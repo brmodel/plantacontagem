@@ -7,6 +7,8 @@ import pyogrio as pyo
 import requests
 from streamlit_folium import st_folium
 import branca
+import { LocateControl } from "leaflet.locatecontrol";
+import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
 
 ## Configurações da Página ##
 st.set_page_config(layout="wide")
@@ -111,7 +113,7 @@ up_inst.add_to(contagem_base)
 up_hibrida.add_to(contagem_base)
 feira_comu.add_to(contagem_base)
 fol.LayerControl().add_to(contagem_base)
-fol.LocateControl().add_to(contagem_base)
+L.control.locate().addTo(contagem_base)
 
 
 fol.plugins.Search(
