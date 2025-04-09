@@ -1,0 +1,9 @@
+streamlit
+pandas
+geopandas
+folium
+git+https://github.com/streamlit/gsheets-connection
+pyogrio
+requests
+streamlit_folium
+branca
