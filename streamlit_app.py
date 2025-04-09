@@ -7,7 +7,7 @@ import pyogrio as pyo
 import requests
 from streamlit_folium import st_folium
 import branca
-import leaflet.locatecontrol as lf_lc
+import leaflet.locatecontrol
 
 ## Configurações da Página ##
 st.set_page_config(layout="wide")
