@@ -111,7 +111,7 @@ up_inst.add_to(contagem_base)
 up_hibrida.add_to(contagem_base)
 feira_comu.add_to(contagem_base)
 fol.LayerControl().add_to(contagem_base)
-LocateControl().add_to(contagem_base)
+fol.LocateControl().add_to(contagem_base)
 
 
 fol.plugins.Search(
