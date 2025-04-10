@@ -35,22 +35,28 @@ if 'map' not in st.session_state:
 
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-    # Create numeral groups
+    # Create numeral configuration
+    numeral_config = {
+        1: {'name': 'Comunitária', 'color': 'green'},
+        2: {'name': 'Institucional', 'color': 'blue'},
+        3: {'name': 'Híbrida', 'color': 'orange'},
+        4: {'name': 'Feira', 'color': 'purple'}
+    }
+
+    # Create feature groups
     numeral_groups = {
-        1: fol.FeatureGroup(name='Comunitária'),
-        2: fol.FeatureGroup(name='Institucional'),
-        3: fol.FeatureGroup(name='Híbrida'),
-        4: fol.FeatureGroup(name='Feira')
+        numeral: fol.FeatureGroup(name=config['name'])
+        for numeral, config in numeral_config.items()
     }
 
     # Add production points
-    for numeral, group in numeral_groups.items():
+    for numeral, config in numeral_config.items():
         subset = gdf[gdf.Numeral == numeral]
         fol.GeoJson(
             subset.__geo_interface__,
-            name=group.name,
-            style_function=lambda x, n=numeral: {
-                'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}[n],
+            name=config['name'],  # Fixed: Use config name instead of group.name
+            style_function=lambda x, c=config['color']: {
+                'fillColor': c,
                 'color': 'black',
                 'weight': 1,
                 'fillOpacity': 0.7
@@ -74,8 +80,8 @@ if 'map' not in st.session_state:
                 aliases=["Unidade Produtiva: "],
                 style="font-family: Arial; font-size: 12px;"
             )
-        ).add_to(group)
-        group.add_to(m)
+        ).add_to(numeral_groups[numeral])
+        numeral_groups[numeral].add_to(m)
 
     # Add regional boundaries
     fol.GeoJson(
