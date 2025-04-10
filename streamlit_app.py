@@ -4,10 +4,11 @@ import folium as fol
 from streamlit_gsheets import GSheetsConnection
 import requests
 from streamlit_folium import st_folium
-from folium.plugins import Search
+from folium.plugins import Search, MarkerCluster
 
 # Page Configuration
 st.set_page_config(layout="wide")
+st.markdown('<meta name="viewport" content="width=device-width, initial-scale=1.0">', unsafe_allow_html=True)
 
 APP_TITLE = 'Mapeamento da Agricultura Urbana em Contagem'
 APP_SUB_TITLE = 'WebApp criado para identificar as Unidades Produtivas Ativas em parceria com a Prefeitura de Contagem'
@@ -22,9 +23,10 @@ def load_data():
 def load_geojson():
     return requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
 
-# Load data once
-data_ups = load_data()
-regionais_json = load_geojson()
+# Load data with spinner
+with st.spinner("Carregando dados..."):
+    data_ups = load_data()
+    regionais_json = load_geojson()
 
 # Create GeoDataFrame
 gdf = gpd.GeoDataFrame(
@@ -43,39 +45,35 @@ icon_config = {
     4: {'icon': 'shopping-cart', 'color': 'purple'}
 }
 
-# Create optimized marker layer
-marker_layer = fol.FeatureGroup(name="Unidades Produtivas", show=True)
+# Create marker cluster
+marker_cluster = MarkerCluster(name="Unidades Produtivas").add_to(m)
 
-# Batch process markers using GeoJSON
-fol.GeoJson(
-    gdf.__geo_interface__,
-    name="ProductionPoints",
-    marker=fol.CircleMarker(radius=0),  # Dummy marker for initialization
-    popup=fol.GeoJsonPopup(
-        fields=["Nome", "Tipo", "Regional"],
-        aliases=["", "", ""],
-        localize=True,
-        labels=False,
-        style="width: 200px; font-family: Arial;",
-        max_width=250
-    ),
-    tooltip=fol.GeoJsonTooltip(
-        fields=["Nome"],
-        aliases=["Unidade Produtiva: "],
-        style="font-family: Arial; font-size: 12px;"
-    ),
-    point_to_layer=lambda feature, latlng: fol.Marker(
-        latlng,
+# Add markers to cluster
+for _, row in gdf.iterrows():
+    numeral = row['Numeral']
+    config = icon_config.get(numeral, {'icon': 'question', 'color': 'gray'})
+    
+    popup_html = f"""
+    <div style="font-family: Arial; font-size: 14px; min-width: 200px;">
+        <h6 style="margin: 0 0 5px 0; color: {config['color']};">{row['Nome']}</h6>
+        <p style="margin: 2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
+        <p style="margin: 2px 0;"><b>Regional:</b> {row['Regional']}</p>
+    </div>
+    """
+    
+    fol.Marker(
+        location=(row['lat'], row['lon']),
         icon=fol.Icon(
-            icon=icon_config.get(feature['properties']['Numeral'], {}).get('icon', 'question'),
-            color=icon_config.get(feature['properties']['Numeral'], {}).get('color', 'gray'),
-            prefix='fa'
-        )
-    )
-).add_to(marker_layer)
+            icon=config['icon'],
+            prefix='fa',
+            color=config['color'],
+            icon_color='white'
+        ),
+        popup=fol.Popup(popup_html, max_width=250),
+        tooltip=f"Unidade Produtiva: {row['Nome']}"
+    ).add_to(marker_cluster)
 
 # Add regional boundaries
-regionais_group = fol.FeatureGroup(name="Regionais", show=True)
 fol.GeoJson(
     regionais_json,
     name="Regionais",
@@ -91,19 +89,15 @@ fol.GeoJson(
         "dashArray": "5,5"
     },
     tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
-).add_to(regionais_group)
+).add_to(m)
 
-# Add layers to map
-regionais_group.add_to(m)
-marker_layer.add_to(m)
-
-# Configure search once
+# Configure search
 Search(
-    layer=marker_layer,
+    layer=marker_cluster,
     search_label='Nome',
     position='topright',
     placeholder='Pesquisar UPs...',
-    collapsed=True,  # Collapsed by default for cleaner UI
+    collapsed=True,
     search_zoom=16
 ).add_to(m)
 
