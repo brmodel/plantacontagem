@@ -76,7 +76,7 @@ def create_map(gdf, regionais):
     }
     
     # Add Production Units
-    search_layers = []
+    search_layer = []
     for numeral, config in feature_groups.items():
         fg = fol.FeatureGroup(name=config["name"])
         
@@ -118,12 +118,12 @@ def create_map(gdf, regionais):
     
     # Add Plugins
     Search(
-        layers=search_layers,
-        search_label="Nome",
-        position="topright",
-        placeholder="Pesquisar Unidades...",
-        collapsed=False
-    ).add_to(m)
+    layer=search_layers,
+    search_label="Nome",
+    position="topright",
+    placeholder="Pesquisar por Unidades Produtivas...",
+    collapsed=False
+).add_to(m)
     
     LocateControl().add_to(m)
     fol.LayerControl().add_to(m)
