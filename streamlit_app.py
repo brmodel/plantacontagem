@@ -22,22 +22,21 @@ def load_data():
 def load_geojson():
     return requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
 
-# Initialize session state for map caching
 if 'map' not in st.session_state:
-    # Load data
     data_ups = load_data()
     regionais_json = load_geojson()
     
-    # Create GeoDataFrame
     gdf = gpd.GeoDataFrame(
         data_ups,
         geometry=gpd.points_from_xy(data_ups.lon, data_ups.lat)
     )
 
-    # Create base map
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-    # Create numeral groups
+    # Create main feature group for search
+    main_group = fol.FeatureGroup(name="Todas as UPs", show=True)
+    
+    # Create numeral subgroups
     numeral_groups = {
         1: fol.FeatureGroup(name='Comunitária'),
         2: fol.FeatureGroup(name='Institucional'),
@@ -45,12 +44,12 @@ if 'map' not in st.session_state:
         4: fol.FeatureGroup(name='Feira')
     }
 
-    # Add production points with numeral filtering
+    # Add points to subgroups
     for numeral, group in numeral_groups.items():
         subset = gdf[gdf.Numeral == numeral]
         fol.GeoJson(
             subset.__geo_interface__,
-            name=group.layer_name,  # Corrected here
+            name=group.name,
             style_function=lambda x, n=numeral: {
                 'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}[n],
                 'color': 'black',
@@ -77,7 +76,10 @@ if 'map' not in st.session_state:
                 style="font-family: Arial; font-size: 12px;"
             )
         ).add_to(group)
-        group.add_to(m)
+        group.add_to(main_group)
+
+    # Add main group to map
+    main_group.add_to(m)
 
     # Add regional boundaries
     fol.GeoJson(
@@ -97,9 +99,9 @@ if 'map' not in st.session_state:
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
     ).add_to(m)
 
-    # Configure search across all numeral groups
+    # Configure search
     Search(
-        layer=list(numeral_groups.values()),
+        layer=main_group,
         search_label='Nome',
         position='topright',
         placeholder='Pesquisar UPs...',
@@ -107,13 +109,14 @@ if 'map' not in st.session_state:
         search_zoom=16
     ).add_to(m)
 
-    # Add layer control
+    # Add layer control for numeral subgroups
+    for group in numeral_groups.values():
+        group.add_to(m)
+    
     fol.LayerControl().add_to(m)
     
-    # Store in session state
     st.session_state.map = m
 
-# Display cached map
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
 st_folium(st.session_state.map, width=1200, height=800)
