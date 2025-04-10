@@ -33,25 +33,22 @@ if 'map' not in st.session_state:
 
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-    # Create main feature group for search
-    main_group = fol.FeatureGroup(name="Todas as UPs", show=True)
-    
-    # Create numeral subgroups
-    numeral_groups = {
-        1: fol.FeatureGroup(name='Comunitária'),
-        2: fol.FeatureGroup(name='Institucional'),
-        3: fol.FeatureGroup(name='Híbrida'),
-        4: fol.FeatureGroup(name='Feira')
+    # Create individual GeoJSON layers for each numeral type
+    numeral_layers = []
+    numeral_config = {
+        1: {'name': 'Comunitária', 'color': 'green'},
+        2: {'name': 'Institucional', 'color': 'blue'},
+        3: {'name': 'Híbrida', 'color': 'orange'},
+        4: {'name': 'Feira', 'color': 'purple'}
     }
 
-    # Add points to subgroups
-    for numeral, group in numeral_groups.items():
+    for numeral, config in numeral_config.items():
         subset = gdf[gdf.Numeral == numeral]
-        fol.GeoJson(
+        layer = fol.GeoJson(
             subset.__geo_interface__,
-            name=group.name,
-            style_function=lambda x, n=numeral: {
-                'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}[n],
+            name=config['name'],
+            style_function=lambda x, c=config['color']: {
+                'fillColor': c,
                 'color': 'black',
                 'weight': 1,
                 'fillOpacity': 0.7
@@ -75,11 +72,9 @@ if 'map' not in st.session_state:
                 aliases=["Unidade Produtiva: "],
                 style="font-family: Arial; font-size: 12px;"
             )
-        ).add_to(group)
-        group.add_to(main_group)
-
-    # Add main group to map
-    main_group.add_to(m)
+        )
+        layer.add_to(m)
+        numeral_layers.append(layer)
 
     # Add regional boundaries
     fol.GeoJson(
@@ -99,9 +94,9 @@ if 'map' not in st.session_state:
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
     ).add_to(m)
 
-    # Configure search
+    # Configure search across all numeral layers
     Search(
-        layer=main_group,
+        layer=numeral_layers,
         search_label='Nome',
         position='topright',
         placeholder='Pesquisar UPs...',
@@ -109,12 +104,7 @@ if 'map' not in st.session_state:
         search_zoom=16
     ).add_to(m)
 
-    # Add layer control for numeral subgroups
-    for group in numeral_groups.values():
-        group.add_to(m)
-    
     fol.LayerControl().add_to(m)
-    
     st.session_state.map = m
 
 st.title(APP_TITLE)
