@@ -29,46 +29,48 @@ gdf = gpd.GeoDataFrame(
 # Create Base Map
 m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-# Create production points layer with higher z-index
-production_points = fol.FeatureGroup(name="Unidades Produtivas", show=True)
-fol.GeoJson(
-    gdf.__geo_interface__,
-    name="Unidades Produtivas",
-    style_function=lambda x: {
-        'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}.get(
-            x['properties']['Numeral'], 'gray'
-        ),
-        'color': 'black',
-        'weight': 1,
-        'fillOpacity': 0.7
-    },
-    marker=fol.CircleMarker(
-        radius=8,
-        weight=1,
-        fill=True,
-        z_index_offset=1000  # Higher z-index for markers
-    ),
-    popup=fol.GeoJsonPopup(
-        fields=["Nome", "Tipo", "Regional"],
-        aliases=["", "", ""],
-        localize=True,
-        labels=False,
-        style="width: 200px; font-family: Arial;",
-        max_width=250,
-        html="""
-            <h6 style="margin-bottom:5px;"><b>{Nome}</b></h6>
-            <p style="margin:2px 0;"><b>Tipo:</b> {Tipo}</p>
-            <p style="margin:2px 0;"><b>Regional:</b> {Regional}</p>
-        """
-    ),
-    tooltip=fol.GeoJsonTooltip(
-        fields=["Nome"],
-        aliases=["Unidade Produtiva: "],
-        style="font-family: Arial; font-size: 12px;"
-    )
-).add_to(production_points)
+# Custom icon configuration
+icon_config = {
+    1: {'icon': 'leaf', 'color': 'green', 'prefix': 'fa'},
+    2: {'icon': 'home', 'color': 'blue', 'prefix': 'fa'},
+    3: {'icon': 'star', 'color': 'orange', 'prefix': 'fa'},
+    4: {'icon': 'shopping-cart', 'color': 'purple', 'prefix': 'fa'}
+}
 
-# Create regional boundaries with lower z-index
+# Create feature group for markers
+markers_group = fol.FeatureGroup(name="Unidades Produtivas", show=True)
+
+# Add custom markers
+for _, row in gdf.iterrows():
+    numeral = row['Numeral']
+    config = icon_config.get(numeral, {'icon': 'question', 'color': 'gray', 'prefix': 'fa'})
+    
+    # Create custom icon
+    custom_icon = fol.Icon(
+        icon=config['icon'],
+        prefix=config['prefix'],
+        color=config['color'],
+        icon_color='white'
+    )
+    
+    # Create HTML popup
+    popup_html = f"""
+    <div style="font-family: Arial; font-size: 14px; min-width: 200px;">
+        <h6 style="margin: 0 0 5px 0; color: {config['color']};">{row['Nome']}</h6>
+        <p style="margin: 2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
+        <p style="margin: 2px 0;"><b>Regional:</b> {row['Regional']}</p>
+    </div>
+    """
+    
+    # Create marker
+    fol.Marker(
+        location=(row['lat'], row['lon']),
+        icon=custom_icon,
+        popup=fol.Popup(popup_html, max_width=250),
+        tooltip=f"Unidade Produtiva: {row['Nome']}"
+    ).add_to(markers_group)
+
+# Add regional boundaries
 regionais_group = fol.FeatureGroup(name="Regionais", show=True)
 fol.GeoJson(
     requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json(),
@@ -84,17 +86,16 @@ fol.GeoJson(
         "fillOpacity": 0.4,
         "dashArray": "5,5"
     },
-    tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-    z_index=10  # Lower z-index for boundaries
+    tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
 ).add_to(regionais_group)
 
-# Add layers to map in correct order
+# Add layers to map
 regionais_group.add_to(m)
-production_points.add_to(m)
+markers_group.add_to(m)
 
-# Add Search plugin
+# Add search functionality
 Search(
-    layer=production_points,
+    layer=markers_group,
     search_label='Nome',
     position='topright',
     placeholder='Pesquisar UPs...',
@@ -102,10 +103,10 @@ Search(
     search_zoom=16
 ).add_to(m)
 
-# Add Layer Control
+# Add layer control
 fol.LayerControl().add_to(m)
 
-# Streamlit Display
+# Streamlit display
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
 st_folium(m, width=1200, height=800)
