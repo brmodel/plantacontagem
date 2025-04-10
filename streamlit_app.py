@@ -29,27 +29,54 @@ gdf = gpd.GeoDataFrame(
 # Create Base Map
 m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-# Create Feature Groups with original styling
-feature_groups = {
-    1: {"name": "Comunitária", "color": "green"},
-    2: {"name": "Institucional", "color": "blue"},
-    3: {"name": "Híbrida", "color": "orange"},
-    4: {"name": "Feira", "color": "purple"}
-}
+# Create styled GeoJSON layer with original marker appearance
+all_points = fol.GeoJson(
+    gdf.__geo_interface__,
+    name="Todas as UPs",
+    style_function=lambda x: {
+        'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}.get(
+            x['properties']['Numeral'], 'gray'
+        ),
+        'color': 'black',
+        'weight': 1,
+        'fillOpacity': 0.7
+    },
+    marker=fol.CircleMarker(
+        radius=8,
+        weight=1,
+        fill=True
+    ),
+    popup=fol.GeoJsonPopup(
+        fields=["Nome", "Tipo", "Regional"],
+        aliases=["", "", ""],
+        localize=True,
+        labels=False,
+        style="width: 200px; font-family: Arial;",
+        max_width=250,
+        html="""
+            <h6 style="margin-bottom:5px;"><b>{Nome}</b></h6>
+            <p style="margin:2px 0;"><b>Tipo:</b> {Tipo}</p>
+            <p style="margin:2px 0;"><b>Regional:</b> {Regional}</p>
+        """
+    ),
+    tooltip=fol.GeoJsonTooltip(
+        fields=["Nome"],
+        aliases=["Unidade Produtiva: "],
+        style="font-family: Arial; font-size: 12px;"
+    )
+).add_to(m)
 
-search_layers = []
-
-# Add regional boundaries first
+# Add Regional Boundaries with original styling
 regionais = requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
 fol.GeoJson(
     regionais,
-    name="Regionais",
+    name='Regionais',
     style_function=lambda x: {
         "fillColor": {
             1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
             4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
             7: "#e5d8bd"
-        }.get(x['properties'].get('id', 0), "#fddaec"),
+        }.get(x['properties']['id'], "#fddaec"),
         "color": "black",
         "weight": 2,
         "fillOpacity": 0.4,
@@ -58,64 +85,19 @@ fol.GeoJson(
     tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
 ).add_to(m)
 
-# Create production units with original styling
-for numeral, config in feature_groups.items():
-    fg = fol.FeatureGroup(name=f"UP {config['name']}")
-    subset = gdf[gdf.Numeral == numeral]
-    
-    # Custom HTML popup
-    popup_html = """
-    <div style="font-family: Arial; font-size: 14px;">
-        <h4 style="margin: 0; padding-bottom: 5px;"><b>{Nome}</b></h4>
-        <p style="margin: 2px 0;"><b>Tipo:</b> {Tipo}</p>
-        <p style="margin: 2px 0;"><b>Regional:</b> {Regional}</p>
-    </div>
-    """
-    
-    geojson = fol.GeoJson(
-        subset.__geo_interface__,
-        name=fg.layer_name,
-        style_function=lambda x: {"color": "transparent", "fillColor": "transparent"},
-        marker=fol.CircleMarker(
-            radius=8,
-            weight=1,
-            color=config["color"],
-            fill_color=config["color"],
-            fill_opacity=0.7
-        ),
-        popup=fol.GeoJsonPopup(
-            fields=["Nome", "Tipo", "Regional"],
-            aliases=["", "", ""],
-            localize=True,
-            labels=False,
-            style="width: 200px;",
-            max_width=250,
-            html=popup_html
-        ),
-        tooltip=fol.GeoJsonTooltip(
-            fields=["Nome"],
-            aliases=["Unidade Produtiva: "],
-            style="font-family: Arial; font-size: 12px;"
-        )
-    ).add_to(fg)
-    
-    fg.add_to(m)
-    search_layers.append(geojson)
-
-# Add search functionality
+# Add Search Plugin
 Search(
-    layer=search_layers,
-    search_label="Nome",
-    position="topright",
-    placeholder="Pesquisar UPs...",
-    collapsed=False,
-    search_zoom=16
+    layer=all_points,
+    search_label='Nome',
+    position='topright',
+    placeholder='Pesquisar UPs...',
+    collapsed=False
 ).add_to(m)
 
-# Add layer control
+# Add Layer Control
 fol.LayerControl().add_to(m)
 
-# Streamlit display
+# Streamlit Display
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
 st_folium(m, width=1200, height=800)
