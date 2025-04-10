@@ -33,8 +33,10 @@ if 'map' not in st.session_state:
 
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-    # Create individual GeoJSON layers for each numeral type
-    numeral_layers = []
+    # Create main feature group for search
+    main_group = fol.FeatureGroup(name="Todas as UPs", show=True)
+    
+    # Create numeral subgroups
     numeral_config = {
         1: {'name': 'Comunitária', 'color': 'green'},
         2: {'name': 'Institucional', 'color': 'blue'},
@@ -42,6 +44,7 @@ if 'map' not in st.session_state:
         4: {'name': 'Feira', 'color': 'purple'}
     }
 
+    # Add points to subgroups and main group
     for numeral, config in numeral_config.items():
         subset = gdf[gdf.Numeral == numeral]
         layer = fol.GeoJson(
@@ -73,8 +76,11 @@ if 'map' not in st.session_state:
                 style="font-family: Arial; font-size: 12px;"
             )
         )
-        layer.add_to(m)
-        numeral_layers.append(layer)
+        layer.add_to(main_group)  # Add to main search group
+        layer.add_to(m)  # Add to map for layer control
+
+    # Add main group to map
+    main_group.add_to(m)
 
     # Add regional boundaries
     fol.GeoJson(
@@ -94,9 +100,9 @@ if 'map' not in st.session_state:
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
     ).add_to(m)
 
-    # Configure search across all numeral layers
+    # Configure search
     Search(
-        layer=numeral_layers,
+        layer=main_group,
         search_label='Nome',
         position='topright',
         placeholder='Pesquisar UPs...',
