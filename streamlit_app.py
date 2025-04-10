@@ -50,7 +50,7 @@ if 'map' not in st.session_state:
         subset = gdf[gdf.Numeral == numeral]
         fol.GeoJson(
             subset.__geo_interface__,
-            name=f'UP {group.name}',
+            name=group.layer_name,  # Corrected here
             style_function=lambda x, n=numeral: {
                 'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}[n],
                 'color': 'black',
