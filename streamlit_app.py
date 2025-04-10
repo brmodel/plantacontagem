@@ -76,39 +76,36 @@ def create_map(gdf, regionais):
     }
     
     # Add Production Units
-    search_layers = []  # Initialize with correct name
-for numeral, config in feature_groups.items():
-    fg = fol.FeatureGroup(name=config["name"])
-    
-    # Filter features
-    data = json.loads(geojson_str)
-    filtered = [
-        f for f in data["features"]
-        if f["properties"]["Numeral"] == numeral
-    ]
-    
-    # Fix lambda scoping issue
-    layer_color = config["color"]  # Capture color in loop scope
-    fol.GeoJson(
-        {"type": "FeatureCollection", "features": filtered},
-        style_function=lambda x, color=layer_color: {
-            "color": color,
-            "fillColor": color
-        },
-        marker=fol.CircleMarker(radius=5, weight=2, fill_opacity=0.5),
-        popup=fol.GeoJsonPopup(
-            fields=["Nome", "Tipo", "Regional"],
-            aliases=["Nome: ", "Tipo: ", "Regional: "],
-            labels=True
-        ),
-        tooltip=fol.GeoJsonTooltip(
-            fields=["Nome"],
-            aliases=["Unidade Produtiva: "]
-        )
-    ).add_to(fg)
-    
-    fg.add_to(m)
-    search_layers.append(fg)
+    search_layers = []
+    for numeral, config in feature_groups.items():
+        fg = fol.FeatureGroup(name=config["name"])
+        
+        # Filter features
+        data = json.loads(geojson_str)
+        filtered = [f for f in data["features"] if f["properties"]["Numeral"] == numeral]
+        
+        # Capture color in loop scope
+        layer_color = config["color"]
+        fol.GeoJson(
+            {"type": "FeatureCollection", "features": filtered},
+            style_function=lambda x, color=layer_color: {
+                "color": color,
+                "fillColor": color
+            },
+            marker=fol.CircleMarker(radius=5, weight=2, fill_opacity=0.5),
+            popup=fol.GeoJsonPopup(
+                fields=["Nome", "Tipo", "Regional"],
+                aliases=["Nome: ", "Tipo: ", "Regional: "],
+                labels=True
+            ),
+            tooltip=fol.GeoJsonTooltip(
+                fields=["Nome"],
+                aliases=["Unidade Produtiva: "]
+            )
+        ).add_to(fg)
+        
+        fg.add_to(m)
+        search_layers.append(fg)
     
     # Add Regional Boundaries
     fol.GeoJson(
@@ -120,17 +117,17 @@ for numeral, config in feature_groups.items():
     
     # Add Plugins
     Search(
-    layer=search_layers,
-    search_label="Nome",
-    position="topright",
-    placeholder="Pesquisar por Unidades Produtivas...",
-    collapsed=False
-).add_to(m)
+        layer=search_layers,
+        search_label="Nome",
+        position="topright",
+        placeholder="Pesquisar por Unidades Produtivas...",
+        collapsed=False
+    ).add_to(m)
     
     LocateControl().add_to(m)
     fol.LayerControl().add_to(m)
     
-    return m
+    return m  # Properly indented inside function
 
 # Main Execution
 gdf, regionais = load_data()
