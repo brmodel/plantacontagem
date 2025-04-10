@@ -5,7 +5,6 @@ from streamlit_gsheets import GSheetsConnection
 import requests
 from streamlit_folium import st_folium
 from folium.plugins import LocateControl, Search
-import json
 import pandas as pd
 
 # Page Configuration
@@ -17,45 +16,29 @@ APP_SUB_TITLE = 'WebApp criado para identificar as Unidades Produtivas Ativas em
 # Cached Data Loading
 @st.cache_data(ttl=3600)
 def load_data():
-    # Load Google Sheets data
     conn = st.connection("gsheets", type=GSheetsConnection)
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/edit?gid=1832051074#gid=1832051074"
     raw_data = conn.read(spreadsheet=url, usecols=list(range(6)), worksheet="1832051074")
     
-    # Clean data
+    # Data cleaning
     data_clean = raw_data.dropna(subset=['Nome','lon','lat','Tipo','Regional','Numeral'])
     data_clean["lon"] = pd.to_numeric(data_clean["lon"], errors="coerce")
     data_clean["lat"] = pd.to_numeric(data_clean["lat"], errors="coerce")
     data_clean = data_clean.dropna(subset=["lat", "lon"])
     
-    # Create GeoDataFrame
+    # GeoDataFrame
     gdf = gpd.GeoDataFrame(
         data_clean,
         geometry=gpd.points_from_xy(data_clean["lon"], data_clean["lat"])
     )
     gdf["Numeral"] = gdf["Numeral"].astype(int)
     
-    # Load Regional GeoJSON
+    # Regional boundaries
     geojson_url = "https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson"
     regionais = requests.get(geojson_url).json()
     
     return gdf, regionais
 
-# Style Functions
-def regional_style(feature):
-    colors = {
-        1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5", 4: "#decbe4",
-        5: "#fed9a6", 6: "#ffffcc", 7: "#e5d8bd"
-    }
-    return {
-        "fillOpacity": 0.4,
-        "fillColor": colors.get(feature["properties"].get("id", 0), "#fddaec"),
-        "color": "black",
-        "weight": 2,
-        "dashArray": "5,5"
-    }
-
-# Map Creation
 def create_map(gdf, regionais):
     m = fol.Map(
         location=[-19.88589, -44.07113],
@@ -64,7 +47,7 @@ def create_map(gdf, regionais):
         crs='EPSG4326'
     )
     
-    # Feature Group Configuration
+    # Feature groups configuration
     feature_groups = {
         1: {"name": "Comunitária", "color": "green"},
         2: {"name": "Institucional", "color": "blue"},
@@ -72,45 +55,47 @@ def create_map(gdf, regionais):
         4: {"name": "Feira", "color": "purple"}
     }
     
+    # Create feature groups and populate them
     search_layers = []
-    
     for numeral, config in feature_groups.items():
-        # Create FeatureGroup for layer control
         fg = fol.FeatureGroup(name=f"UP {config['name']}")
         
-        # Create GeoJson layer
-        geojson_data = gdf[gdf["Numeral"] == numeral].to_json()
-        layer = fol.GeoJson(
-            geojson_data,
+        # Create GeoJSON layer
+        subset = gdf[gdf["Numeral"] == numeral]
+        fol.GeoJson(
+            subset.__geo_interface__,
             name=f"UP {config['name']}",
             style_function=lambda x, c=config["color"]: {
                 "color": c,
                 "fillColor": c
             },
             marker=fol.CircleMarker(radius=5, weight=2, fill_opacity=0.5),
-            popup=fol.GeoJsonPopup(
-                fields=["Nome", "Tipo", "Regional"],
-                aliases=["Nome: ", "Tipo: ", "Regional: "]
-            ),
-            tooltip=fol.GeoJsonTooltip(
-                fields=["Nome"],
-                aliases=["Unidade: "]
-            )
-        )
+            popup=fol.GeoJsonPopup(fields=["Nome", "Tipo", "Regional"]),
+            tooltip=fol.GeoJsonTooltip(fields=["Nome"])
+        ).add_to(fg)
         
-        layer.add_to(fg)
         fg.add_to(m)
-        search_layers.append(layer)  # Pass GeoJson layer to search
+        search_layers.append(fg)  # Pass FeatureGroup to search
 
-    # Add Regional Boundaries
+    # Regional boundaries
     fol.GeoJson(
         regionais,
-        style_function=regional_style,
+        style_function=lambda x: {
+            "fillOpacity": 0.4,
+            "fillColor": {
+                1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
+                4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
+                7: "#e5d8bd"
+            }.get(x["properties"].get("id", 0), "#fddaec"),
+            "color": "black",
+            "weight": 2,
+            "dashArray": "5,5"
+        },
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
         name="Regionais"
     ).add_to(m)
 
-    # Add Search plugin
+    # Add plugins
     Search(
         layer=search_layers,
         search_label="Nome",
@@ -119,17 +104,16 @@ def create_map(gdf, regionais):
         collapsed=False
     ).add_to(m)
     
-    # Add controls
     LocateControl().add_to(m)
     fol.LayerControl().add_to(m)
     
     return m
 
-# Main Execution
+# Main execution
 gdf, regionais = load_data()
 map_obj = create_map(gdf, regionais)
 
-# Streamlit Display
+# Streamlit interface
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
 st_folium(map_obj, width=1200, height=800)
