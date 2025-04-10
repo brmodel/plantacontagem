@@ -16,7 +16,9 @@ def load_data():
     conn = st.connection("gsheets", type=GSheetsConnection)
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/edit?gid=1832051074#gid=1832051074"
     data = conn.read(spreadsheet=url, usecols=list(range(6)), worksheet="1832051074")
-    return data.dropna(subset=['Nome','lon','lat','Tipo','Regional','Numeral'])
+    clean_data = data.dropna(subset=['Nome','lon','lat','Tipo','Regional','Numeral'])
+    clean_data['Numeral'] = clean_data['Numeral'].astype(int)
+    return clean_data
 
 @st.cache_data(ttl=3600)
 def load_geojson():
@@ -33,25 +35,22 @@ if 'map' not in st.session_state:
 
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-    # Create main feature group for search
-    main_group = fol.FeatureGroup(name="Todas as UPs", show=True)
-    
-    # Create numeral subgroups
-    numeral_config = {
-        1: {'name': 'Comunitária', 'color': 'green'},
-        2: {'name': 'Institucional', 'color': 'blue'},
-        3: {'name': 'Híbrida', 'color': 'orange'},
-        4: {'name': 'Feira', 'color': 'purple'}
+    # Create numeral groups
+    numeral_groups = {
+        1: fol.FeatureGroup(name='Comunitária'),
+        2: fol.FeatureGroup(name='Institucional'),
+        3: fol.FeatureGroup(name='Híbrida'),
+        4: fol.FeatureGroup(name='Feira')
     }
 
-    # Add points to subgroups and main group
-    for numeral, config in numeral_config.items():
+    # Add production points
+    for numeral, group in numeral_groups.items():
         subset = gdf[gdf.Numeral == numeral]
-        layer = fol.GeoJson(
+        fol.GeoJson(
             subset.__geo_interface__,
-            name=config['name'],
-            style_function=lambda x, c=config['color']: {
-                'fillColor': c,
+            name=group.name,
+            style_function=lambda x, n=numeral: {
+                'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}[n],
                 'color': 'black',
                 'weight': 1,
                 'fillOpacity': 0.7
@@ -75,12 +74,8 @@ if 'map' not in st.session_state:
                 aliases=["Unidade Produtiva: "],
                 style="font-family: Arial; font-size: 12px;"
             )
-        )
-        layer.add_to(main_group)  # Add to main search group
-        layer.add_to(m)  # Add to map for layer control
-
-    # Add main group to map
-    main_group.add_to(m)
+        ).add_to(group)
+        group.add_to(m)
 
     # Add regional boundaries
     fol.GeoJson(
@@ -102,7 +97,7 @@ if 'map' not in st.session_state:
 
     # Configure search
     Search(
-        layer=main_group,
+        layer=list(numeral_groups.values()),
         search_label='Nome',
         position='topright',
         placeholder='Pesquisar UPs...',
