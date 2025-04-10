@@ -12,7 +12,6 @@ st.set_page_config(layout="wide")
 APP_TITLE = 'Mapeamento da Agricultura Urbana em Contagem'
 APP_SUB_TITLE = 'WebApp criado para identificar as Unidades Produtivas Ativas em parceria com a Prefeitura de Contagem'
 
-# Data Loading
 @st.cache_data
 def load_data():
     conn = st.connection("gsheets", type=GSheetsConnection)
@@ -30,71 +29,93 @@ gdf = gpd.GeoDataFrame(
 # Create Base Map
 m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-# Create Feature Groups
+# Create Feature Groups with original styling
 feature_groups = {
-    1: fol.FeatureGroup(name="Unidade Produtiva Comunitária"),
-    2: fol.FeatureGroup(name="Unidade Produtiva Institucional"),
-    3: fol.FeatureGroup(name="Unidade Produtiva Híbrida"),
-    4: fol.FeatureGroup(name="Feira Comunitária")
+    1: {"name": "Comunitária", "color": "green"},
+    2: {"name": "Institucional", "color": "blue"},
+    3: {"name": "Híbrida", "color": "orange"},
+    4: {"name": "Feira", "color": "purple"}
 }
 
-# Add Markers to Feature Groups (Original Style)
-for _, row in gdf.iterrows():
-    numeral = row["Numeral"]
-    color = {1: "green", 2: "blue", 3: "orange", 4: "purple"}.get(numeral, "gray")
-    
-    marker = fol.Marker(
-        location=(row["lat"], row["lon"]),
-        popup=fol.Popup(
-            f"""<h6 style="margin-bottom:5px;"><b>{row['Nome']}</b></h6>
-            <p style="margin:2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
-            <p style="margin:2px 0;"><b>Regional:</b> {row['Regional']}</p>""",
-            max_width=250
-        ),
-        icon=fol.Icon(color=color),
-        tooltip=row['Nome']
-    )
-    
-    if numeral in feature_groups:
-        marker.add_to(feature_groups[numeral])
+search_layers = []
 
-# Add Regional Boundaries First (to ensure markers stay on top)
+# Add regional boundaries first
 regionais = requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
 fol.GeoJson(
     regionais,
     name="Regionais",
     style_function=lambda x: {
-        "fillOpacity": 0.4,
         "fillColor": {
             1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
             4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
             7: "#e5d8bd"
-        }.get(x['properties']['id'], "#fddaec"),
+        }.get(x['properties'].get('id', 0), "#fddaec"),
         "color": "black",
         "weight": 2,
+        "fillOpacity": 0.4,
         "dashArray": "5,5"
     },
     tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
 ).add_to(m)
 
-# Add Feature Groups to Map
-for fg in feature_groups.values():
+# Create production units with original styling
+for numeral, config in feature_groups.items():
+    fg = fol.FeatureGroup(name=f"UP {config['name']}")
+    subset = gdf[gdf.Numeral == numeral]
+    
+    # Custom HTML popup
+    popup_html = """
+    <div style="font-family: Arial; font-size: 14px;">
+        <h4 style="margin: 0; padding-bottom: 5px;"><b>{Nome}</b></h4>
+        <p style="margin: 2px 0;"><b>Tipo:</b> {Tipo}</p>
+        <p style="margin: 2px 0;"><b>Regional:</b> {Regional}</p>
+    </div>
+    """
+    
+    geojson = fol.GeoJson(
+        subset.__geo_interface__,
+        name=fg.layer_name,
+        style_function=lambda x: {"color": "transparent", "fillColor": "transparent"},
+        marker=fol.CircleMarker(
+            radius=8,
+            weight=1,
+            color=config["color"],
+            fill_color=config["color"],
+            fill_opacity=0.7
+        ),
+        popup=fol.GeoJsonPopup(
+            fields=["Nome", "Tipo", "Regional"],
+            aliases=["", "", ""],
+            localize=True,
+            labels=False,
+            style="width: 200px;",
+            max_width=250,
+            html=popup_html
+        ),
+        tooltip=fol.GeoJsonTooltip(
+            fields=["Nome"],
+            aliases=["Unidade Produtiva: "],
+            style="font-family: Arial; font-size: 12px;"
+        )
+    ).add_to(fg)
+    
     fg.add_to(m)
+    search_layers.append(geojson)
 
-# Configure Search Plugin
+# Add search functionality
 Search(
-    layer=list(feature_groups.values()),  # Pass FeatureGroups directly
-    search_label='Nome',
-    position='topright',
-    placeholder='Pesquisar UPs...',
+    layer=search_layers,
+    search_label="Nome",
+    position="topright",
+    placeholder="Pesquisar UPs...",
     collapsed=False,
     search_zoom=16
 ).add_to(m)
 
-# Add Layer Control
+# Add layer control
 fol.LayerControl().add_to(m)
 
-# Streamlit Display
+# Streamlit display
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
 st_folium(m, width=1200, height=800)
