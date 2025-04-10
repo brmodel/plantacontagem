@@ -29,31 +29,9 @@ gdf = gpd.GeoDataFrame(
 # Create Base Map
 m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-# Create layer groups
-regionais_group = fol.FeatureGroup(name="Regionais", show=True)
-points_group = fol.FeatureGroup(name="Unidades Produtivas", show=True)
-
-# Add Regional Boundaries FIRST with lower z-index
-regionais = requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
+# Create production points layer with higher z-index
+production_points = fol.FeatureGroup(name="Unidades Produtivas", show=True)
 fol.GeoJson(
-    regionais,
-    name="Regionais",
-    style_function=lambda x: {
-        "fillColor": {
-            1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
-            4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
-            7: "#e5d8bd"
-        }.get(x['properties'].get('id', 0), "#fddaec"),
-        "color": "black",
-        "weight": 2,
-        "fillOpacity": 0.4,
-        "dashArray": "5,5"
-    },
-    tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
-).add_to(regionais_group)
-
-# Add Production Points with original styling
-production_points = fol.GeoJson(
     gdf.__geo_interface__,
     name="Unidades Produtivas",
     style_function=lambda x: {
@@ -67,7 +45,8 @@ production_points = fol.GeoJson(
     marker=fol.CircleMarker(
         radius=8,
         weight=1,
-        fill=True
+        fill=True,
+        z_index_offset=1000  # Higher z-index for markers
     ),
     popup=fol.GeoJsonPopup(
         fields=["Nome", "Tipo", "Regional"],
@@ -87,16 +66,33 @@ production_points = fol.GeoJson(
         aliases=["Unidade Produtiva: "],
         style="font-family: Arial; font-size: 12px;"
     )
-).add_to(points_group)
+).add_to(production_points)
 
-# Add groups to map in correct order
+# Create regional boundaries with lower z-index
+regionais_group = fol.FeatureGroup(name="Regionais", show=True)
+fol.GeoJson(
+    requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json(),
+    name="Regionais",
+    style_function=lambda x: {
+        "fillColor": {
+            1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
+            4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
+            7: "#e5d8bd"
+        }.get(x['properties'].get('id', 0), "#fddaec"),
+        "color": "black",
+        "weight": 2,
+        "fillOpacity": 0.4,
+        "dashArray": "5,5"
+    },
+    tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
+    z_index=10  # Lower z-index for boundaries
+).add_to(regionais_group)
+
+# Add layers to map in correct order
 regionais_group.add_to(m)
-points_group.add_to(m)
+production_points.add_to(m)
 
-# Force points to stay on top
-points_group.bring_to_front()
-
-# Add Search functionality to points layer
+# Add Search plugin
 Search(
     layer=production_points,
     search_label='Nome',
