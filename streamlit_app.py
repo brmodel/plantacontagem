@@ -12,7 +12,6 @@ st.set_page_config(layout="wide")
 APP_TITLE = 'Mapeamento da Agricultura Urbana em Contagem'
 APP_SUB_TITLE = 'WebApp criado para identificar as Unidades Produtivas Ativas em parceria com a Prefeitura de Contagem'
 
-# Data Loading and Processing
 @st.cache_data
 def load_data():
     conn = st.connection("gsheets", type=GSheetsConnection)
@@ -30,26 +29,21 @@ gdf = gpd.GeoDataFrame(
 # Create Base Map
 m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-# Create Feature Groups
-groups = {
-    1: fol.FeatureGroup(name="Unidade Produtiva Comunitária"),
-    2: fol.FeatureGroup(name="Unidade Produtiva Institucional"),
-    3: fol.FeatureGroup(name="Unidade Produtiva Híbrida"),
-    4: fol.FeatureGroup(name="Feira Comunitária")
-}
-
-# Add Points as GeoJSON Layers
-for numeral, group in groups.items():
-    subset = gdf[gdf.Numeral == numeral]
-    geojson = fol.GeoJson(
-        subset.__geo_interface__,
-        name=group.layer_name,
-        marker=fol.CircleMarker(radius=5, fill_color={1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}[numeral]),
-        popup=fol.GeoJsonPopup(fields=['Nome', 'Tipo', 'Regional']),
-        tooltip=fol.GeoJsonTooltip(fields=['Nome'])
-    )
-    geojson.add_to(group)
-    group.add_to(m)
+# Create a single GeoJSON layer with all points
+all_points = fol.GeoJson(
+    gdf.__geo_interface__,
+    name="Todas as UPs",
+    style_function=lambda x: {
+        'fillColor': {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple'}.get(
+            x['properties']['Numeral'], 'gray'
+        ),
+        'color': 'black',
+        'radius': 5
+    },
+    marker=fol.CircleMarker(),
+    popup=fol.GeoJsonPopup(fields=['Nome', 'Tipo', 'Regional', 'Numeral']),
+    tooltip=fol.GeoJsonTooltip(fields=['Nome'])
+).add_to(m)
 
 # Add Regional Boundaries
 regionais = requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
@@ -68,9 +62,9 @@ fol.GeoJson(
     }
 ).add_to(m)
 
-# Add Search Plugin
+# Add Search Plugin to the single GeoJSON layer
 Search(
-    layer=list(groups.values()),  # Pass FeatureGroup objects directly
+    layer=all_points,
     search_label='Nome',
     position='topright',
     placeholder='Pesquisar UPs...',
