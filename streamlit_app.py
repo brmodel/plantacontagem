@@ -46,24 +46,25 @@ def create_map(gdf, regionais):
         crs='EPSG4326'
     )
     
-    # Create individual GeoJSON layers
-    layers = {
+    # Create feature groups with GeoJSON layers
+    layers_config = {
         1: {"name": "Comunitária", "color": "green"},
         2: {"name": "Institucional", "color": "blue"},
         3: {"name": "Híbrida", "color": "orange"},
         4: {"name": "Feira", "color": "purple"}
     }
     
-    search_layers = []
+    search_groups = []
     
-    for numeral, config in layers.items():
-        layer_name = f"UP {config['name']}"
-        subset = gdf[gdf["Numeral"] == numeral]
+    for numeral, config in layers_config.items():
+        # Create FeatureGroup container
+        fg = fol.FeatureGroup(name=f"UP {config['name']}")
         
         # Create GeoJSON layer
+        subset = gdf[gdf["Numeral"] == numeral]
         geojson_layer = fol.GeoJson(
             subset.__geo_interface__,
-            name=layer_name,
+            name=f"UP {config['name']}",
             style_function=lambda x, c=config["color"]: {
                 "color": c,
                 "fillColor": c
@@ -71,10 +72,11 @@ def create_map(gdf, regionais):
             marker=fol.CircleMarker(radius=5, weight=2, fill_opacity=0.5),
             popup=fol.GeoJsonPopup(fields=["Nome", "Tipo", "Regional"]),
             tooltip=fol.GeoJsonTooltip(fields=["Nome"])
-        ).add_to(m)
+        ).add_to(fg)
         
-        search_layers.append(geojson_layer)
-        st.write(f"Created layer: {layer_name}")  # Debug output
+        fg.add_to(m)
+        search_groups.append(fg)
+        st.write(f"Created FeatureGroup: {fg.layer_name}")  # Debug
 
     # Add regional boundaries
     fol.GeoJson(
@@ -94,13 +96,13 @@ def create_map(gdf, regionais):
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
     ).add_to(m)
 
-    # Add search plugin
-    st.write("Search layers types:", [type(l) for l in search_layers])  # Debug
+    # Add search plugin using FeatureGroups
+    st.write("Search layer types:", [type(g) for g in search_groups])  # Debug
     Search(
-        layer=search_layers,
+        layer=search_groups,
         search_label="Nome",
         position="topright",
-        placeholder="Pesquisar por Unidades Produtivas...",
+        placeholder="Pesquisar UPs...",
         collapsed=False
     ).add_to(m)
     
