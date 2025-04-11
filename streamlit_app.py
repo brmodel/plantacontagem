@@ -84,7 +84,7 @@ for _, row in df.iterrows():
     Marker(
         location=[row["lat"], row["lon"]],
         popup=popup_content,
-        icon=icon
+        icon=icon,
         tooltip=tooltip_content
     ).add_to(m)
 
