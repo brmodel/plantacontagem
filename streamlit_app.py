@@ -8,7 +8,7 @@ import requests
 # --- Config ---
 APP_TITLE = ":plant: Planta Contagem :plant:"
 APP_SUB_TITLE = "Mapa das Unidades Produtivas de Contagem"
-APP_SUBHEADER = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar - CMAUF, em parceria com a Prefeitura Municipal de Contagem - MG
+APP_SUBHEADER = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar - CMAUF, em parceria com a Prefeitura Municipal de Contagem - MG"
 ICON_BASE_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
 ICON_MAPPING = {
     1: "leaf_green.png",
