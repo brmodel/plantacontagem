@@ -114,4 +114,4 @@ st.caption(APP_CAPTION)
 # Display banners
 for img in IMAGE_BANNER_URLS:
     st.image(ICON_BASE_URL + img, use_container_width=False)
-st.image("https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true")
+st.image(LOGO_PMC)
