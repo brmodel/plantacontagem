@@ -91,7 +91,7 @@ for _, row in df.iterrows():
 # --- Layout ---
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
-st.image(IMAGE_BANNER_URLS + contagem_sem_fome.png)
+st.image("https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true")
 
 # --- Search box ---
 search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
