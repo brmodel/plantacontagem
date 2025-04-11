@@ -74,13 +74,15 @@ for _, row in df.iterrows():
     )
 
     tooltip_content = f"""
-    <h6><b>Conheça a Unidade Produtiva: {row['Nome']}</h6></b>
+    <h4><b>Conheça a Unidade Produtiva:<br>{row['Nome']}</h4></b>
     """
     
     popup_content = f"""
-    <b><h6>{row['Nome']}</h6></b><br>
-    <b><h6>Tipo</b>: {row['Tipo']}</h6><br>
-    <b><h6>Regional</b>: {row['Regional']}</h6><br>
+    <div style="font-family: Arial; font-size: 14px; min-width: 200px;">
+        <h6 style="margin: 0 0 5px 0; color: {config['color']};">{row['Nome']}</h6>
+        <p style="margin: 2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
+        <p style="margin: 2px 0;"><b>Regional:</b> {row['Regional']}</p>
+    </div>
     """
     Marker(
         location=[row["lat"], row["lon"]],
