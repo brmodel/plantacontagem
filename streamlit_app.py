@@ -1,77 +1,101 @@
 import streamlit as st
-from streamlit_folium import st_folium
-import folium as fol
 import pandas as pd
+import folium
+from streamlit_folium import st_folium
+from folium import Marker
+import requests
 
-# --- Constants ---
-APP_TITLE = "Mapa das Unidades Produtivas"
-APP_SUB_TITLE = "Filtro e visualização de dados no mapa"
+# --- Config ---
+APP_TITLE = "Planta Contagem"
+APP_SUB_TITLE = "Unidades Produtivas por Região de Contagem"
+ICON_BASE_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
+ICON_MAPPING = {
+    1: "leaf_green.png",
+    2: "leaf_orange.png",
+    3: "leaf_blue.png",
+    4: "leaf_purple.png",
+}
+IMAGE_BANNER_URLS = [
+    "banner_pmc.png",
+    "contagem_sem_fome.png",
+    "ilustracao_pmc.png"
+]
+GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 
 # --- Load Data ---
 @st.cache_data(ttl=600)
 def load_data():
-    # Convert Google Sheets link to CSV export link
-    sheet_id = "16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM"
-    gid = "1832051074"
-    csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
+    url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
+    data = pd.read_csv(url, usecols=range(6))
+    clean_data = data.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral']).copy()
+    clean_data['Numeral'] = clean_data['Numeral'].astype(int)
+    return clean_data
 
-    df = pd.read_csv(csv_url, usecols=[0, 1, 2, 3, 4, 5])  # adjust columns if needed
-    df.columns = df.columns.str.strip()  # ensure no extra whitespace
-    df = df.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral']).copy()
-    df['Numeral'] = df['Numeral'].astype(int)
-    return df
+@st.cache_data(ttl=3600)
+def load_geojson():
+    return requests.get(GEOJSON_URL).json()
 
 df = load_data()
+regionais_json = load_geojson()
 
 # --- Search box ---
 search_query = st.text_input("Buscar por Nome:", "").strip().lower()
 if search_query:
-    df = df[df['Nome'].str.lower().str.contains(search_query)]
-
-# --- Create GeoJSON features ---
-def df_to_geojson(dataframe: pd.DataFrame):
-    features = []
-    for _, row in dataframe.iterrows():
-        popup_html = f"""
-        <b>Nome:</b> {row['Nome']}<br>
-        <b>Tipo:</b> {row['Tipo']}<br>
-        <b>Regional:</b> {row['Regional']}<br>
-        <b>Numeral:</b> {row['Numeral']}
-        """
-        feature = {
-            "type": "Feature",
-            "properties": {
-                "popup": popup_html
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [row['lon'], row['lat']]
-            }
-        }
-        features.append(feature)
-
-    return {
-        "type": "FeatureCollection",
-        "features": features
-    }
-
-geojson_data = df_to_geojson(df)
+    df = df[df["Nome"].str.lower().str.contains(search_query)]
 
 # --- Create Folium Map ---
-m = fol.Map(location=[-19.9, -43.9], zoom_start=10, control_scale=True)
+m = folium.Map(location=[-19.9167, -43.9345], zoom_start=12)
 
-# Add all markers as a single GeoJson layer
-marker_layer = fol.GeoJson(
-    geojson_data,
-    name='Unidades Produtivas',
-    popup=fol.GeoJsonPopup(fields=["popup"], labels=False),
-)
-marker_layer.add_to(m)
+# Add GeoJSON layer under markers
+folium.GeoJson(
+    regionais_json,
+    name='Regionais',
+    style_function=lambda x: {
+        "fillColor": {
+            1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
+            4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
+            7: "#e5d8bd"
+        }.get(x['properties'].get('id', 0), "#fddaec"),
+        "color": "black",
+        "weight": 2,
+        "fillOpacity": 0.4,
+        "dashArray": "5,5"
+    },
+    tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
+    control=False
+).add_to(m)
 
-# Add layer control
-fol.LayerControl().add_to(m)
+# Add markers on top of the geojson
+for _, row in df.iterrows():
+    numeral = row["Numeral"]
+    icon_file = ICON_MAPPING.get(numeral, "leaf_green.png")
 
-# --- Render ---
+    icon_url = ICON_BASE_URL + icon_file
+    icon = folium.CustomIcon(
+        icon_url,
+        icon_size=(32, 32),
+        icon_anchor=(16, 16)
+    )
+
+    popup_content = f"""
+    <b>{row['Nome']}</b><br>
+    Tipo: {row['Tipo']}<br>
+    Regional: {row['Regional']}<br>
+    Coordenadas: ({row['lat']}, {row['lon']})
+    """
+    Marker(
+        location=[row["lat"], row["lon"]],
+        popup=popup_content,
+        icon=icon
+    ).add_to(m)
+
+# --- Layout ---
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
-st_folium(m, width=1200, height=800)
+
+# Display banners
+for img in IMAGE_BANNER_URLS:
+    st.image(ICON_BASE_URL + img, use_column_width=True)
+
+# Display Map
+st_data = st_folium(m, width=1200, height=700)
