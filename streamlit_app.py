@@ -102,4 +102,14 @@ if 'map' not in st.session_state:
         search_label="Nome",
         position="topright",
         placeholder="Pesquisar UPs...",
-        collapsed
+        collapsed=False,
+        search_zoom=16
+    ).add_to(m)
+
+    fol.LayerControl(collapsed=False).add_to(m)
+    st.session_state.map = m
+
+# Render app
+st.title(APP_TITLE)
+st.header(APP_SUB_TITLE)
+st_folium(st.session_state.map, width=1200, height=800)
