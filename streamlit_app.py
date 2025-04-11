@@ -69,7 +69,7 @@ for _, row in df.iterrows():
     icon_url = ICON_BASE_URL + icon_file
     icon = folium.CustomIcon(
         icon_url,
-        icon_size=(32, 32),
+        icon_size=(52, 52),
         icon_anchor=(16, 16)
     )
 
