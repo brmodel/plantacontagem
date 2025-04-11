@@ -18,8 +18,8 @@ ICON_MAPPING = {
     4: "leaf_purple.png",
 }
 IMAGE_BANNER_URLS = [
-    "banner_pmc.png",
-    "ilustracao_pmc.png"
+    "ilustracao_pmc.png",
+    "banner_pmc.png"
 ]
 LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
