@@ -6,20 +6,20 @@ import requests
 from streamlit_folium import st_folium
 from folium.plugins import Search
 
-# Load FontAwesome for icons
-st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">', unsafe_allow_html=True)
-
-# Page Configuration
+# Page Configuration MUST BE FIRST
 st.set_page_config(layout="wide")
 APP_TITLE = 'Mapeamento da Agricultura Urbana em Contagem'
 APP_SUB_TITLE = 'WebApp criado para identificar as Unidades Produtivas Ativas em parceria com a Prefeitura de Contagem'
+
+# Load FontAwesome after page config
+st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">', unsafe_allow_html=True)
 
 @st.cache_data(ttl=3600)
 def load_data():
     conn = st.connection("gsheets", type=GSheetsConnection)
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/edit?gid=1832051074#gid=1832051074"
     data = conn.read(spreadsheet=url, usecols=list(range(6)), worksheet="1832051074")
-    clean_data = data.dropna(subset=['Nome','lon','lat','Tipo','Regional','Numeral'])
+    clean_data = data.dropna(subset=['Nome','lon','lat','Tipo','Regional','Numeral']).copy()
     clean_data['Numeral'] = clean_data['Numeral'].astype(int)
     return clean_data
 
@@ -38,7 +38,9 @@ if 'map' not in st.session_state:
 
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-    # Create numeral configuration with icons
+    # Create a parent FeatureGroup for all markers
+    all_markers_group = fol.FeatureGroup(name="Todas UPs")
+
     numeral_config = {
         1: {'name': 'Comunitária', 'color': 'green', 'icon': 'leaf'},
         2: {'name': 'Institucional', 'color': 'blue', 'icon': 'university'},
@@ -46,25 +48,17 @@ if 'map' not in st.session_state:
         4: {'name': 'Feira', 'color': 'purple', 'icon': 'shopping-cart'}
     }
 
-    # Create feature groups
-    numeral_groups = {
-        numeral: fol.FeatureGroup(name=config['name'])
-        for numeral, config in numeral_config.items()
-    }
+    # Create individual feature groups for layer control
+    layer_groups = {}
 
-    # Add production points with custom markers
     for numeral, config in numeral_config.items():
         subset = gdf[gdf.Numeral == numeral]
+        group = fol.FeatureGroup(name=config['name'])
+        layer_groups[numeral] = group
         
         fol.GeoJson(
             subset.__geo_interface__,
-            name=config['name'],
-            style_function=lambda x, c=config['color']: {
-                'fillColor': c,
-                'color': 'black',
-                'weight': 1,
-                'fillOpacity': 0.7
-            },
+            style_function=lambda x, c=config['color']: {'fillColor': c},
             pointToLayer=lambda feature, latlng, config=config: fol.Marker(
                 location=latlng,
                 icon=fol.Icon(
@@ -82,8 +76,11 @@ if 'map' not in st.session_state:
                 ),
                 tooltip=feature['properties']['Nome']
             )
-        ).add_to(numeral_groups[numeral])
-        numeral_groups[numeral].add_to(m)
+        ).add_to(group)
+        
+        # Add to both the layer group and parent group
+        group.add_to(m)
+        group.add_to(all_markers_group)
 
     # Add regional boundaries
     fol.GeoJson(
@@ -103,9 +100,9 @@ if 'map' not in st.session_state:
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
     ).add_to(m)
 
-    # Configure search
+    # Configure search on the parent group
     Search(
-        layer=list(numeral_groups.values()),
+        layer=all_markers_group,
         search_label='Nome',
         position='topright',
         placeholder='Pesquisar UPs...',
