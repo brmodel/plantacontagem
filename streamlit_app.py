@@ -40,7 +40,7 @@ df = load_data()
 regionais_json = load_geojson()
 
 # --- Create Folium Map ---
-m = folium.Map(location=[-19.89323, -44.00145], tiles="CartoDB", zoom_start=12.49, control_scale=True)
+m = folium.Map(location=[-19.89323, -44.00145], tiles="CartoDB Positron", zoom_start=12.49, control_scale=True)
 
 # Add GeoJSON layer under markers
 folium.GeoJson(
