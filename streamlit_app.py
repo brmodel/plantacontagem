@@ -4,6 +4,7 @@ import folium
 from streamlit_folium import st_folium
 from folium import Marker
 import requests
+from folium.plugins import LocateControl
 
 # --- Config ---
 APP_TITLE = "Planta Contagem"
@@ -87,6 +88,8 @@ for _, row in df.iterrows():
         icon=icon,
         tooltip=tooltip_content
     ).add_to(m)
+
+fol.plugins.LocateControl().add_to(m)
 
 # --- Layout ---
 st.title(APP_TITLE)
