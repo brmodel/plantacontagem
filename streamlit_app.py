@@ -4,6 +4,7 @@ import folium
 from streamlit_folium import st_folium
 from folium import Marker
 import requests
+import folium.plugins as fol.plugins
 from folium.plugins import LocateControl
 
 # --- Config ---
