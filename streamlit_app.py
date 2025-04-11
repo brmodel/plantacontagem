@@ -1,7 +1,11 @@
 import streamlit as st
-from streamlit_folium import st_folium
+import geopandas as gpd
 import folium as fol
-import pandas as pd
+from streamlit_gsheets import GSheetsConnection
+import requests
+from streamlit_folium import st_folium
+from folium.plugins import Search
+
 
 # --- Constants ---
 APP_TITLE = "Mapa das Unidades Produtivas"
