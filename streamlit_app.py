@@ -79,7 +79,7 @@ for _, row in df.iterrows():
     
     popup_content = f"""
     <div style="font-family: Arial; font-size: 14px; min-width: 200px;">
-        <h6 style="margin: 0 0 5px 0; color: {config['color']};">{row['Nome']}</h6>
+        <h6 style="margin: 0 0 5px 0;">{row['Nome']}</h6>
         <p style="margin: 2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
         <p style="margin: 2px 0;"><b>Regional:</b> {row['Regional']}</p>
     </div>
