@@ -1,11 +1,7 @@
 import streamlit as st
-import geopandas as gpd
-import folium as fol
-from streamlit_gsheets import GSheetsConnection
-import requests
 from streamlit_folium import st_folium
-from folium.plugins import Search
-
+import folium as fol
+import pandas as pd
 
 # --- Constants ---
 APP_TITLE = "Mapa das Unidades Produtivas"
@@ -14,12 +10,16 @@ APP_SUB_TITLE = "Filtro e visualização de dados no mapa"
 # --- Load Data ---
 @st.cache_data(ttl=600)
 def load_data():
-    conn = st.connection("gsheets", type="gheets")
-    url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/edit?gid=1832051074#gid=1832051074"
-    data = conn.read(spreadsheet=url, usecols=list(range(6)), worksheet="1832051074")
-    clean_data = data.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral']).copy()
-    clean_data['Numeral'] = clean_data['Numeral'].astype(int)
-    return clean_data
+    # Convert Google Sheets link to CSV export link
+    sheet_id = "16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM"
+    gid = "1832051074"
+    csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
+
+    df = pd.read_csv(csv_url, usecols=[0, 1, 2, 3, 4, 5])  # adjust columns if needed
+    df.columns = df.columns.str.strip()  # ensure no extra whitespace
+    df = df.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral']).copy()
+    df['Numeral'] = df['Numeral'].astype(int)
+    return df
 
 df = load_data()
 
