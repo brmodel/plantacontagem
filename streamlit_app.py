@@ -40,7 +40,7 @@ df = load_data()
 regionais_json = load_geojson()
 
 # --- Create Folium Map ---
-m = folium.Map(location=[-19.89323, -44.00145], zoom_start=12.49, control_scale=True)
+m = folium.Map(location=[-19.89323, -44.00145], tileset=Mapbox, zoom_start=12.49, control_scale=True)
 
 # Add GeoJSON layer under markers
 folium.GeoJson(
@@ -90,6 +90,7 @@ for _, row in df.iterrows():
     ).add_to(m)
 
 folium.plugins.LocateControl().add_to(m)
+folium.LayerControl().add_to(m)
 
 # --- Layout ---
 st.title(APP_TITLE)
