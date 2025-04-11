@@ -6,8 +6,9 @@ from folium import Marker
 import requests
 
 # --- Config ---
-APP_TITLE = "Planta Contagem"
-APP_SUB_TITLE = "Unidades Produtivas por Região de Contagem"
+APP_TITLE = ":plant: Planta Contagem :plant:"
+APP_SUB_TITLE = "Mapa das Unidades Produtivas de Contagem"
+APP_SUBHEADER = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar - CMAUF, em parceria com a Prefeitura Municipal de Contagem - MG
 ICON_BASE_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
 ICON_MAPPING = {
     1: "leaf_green.png",
@@ -17,7 +18,6 @@ ICON_MAPPING = {
 }
 IMAGE_BANNER_URLS = [
     "banner_pmc.png",
-    "contagem_sem_fome.png",
     "ilustracao_pmc.png"
 ]
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
@@ -91,6 +91,7 @@ for _, row in df.iterrows():
 # --- Layout ---
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
+st.image(IMAGE_BANNER_URLS + "contagem_sem_fome.png")
 
 # --- Search box ---
 search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
@@ -99,6 +100,7 @@ if search_query:
 
 # Display Map
 st_data = st_folium(m, width=1200, height=700)
+st.subheader(APP_SUBHEADER)
 
 # Display banners
 for img in IMAGE_BANNER_URLS:
