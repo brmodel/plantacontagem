@@ -5,10 +5,9 @@ from streamlit_gsheets import GSheetsConnection
 import requests
 from streamlit_folium import st_folium
 from folium.plugins import Search
-from folium import FeatureGroup, LayerControl, Icon, Marker, Popup, GeoJson, Map
-from folium.map import Tooltip
+import json
 
-# Page Configuration MUST BE FIRST
+# Page Configuration
 st.set_page_config(layout="wide")
 APP_TITLE = 'Mapeamento da Agricultura Urbana em Contagem'
 APP_SUB_TITLE = 'WebApp criado para identificar as Unidades Produtivas Ativas em parceria com a Prefeitura de Contagem'
@@ -29,55 +28,32 @@ def load_data():
 def load_geojson():
     return requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
 
-# Main logic
+# Initialize session map only once
 if 'map' not in st.session_state:
     data_ups = load_data()
     regionais_json = load_geojson()
 
+    # Convert to GeoDataFrame
     gdf = gpd.GeoDataFrame(
         data_ups,
-        geometry=gpd.points_from_xy(data_ups.lon, data_ups.lat)
+        geometry=gpd.points_from_xy(data_ups.lon, data_ups.lat),
+        crs="EPSG:4326"
     )
 
-    # Create folium map and attach to a Figure
-    m = Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
-    figure = fol.Figure().add_child(m)
+    # Convert to GeoJSON with desired properties
+    geojson_features = json.loads(gdf.to_json())
+    for f in geojson_features["features"]:
+        f["properties"]["popup"] = (
+            f"<h6 style='margin-bottom:5px;'><b>{f['properties']['Nome']}</b></h6>"
+            f"<p style='margin:2px 0;'><b>Tipo:</b> {f['properties']['Tipo']}</p>"
+            f"<p style='margin:2px 0;'><b>Regional:</b> {f['properties']['Regional']}</p>"
+        )
 
-    all_markers_group = FeatureGroup(name="Todas UPs", show=True)
-    all_markers_group.add_to(m)
+    # Create the map
+    m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.2, tiles="OpenStreetMap")
 
-    numeral_config = {
-        1: {'name': 'Comunitária', 'color': 'green', 'icon': 'leaf'},
-        2: {'name': 'Institucional', 'color': 'blue', 'icon': 'university'},
-        3: {'name': 'Híbrida', 'color': 'orange', 'icon': 'tree'},
-        4: {'name': 'Feira', 'color': 'purple', 'icon': 'shopping-cart'}
-    }
-
-    for numeral, config in numeral_config.items():
-        subset = gdf[gdf.Numeral == numeral]
-        group = FeatureGroup(name=config['name'])
-        group.add_to(m)
-
-        for _, row in subset.iterrows():
-            marker = Marker(
-                location=[row.lat, row.lon],
-                icon=Icon(
-                    icon=config['icon'],
-                    prefix='fa',
-                    color=config['color']
-                ),
-                popup=Popup(html=f"""
-                    <h6 style="margin-bottom:5px;"><b>{row.Nome}</b></h6>
-                    <p style="margin:2px 0;"><b>Tipo:</b> {row.Tipo}</p>
-                    <p style="margin:2px 0;"><b>Regional:</b> {row.Regional}</p>
-                """, max_width=250),
-                tooltip=Tooltip(row.Nome)
-            )
-            marker.add_to(group)
-            marker.add_to(all_markers_group)
-
-    # Add regional GeoJson layer
-    GeoJson(
+    # Add regionais polygons
+    fol.GeoJson(
         regionais_json,
         name='Regionais',
         style_function=lambda x: {
@@ -94,20 +70,15 @@ if 'map' not in st.session_state:
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
     ).add_to(m)
 
-    # Add Search functionality
-    Search(
-        layer=all_markers_group,
-        search_label='tooltip',
-        position='topright',
-        placeholder='Pesquisar UPs...',
-        collapsed=False,
-        search_zoom=16
+    # Add all points as a single GeoJson layer (fast and searchable)
+    marker_layer = fol.GeoJson(
+        geojson_features,
+        name='Unidades Produtivas',
+        popup=fol.GeoJsonPopup(fields=["popup"], labels=False),
+        tooltip=fol.GeoJsonTooltip(fields=["Nome"]),
+        marker=fol.Marker
     ).add_to(m)
 
-    LayerControl(collapsed=False).add_to(m)
-    st.session_state.map = m
-
-# Display Streamlit App
-st.title(APP_TITLE)
-st.header(APP_SUB_TITLE)
-st_folium(st.session_state.map, width=1200, height=800)
+    # Add search by 'Nome'
+    Search(
+        layer=marker
