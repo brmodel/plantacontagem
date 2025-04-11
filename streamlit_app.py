@@ -97,7 +97,7 @@ folium.plugins.LocateControl().add_to(m)
 folium.LayerControl().add_to(m)
 
 # --- Layout ---
-st.title(APP_TITLE)
+st.title(APP_TITLE:plant:)
 st.header(APP_SUB_TITLE)
 
 # --- Search box ---
