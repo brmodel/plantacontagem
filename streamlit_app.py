@@ -108,8 +108,8 @@ if search_query:
 # Display Map
 st_data = st_folium(m, width=1200, height=700)
 st.caption(APP_CAPTION)
-st.image("https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true")
 
 # Display banners
 for img in IMAGE_BANNER_URLS:
     st.image(ICON_BASE_URL + img, use_container_width=False)
+st.image("https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true")
