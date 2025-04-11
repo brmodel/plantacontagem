@@ -53,7 +53,7 @@ folium.GeoJson(
             7: "#e5d8bd"
         }.get(x['properties'].get('id', 0), "#fddaec"),
         "color": "black",
-        "weight": 2,
+        "weight": 1,
         "fillOpacity": 0.3,
         "dashArray": "5,5"
     },
