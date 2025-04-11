@@ -7,7 +7,7 @@ from streamlit_folium import st_folium
 from folium.plugins import Search
 import json
 
-# Page Configuration
+# Page config
 st.set_page_config(layout="wide")
 APP_TITLE = 'Mapeamento da Agricultura Urbana em Contagem'
 APP_SUB_TITLE = 'WebApp criado para identificar as Unidades Produtivas Ativas em parceria com a Prefeitura de Contagem'
@@ -28,31 +28,41 @@ def load_data():
 def load_geojson():
     return requests.get("https://raw.githubusercontent.com/brmodel/mapeamento_agricultura_contagem/main/data/regionais_contagem.geojson").json()
 
-# Initialize session map only once
+# Marker icon mapping
+numeral_config = {
+    1: {'name': 'Comunitária', 'color': 'green', 'icon': 'leaf'},
+    2: {'name': 'Institucional', 'color': 'blue', 'icon': 'university'},
+    3: {'name': 'Híbrida', 'color': 'orange', 'icon': 'tree'},
+    4: {'name': 'Feira', 'color': 'purple', 'icon': 'shopping-cart'}
+}
+
+# Start app logic
 if 'map' not in st.session_state:
     data_ups = load_data()
     regionais_json = load_geojson()
 
-    # Convert to GeoDataFrame
     gdf = gpd.GeoDataFrame(
         data_ups,
         geometry=gpd.points_from_xy(data_ups.lon, data_ups.lat),
         crs="EPSG:4326"
     )
 
-    # Convert to GeoJSON with desired properties
-    geojson_features = json.loads(gdf.to_json())
-    for f in geojson_features["features"]:
-        f["properties"]["popup"] = (
+    # Convert to GeoJSON with custom popup and config
+    geojson_data = json.loads(gdf.to_json())
+    for f in geojson_data["features"]:
+        numeral = f["properties"]["Numeral"]
+        icon_data = numeral_config.get(numeral, {})
+        f["properties"]["popup_html"] = (
             f"<h6 style='margin-bottom:5px;'><b>{f['properties']['Nome']}</b></h6>"
             f"<p style='margin:2px 0;'><b>Tipo:</b> {f['properties']['Tipo']}</p>"
             f"<p style='margin:2px 0;'><b>Regional:</b> {f['properties']['Regional']}</p>"
         )
+        f["properties"]["icon"] = icon_data.get("icon", "info-sign")
+        f["properties"]["color"] = icon_data.get("color", "gray")
 
-    # Create the map
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.2, tiles="OpenStreetMap")
 
-    # Add regionais polygons
+    # Add boundaries
     fol.GeoJson(
         regionais_json,
         name='Regionais',
@@ -70,33 +80,26 @@ if 'map' not in st.session_state:
         tooltip=fol.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"])
     ).add_to(m)
 
-    # Add all points as a single GeoJson layer (fast and searchable)
+    # Add points as a single GeoJson layer using pointToLayer
     marker_layer = fol.GeoJson(
-        geojson_features,
-        name='Unidades Produtivas',
-        popup=fol.GeoJsonPopup(fields=["popup"], labels=False),
+        geojson_data,
+        name="Unidades Produtivas",
+        popup=fol.GeoJsonPopup(fields=["popup_html"], labels=False, max_width=300),
         tooltip=fol.GeoJsonTooltip(fields=["Nome"]),
-        marker=fol.Marker
+        point_to_layer=lambda feature, latlng: fol.Marker(
+            location=latlng,
+            icon=fol.Icon(
+                icon=feature['properties'].get("icon", "info-sign"),
+                color=feature['properties'].get("color", "gray"),
+                prefix="fa"
+            )
+        )
     ).add_to(m)
 
-    # Add search by 'Nome'
+    # Search plugin (works on GeoJson layer)
     Search(
         layer=marker_layer,
-        geom_type='Point',
-        search_label='Nome',
-        position='topright',
-        placeholder='Pesquisar UPs...',
-        collapsed=False,
-        search_zoom=16
-    ).add_to(m)
-
-    # Add Layer Control
-    fol.LayerControl(collapsed=False).add_to(m)
-
-    # Save map to session state
-    st.session_state.map = m
-
-# Render the app
-st.title(APP_TITLE)
-st.header(APP_SUB_TITLE)
-st_folium(st.session_state.map, width=1200, height=800)
+        search_label="Nome",
+        position="topright",
+        placeholder="Pesquisar UPs...",
+        collapsed
