@@ -54,7 +54,7 @@ folium.GeoJson(
         }.get(x['properties'].get('id', 0), "#fddaec"),
         "color": "black",
         "weight": 2,
-        "fillOpacity": 0.4,
+        "fillOpacity": 0.3,
         "dashArray": "5,5"
     },
     tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
