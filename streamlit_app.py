@@ -6,6 +6,9 @@ import requests
 from streamlit_folium import st_folium
 from folium.plugins import Search
 
+# Load FontAwesome for icons
+st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">', unsafe_allow_html=True)
+
 # Page Configuration
 st.set_page_config(layout="wide")
 APP_TITLE = 'Mapeamento da Agricultura Urbana em Contagem'
@@ -35,12 +38,12 @@ if 'map' not in st.session_state:
 
     m = fol.Map(location=[-19.88589, -44.07113], zoom_start=12.18, tiles="OpenStreetMap")
 
-    # Create numeral configuration
+    # Create numeral configuration with icons
     numeral_config = {
-        1: {'name': 'Comunitária', 'color': 'green'},
-        2: {'name': 'Institucional', 'color': 'blue'},
-        3: {'name': 'Híbrida', 'color': 'orange'},
-        4: {'name': 'Feira', 'color': 'purple'}
+        1: {'name': 'Comunitária', 'color': 'green', 'icon': 'leaf'},
+        2: {'name': 'Institucional', 'color': 'blue', 'icon': 'university'},
+        3: {'name': 'Híbrida', 'color': 'orange', 'icon': 'tree'},
+        4: {'name': 'Feira', 'color': 'purple', 'icon': 'shopping-cart'}
     }
 
     # Create feature groups
@@ -49,36 +52,35 @@ if 'map' not in st.session_state:
         for numeral, config in numeral_config.items()
     }
 
-    # Add production points
+    # Add production points with custom markers
     for numeral, config in numeral_config.items():
         subset = gdf[gdf.Numeral == numeral]
+        
         fol.GeoJson(
             subset.__geo_interface__,
-            name=config['name'],  # Fixed: Use config name instead of group.name
+            name=config['name'],
             style_function=lambda x, c=config['color']: {
                 'fillColor': c,
                 'color': 'black',
                 'weight': 1,
                 'fillOpacity': 0.7
             },
-            marker=fol.CircleMarker(radius=8),
-            popup=fol.GeoJsonPopup(
-                fields=["Nome", "Tipo", "Regional"],
-                aliases=["", "", ""],
-                localize=True,
-                labels=False,
-                style="width: 200px; font-family: Arial;",
-                max_width=250,
-                html="""
-                    <h6 style="margin-bottom:5px;"><b>{Nome}</b></h6>
-                    <p style="margin:2px 0;"><b>Tipo:</b> {Tipo}</p>
-                    <p style="margin:2px 0;"><b>Regional:</b> {Regional}</p>
-                """
-            ),
-            tooltip=fol.GeoJsonTooltip(
-                fields=["Nome"],
-                aliases=["Unidade Produtiva: "],
-                style="font-family: Arial; font-size: 12px;"
+            pointToLayer=lambda feature, latlng, config=config: fol.Marker(
+                location=latlng,
+                icon=fol.Icon(
+                    icon=config['icon'],
+                    color=config['color'],
+                    prefix='fa'
+                ),
+                popup=fol.Popup(
+                    html=f"""
+                        <h6 style="margin-bottom:5px;"><b>{feature['properties']['Nome']}</b></h6>
+                        <p style="margin:2px 0;"><b>Tipo:</b> {feature['properties']['Tipo']}</p>
+                        <p style="margin:2px 0;"><b>Regional:</b> {feature['properties']['Regional']}</p>
+                    """,
+                    max_width=250
+                ),
+                tooltip=feature['properties']['Nome']
             )
         ).add_to(numeral_groups[numeral])
         numeral_groups[numeral].add_to(m)
