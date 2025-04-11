@@ -89,11 +89,11 @@ for _, row in df.iterrows():
     ).add_to(m)
 
 # --- Layout ---
-st.title(APP_TITLE , anchor=center)
-st.header(APP_SUB_TITLE , anchor=center)
+st.title(APP_TITLE)
+st.header(APP_SUB_TITLE)
 
 # --- Search box ---
-search_query = st.text_input("Buscar por Nome:", "").strip().lower()
+search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
 if search_query:
     df = df[df["Nome"].str.lower().str.contains(search_query)]
 
