@@ -113,5 +113,5 @@ st.caption(APP_CAPTION)
 
 # Display banners
 for img in IMAGE_BANNER_URLS:
-    st.image(ICON_BASE_URL + img, use_container_width=False)
+    st.image(ICON_BASE_URL + img, use_container_width=True)
 st.image(LOGO_PMC)
