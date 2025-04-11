@@ -21,6 +21,7 @@ IMAGE_BANNER_URLS = [
     "banner_pmc.png",
     "ilustracao_pmc.png"
 ]
+LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 
 # --- Load Data ---
@@ -97,6 +98,7 @@ folium.plugins.LocateControl().add_to(m)
 folium.LayerControl().add_to(m)
 
 # --- Layout ---
+st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
 st.title(APP_TITLE)
 st.header(APP_SUB_TITLE)
 
