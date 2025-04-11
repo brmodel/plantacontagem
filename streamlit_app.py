@@ -72,9 +72,9 @@ for _, row in df.iterrows():
         icon_anchor=(16, 16)
     )
 
-    tooltip_content = f"
+    tooltip_content = f"""
     Conheça a Unidade Produtiva: {row['Nome']}
-    "
+    """
     
     popup_content = f"""
     <b>{row['Nome']}</b><br>
