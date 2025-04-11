@@ -81,4 +81,22 @@ if 'map' not in st.session_state:
 
     # Add search by 'Nome'
     Search(
-        layer=marker
+        layer=marker_layer,
+        geom_type='Point',
+        search_label='Nome',
+        position='topright',
+        placeholder='Pesquisar UPs...',
+        collapsed=False,
+        search_zoom=16
+    ).add_to(m)
+
+    # Add Layer Control
+    fol.LayerControl(collapsed=False).add_to(m)
+
+    # Save map to session state
+    st.session_state.map = m
+
+# Render the app
+st.title(APP_TITLE)
+st.header(APP_SUB_TITLE)
+st_folium(st.session_state.map, width=1200, height=800)
