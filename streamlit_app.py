@@ -74,7 +74,7 @@ for _, row in df.iterrows():
     )
 
     tooltip_content = f"""
-    <div style="font-family: Arial; font-size: 12px; max-width: 200px;"><p><b>Conheça a Unidade Produtiva:<br>{row['Nome']}</p></b>
+    <div style="font-family: Arial; font-size: 12px; max-width: 200px;"><p><b>Unidade Produtiva:<br>{row['Nome']}</p></b>
     """
     
     popup_content = f"""
