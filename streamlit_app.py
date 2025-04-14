@@ -36,13 +36,13 @@ BANNER_URLS = [ICON_BASE_URL + img for img in IMAGE_BANNER_URLS]
 
 # HTML Templates
 TOOLTIP_TEMPLATE = """
-<div style="font-family: Arial; font-size: 14px">
+<div style="font-family: Arial; font-size: 12px">
     <p><b>Unidade Produtiva:<br>{}</b></p>
 </div>
 """
 
 POPUP_TEMPLATE = """
-<div style="font-family: Arial; font-size: 14px; min-width: 200px;">
+<div style="font-family: Arial; font-size: 12px; min-width: 200px;">
     <h6 style="margin: 0 0 5px 0;"><b>{}</b></h6>
     <p style="margin: 2px 0;"><b>Tipo:</b> {}</p>
     <p style="margin: 2px 0;"><b>Regional:</b> {}</p>
