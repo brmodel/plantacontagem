@@ -137,7 +137,7 @@ def create_map(data, geojson_data):
     # Add markers
     for _, row in data.iterrows():
         icon_url = ICON_URLS.get(row["Numeral"], DEFAULT_ICON)
-        icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(-32, 32))
+        icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(0, 0))
         
         Marker(
             location=[row["lat"], row["lon"]],
