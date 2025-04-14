@@ -113,12 +113,12 @@ def create_legend(geojson_data):
     """)
 
 def create_map(data, geojson_data):
-    m = folium.Map(location=[-19.89323, -44.00145], 
+    m = folium.Map(location=[-19.89323, -43.97145], 
                  tiles="OpenStreetMap", 
                  zoom_start=12.49, 
                  control_scale=True)
 
-    # Add GeoJSON with proper label configuration
+    # Add non-interactive GeoJSON
     folium.GeoJson(
         geojson_data,
         name='Regionais',
@@ -129,19 +129,12 @@ def create_map(data, geojson_data):
             "fillOpacity": 0.3,
             "dashArray": "5,5"
         },
-        highlight_function=lambda x: {"color": "black", "weight": 1},
-        labels=lambda x: x['properties']['Name'],  # Text source
-        label_style=lambda x: {
-            "fontFamily": "Arial",
-            "fontSize": "12px",
-            "fontWeight": "bold",
-            "color": "#333333",
-            "textShadow": "-1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff"
-        },
-        interactive=False,
-        control=False
+        tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
+        interactive=True,
+        highlight=False,
+        control=True
     ).add_to(m)
-    
+
     # Add markers
     for _, row in data.iterrows():
         icon_url = ICON_URLS.get(row["Numeral"], DEFAULT_ICON)
