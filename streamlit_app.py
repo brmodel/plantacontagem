@@ -113,7 +113,7 @@ def create_legend(geojson_data):
     """)
 
 def create_map(data, geojson_data):
-    m = folium.Map(location=[-19.89323, -43.08145], 
+    m = folium.Map(location=[-19.89323, -43.98145], 
                  tiles="OpenStreetMap", 
                  zoom_start=12.49, 
                  control_scale=True)
