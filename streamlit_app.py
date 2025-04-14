@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
-from folium import Marker, plugins
-from folium.plugins import LocateControl, FloatImage
+from folium import Marker
 import requests
+from folium.plugins import LocateControl
 
 # --- Config ---
 APP_TITLE = "Planta Contagem"
@@ -28,7 +28,6 @@ IMAGE_BANNER_URLS = [
 ]
 LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
-COMPASS_URL = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/compass-rose.png"
 
 # Precomputed URLs
 ICON_URLS = {k: ICON_BASE_URL + v for k, v in ICON_MAPPING.items()}
@@ -119,7 +118,7 @@ def create_map(data, geojson_data):
                  zoom_start=12.49, 
                  control_scale=True)
 
-    # Add GeoJSON layer
+    # Add non-interactive GeoJSON
     folium.GeoJson(
         geojson_data,
         name='Regionais',
@@ -131,17 +130,9 @@ def create_map(data, geojson_data):
             "dashArray": "5,5"
         },
         tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-        interactive=False,
-        control=False
-    ).add_to(m)
-
-    # Add wind rose
-    FloatImage(
-        COMPASS_URL,
-        bottom=5,
-        left=5,
-        width=75,
-        height=75
+        interactive=True,
+        highlight=False,
+        control=True
     ).add_to(m)
 
     # Add markers
