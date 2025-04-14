@@ -130,7 +130,8 @@ def create_map(data, geojson_data):
             "dashArray": "5,5"
         },
         tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-        interactive=True,  # Disables all interaction including clicks
+        interactive=True,
+        highlight=False,
         control=True
     ).add_to(m)
 
