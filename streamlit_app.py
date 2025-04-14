@@ -118,7 +118,7 @@ def create_map(data, geojson_data):
                  zoom_start=12.49, 
                  control_scale=True)
 
-    # Add GeoJSON with embedded labels
+    # Add GeoJSON with proper label configuration
     folium.GeoJson(
         geojson_data,
         name='Regionais',
@@ -129,22 +129,19 @@ def create_map(data, geojson_data):
             "fillOpacity": 0.3,
             "dashArray": "5,5"
         },
-        highlight_function=lambda x: {"color": "black", "weight": 1},  # Minimal highlight
-        labels=True,
+        highlight_function=lambda x: {"color": "black", "weight": 1},
+        labels=lambda x: x['properties']['Name'],  # Text source
         label_style=lambda x: {
-            "text": x['properties']['Name'],
-            "style": """
-                font-family: Arial;
-                font-size: 12px;
-                font-weight: bold;
-                color: #333333;
-                text-shadow: -1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff;
-            """
+            "fontFamily": "Arial",
+            "fontSize": "12px",
+            "fontWeight": "bold",
+            "color": "#333333",
+            "textShadow": "-1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff"
         },
         interactive=False,
         control=False
     ).add_to(m)
-
+    
     # Add markers
     for _, row in data.iterrows():
         icon_url = ICON_URLS.get(row["Numeral"], DEFAULT_ICON)
