@@ -4,7 +4,7 @@ import folium
 from streamlit_folium import st_folium
 from folium import Marker
 import requests
-from folium.plugins import LocateControl,LayerControl
+from folium.plugins import LocateControl , LayerControl
 
 # --- Config ---
 APP_TITLE = "Planta Contagem"
