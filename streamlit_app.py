@@ -2,9 +2,14 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
-from folium import Marker
+from folium import Marker, plugins
+from folium.plugins import LocateControl, FloatImage
 import requests
-from folium.plugins import LocateControl
+import io
+from PIL import Image
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import numpy as np
 
 # --- Config ---
 APP_TITLE = "Planta Contagem"
@@ -28,6 +33,7 @@ IMAGE_BANNER_URLS = [
 ]
 LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
+COMPASS_URL = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/compass-rose.png"
 
 # Precomputed URLs
 ICON_URLS = {k: ICON_BASE_URL + v for k, v in ICON_MAPPING.items()}
@@ -73,44 +79,34 @@ def load_geojson():
         return {"type": "FeatureCollection", "features": []}
 
 # --- Map Creation ---
-def create_legend(geojson_data):
-    """Create HTML legend for regional colors"""
-    regions = []
-    for feature in geojson_data.get('features', []):
-        props = feature.get('properties', {})
-        regions.append({
-            'id': props.get('id'),
-            'name': props.get('Name')
-        })
+def create_geojson_image(geojson_data):
+    """Convert GeoJSON to georeferenced image with legend"""
+    gdf = gpd.GeoDataFrame.from_features(geojson_data['features'])
     
-    legend_items = []
-    for region in sorted(regions, key=lambda x: x['id']):
-        color = COLOR_MAPPING.get(region['id'], "#fddaec")
-        legend_items.append(f"""
-            <div style="display: flex; align-items: center; margin: 2px 0;">
-                <div style="background: {color}; width: 20px; height: 20px; margin-right: 5px;"></div>
-                <span>{region['name']}</span>
-            </div>
-        """)
+    # Create plot with embedded legend
+    fig, ax = plt.subplots(figsize=(10, 10))
+    gdf.plot(
+        ax=ax,
+        column='Name',
+        categorical=True,
+        legend=True,
+        legend_kwds={
+            'loc': 'upper left',
+            'bbox_to_anchor': (1, 1),
+            'title': 'Regionais'
+        },
+        edgecolor='black',
+        linewidth=0.5,
+        cmap='Pastel1'
+    )
+    ax.axis('off')
     
-    return folium.Element(f"""
-        <div style="
-            position: fixed; 
-            bottom: 50px; 
-            right: 20px; 
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            font-family: Arial;
-            font-size: 12px;
-            max-width: 150px;
-        ">
-            <div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>
-            {"".join(legend_items)}
-        </div>
-    """)
+    # Save to buffer
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=150, transparent=True)
+    img_buffer.seek(0)
+    
+    return np.array(Image.open(img_buffer)), gdf.total_bounds
 
 def create_map(data, geojson_data):
     m = folium.Map(location=[-19.89323, -43.97145], 
@@ -118,21 +114,26 @@ def create_map(data, geojson_data):
                  zoom_start=12.49, 
                  control_scale=True)
 
-    # Add non-interactive GeoJSON
-    folium.GeoJson(
-        geojson_data,
-        name='Regionais',
-        style_function=lambda x: {
-            "fillColor": COLOR_MAPPING.get(x['properties'].get('id'), "#fddaec"),
-            "color": "black",
-            "weight": 1,
-            "fillOpacity": 0.3,
-            "dashArray": "5,5"
-        },
-        tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-        interactive=True,
-        highlight=False,
-        control=True
+    # Add GeoJSON as image overlay
+    try:
+        img_array, bounds = create_geojson_image(geojson_data)
+        folium.raster_layers.ImageOverlay(
+            img_array,
+            bounds=[[bounds[1], bounds[0]], [bounds[3], bounds[2]]],
+            opacity=0.5,
+            interactive=False
+        ).add_to(m)
+    except Exception as e:
+        st.error(f"Erro ao criar overlay: {e}")
+
+    # Add wind rose
+    FloatImage(
+        COMPASS_URL,
+        bottom=5,
+        left=5,
+        width=75,
+        height=75,
+        position='bottomleft'
     ).add_to(m)
 
     # Add markers
@@ -150,10 +151,6 @@ def create_map(data, geojson_data):
     # Add controls
     LocateControl().add_to(m)
     folium.LayerControl().add_to(m)
-    
-    # Add legend
-    legend = create_legend(geojson_data)
-    m.get_root().html.add_child(legend)
 
     return m
 
