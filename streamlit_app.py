@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
-from folium import Marker
+from folium import Marker,LayerControl
 import requests
-from folium.plugins import LocateControl , LayerControl
+from folium.plugins import LocateControl
 
 # --- Config ---
 APP_TITLE = "Planta Contagem"
