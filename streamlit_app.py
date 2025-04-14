@@ -131,6 +131,17 @@ def create_map(data, geojson_data):
         },
         tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
         interactive=True,
+        labels=True,
+        label_style=lambda x: {
+            "text": x['properties']['Name'],
+            "style": """
+                font-family: Arial;
+                font-size: 12px;
+                font-weight: bold;
+                color: #333333;
+                text-shadow: -1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff;
+            """
+        },
         highlight=False,
         control=True
     ).add_to(m)
