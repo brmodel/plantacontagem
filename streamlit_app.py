@@ -40,62 +40,64 @@ def load_geojson():
 df = load_data()
 regionais_json = load_geojson()
 
-# --- Create Folium Map ---
-m = folium.Map(location=[-19.89323, -44.00145], tiles="OpenStreetMap", zoom_start=12.49, control_scale=True)
+# --- Create Folium Map Function ---
+def create_map(data):
+    m = folium.Map(location=[-19.89323, -44.00145], tiles="OpenStreetMap", zoom_start=12.49, control_scale=True)
 
-# Add GeoJSON layer under markers
-folium.GeoJson(
-    regionais_json,
-    name='Regionais',
-    style_function=lambda x: {
-        "fillColor": {
-            1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
-            4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
-            7: "#e5d8bd"
-        }.get(x['properties'].get('id', 0), "#fddaec"),
-        "color": "black",
-        "weight": 1,
-        "fillOpacity": 0.3,
-        "dashArray": "5,5"
-    },
-    tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-    control=False
-).add_to(m)
-
-# Add markers on top of the geojson
-for _, row in df.iterrows():
-    numeral = row["Numeral"]
-    icon_file = ICON_MAPPING.get(numeral, "leaf_green.png")
-
-    icon_url = ICON_BASE_URL + icon_file
-    icon = folium.CustomIcon(
-        icon_url,
-        icon_size=(42, 42),
-        icon_anchor=(16, 16)
-    )
-
-    tooltip_content = f"""
-    <div style="font-family: Arial; font-size: 14px"><p><b>Unidade Produtiva:<br>
-    {row['Nome']}</p></b>
-    </div>
-    """
-    
-    popup_content = f"""
-    <div style="font-family: Arial; font-size: 14px; min-width: 200px;">
-        <h6 style="margin: 0 0 5px 0;"><b>{row['Nome']}</b></h6>
-        <p style="margin: 2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
-        <p style="margin: 2px 0;"><b>Regional:</b> {row['Regional']}</p>
-    </div>
-    """
-    Marker(
-        location=[row["lat"], row["lon"]],
-        popup=popup_content,
-        icon=icon,
-        tooltip=tooltip_content
+    # Add GeoJSON layer under markers
+    folium.GeoJson(
+        regionais_json,
+        name='Regionais',
+        style_function=lambda x: {
+            "fillColor": {
+                1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
+                4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
+                7: "#e5d8bd"
+            }.get(x['properties'].get('id', 0), "#fddaec"),
+            "color": "black",
+            "weight": 1,
+            "fillOpacity": 0.3,
+            "dashArray": "5,5"
+        },
+        tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
+        control=False
     ).add_to(m)
 
-folium.plugins.LocateControl().add_to(m)
-folium.LayerControl().add_to(m)
+    # Add markers on top of the geojson
+    for _, row in data.iterrows():
+        numeral = row["Numeral"]
+        icon_file = ICON_MAPPING.get(numeral, "leaf_green.png")
+
+        icon_url = ICON_BASE_URL + icon_file
+        icon = folium.CustomIcon(
+            icon_url,
+            icon_size=(42, 42),
+            icon_anchor=(16, 16)
+        )
+
+        tooltip_content = f"""
+        <div style="font-family: Arial; font-size: 14px"><p><b>Unidade Produtiva:<br>
+        {row['Nome']}</p></b>
+        </div>
+        """
+        
+        popup_content = f"""
+        <div style="font-family: Arial; font-size: 14px; min-width: 200px;">
+            <h6 style="margin: 0 0 5px 0;"><b>{row['Nome']}</b></h6>
+            <p style="margin: 2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
+            <p style="margin: 2px 0;"><b>Regional:</b> {row['Regional']}</p>
+        </div>
+        """
+        Marker(
+            location=[row["lat"], row["lon"]],
+            popup=popup_content,
+            icon=icon,
+            tooltip=tooltip_content
+        ).add_to(m)
+
+    folium.plugins.LocateControl().add_to(m)
+    folium.LayerControl().add_to(m)
+    return m
 
 # --- Layout ---
 st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
@@ -105,9 +107,12 @@ st.header(APP_SUB_TITLE)
 # --- Search box ---
 search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
 if search_query:
-    df = df[df["Nome"].str.lower().str.contains(search_query)]
+    filtered_df = df[df["Nome"].str.lower().str.contains(search_query)]
+else:
+    filtered_df = df
 
-# Display Map
+# Display Map with filtered data
+m = create_map(filtered_df)
 st_data = st_folium(m, width=1200, height=700)
 st.caption(APP_CAPTION)
 
