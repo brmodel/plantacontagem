@@ -130,8 +130,8 @@ def create_map(data, geojson_data):
             "dashArray": "5,5"
         },
         tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-        interactive=False,  # Disables all interaction including clicks
-        control=False
+        interactive=True,  # Disables all interaction including clicks
+        control=True
     ).add_to(m)
 
     # Add markers
@@ -178,7 +178,7 @@ def main():
     # Display map
     if not df.empty:
         m = create_map(filtered_df, geojson_data)
-        st_folium(m, width=1200, height=700)
+        st_folium(m, width=1400, height=700)
     else:
         st.warning("Nenhum dado disponível para exibir")
     
