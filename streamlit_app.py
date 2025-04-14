@@ -17,6 +17,11 @@ ICON_MAPPING = {
     3: "leaf_blue.png",
     4: "leaf_purple.png",
 }
+COLOR_MAPPING = {
+    1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
+    4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
+    7: "#e5d8bd"
+}
 IMAGE_BANNER_URLS = [
     "ilustracao_pmc.png",
     "banner_pmc.png"
@@ -24,99 +29,165 @@ IMAGE_BANNER_URLS = [
 LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 
+# Precomputed URLs
+ICON_URLS = {k: ICON_BASE_URL + v for k, v in ICON_MAPPING.items()}
+DEFAULT_ICON = ICON_BASE_URL + "leaf_green.png"
+BANNER_URLS = [ICON_BASE_URL + img for img in IMAGE_BANNER_URLS]
+
+# HTML Templates
+TOOLTIP_TEMPLATE = """
+<div style="font-family: Arial; font-size: 14px">
+    <p><b>Unidade Produtiva:<br>{}</b></p>
+</div>
+"""
+
+POPUP_TEMPLATE = """
+<div style="font-family: Arial; font-size: 14px; min-width: 200px;">
+    <h6 style="margin: 0 0 5px 0;"><b>{}</b></h6>
+    <p style="margin: 2px 0;"><b>Tipo:</b> {}</p>
+    <p style="margin: 2px 0;"><b>Regional:</b> {}</p>
+</div>
+"""
+
 # --- Load Data ---
 @st.cache_data(ttl=600)
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
-    data = pd.read_csv(url, usecols=range(6))
-    clean_data = data.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral']).copy()
-    clean_data['Numeral'] = clean_data['Numeral'].astype(int)
-    return clean_data
+    try:
+        url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
+        data = pd.read_csv(url, usecols=range(6))
+        clean_data = data.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral']).copy()
+        clean_data['Numeral'] = clean_data['Numeral'].astype(int)
+        return clean_data
+    except Exception as e:
+        st.error(f"Erro ao carregar dados: {e}")
+        return pd.DataFrame()
 
 @st.cache_data(ttl=3600)
 def load_geojson():
-    return requests.get(GEOJSON_URL).json()
+    try:
+        response = requests.get(GEOJSON_URL)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Erro ao carregar GeoJSON: {e}")
+        return {"type": "FeatureCollection", "features": []}
 
-df = load_data()
-regionais_json = load_geojson()
+# --- Map Creation ---
+def create_legend(geojson_data):
+    """Create HTML legend for regional colors"""
+    regions = []
+    for feature in geojson_data.get('features', []):
+        props = feature.get('properties', {})
+        regions.append({
+            'id': props.get('id'),
+            'name': props.get('Name')
+        })
+    
+    legend_items = []
+    for region in sorted(regions, key=lambda x: x['id']):
+        color = COLOR_MAPPING.get(region['id'], "#fddaec")
+        legend_items.append(f"""
+            <div style="display: flex; align-items: center; margin: 2px 0;">
+                <div style="background: {color}; width: 20px; height: 20px; margin-right: 5px;"></div>
+                <span>{region['name']}</span>
+            </div>
+        """)
+    
+    return folium.Element(f"""
+        <div style="
+            position: fixed; 
+            bottom: 50px; 
+            right: 20px; 
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            font-family: Arial;
+            font-size: 12px;
+            max-width: 150px;
+        ">
+            <div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>
+            {"".join(legend_items)}
+        </div>
+    """)
 
-# --- Create Folium Map Function ---
-def create_map(data):
-    m = folium.Map(location=[-19.89323, -44.00145], tiles="OpenStreetMap", zoom_start=12.49, control_scale=True)
+def create_map(data, geojson_data):
+    m = folium.Map(location=[-19.89323, -44.00145], 
+                 tiles="OpenStreetMap", 
+                 zoom_start=12.49, 
+                 control_scale=True)
 
-    # Add GeoJSON layer under markers
+    # Add non-interactive GeoJSON
     folium.GeoJson(
-        regionais_json,
+        geojson_data,
         name='Regionais',
         style_function=lambda x: {
-            "fillColor": {
-                1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
-                4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
-                7: "#e5d8bd"
-            }.get(x['properties'].get('id', 0), "#fddaec"),
+            "fillColor": COLOR_MAPPING.get(x['properties'].get('id'), "#fddaec"),
             "color": "black",
             "weight": 1,
             "fillOpacity": 0.3,
             "dashArray": "5,5"
         },
         tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
+        interactive=False,  # Disables all interaction including clicks
         control=False
     ).add_to(m)
 
-    # Add markers on top of the geojson
+    # Add markers
     for _, row in data.iterrows():
-        numeral = row["Numeral"]
-        icon_file = ICON_MAPPING.get(numeral, "leaf_green.png")
-
-        icon_url = ICON_BASE_URL + icon_file
-        icon = folium.CustomIcon(
-            icon_url,
-            icon_size=(42, 42),
-            icon_anchor=(16, 16)
-        )
-
-        tooltip_content = f"""
-        <div style="font-family: Arial; font-size: 14px"><p><b>Unidade Produtiva:<br>
-        {row['Nome']}</p></b>
-        </div>
-        """
+        icon_url = ICON_URLS.get(row["Numeral"], DEFAULT_ICON)
+        icon = folium.CustomIcon(icon_url, icon_size=(42, 42), icon_anchor=(16, 16))
         
-        popup_content = f"""
-        <div style="font-family: Arial; font-size: 14px; min-width: 200px;">
-            <h6 style="margin: 0 0 5px 0;"><b>{row['Nome']}</b></h6>
-            <p style="margin: 2px 0;"><b>Tipo:</b> {row['Tipo']}</p>
-            <p style="margin: 2px 0;"><b>Regional:</b> {row['Regional']}</p>
-        </div>
-        """
         Marker(
             location=[row["lat"], row["lon"]],
-            popup=popup_content,
+            popup=POPUP_TEMPLATE.format(row['Nome'], row['Tipo'], row['Regional']),
             icon=icon,
-            tooltip=tooltip_content
+            tooltip=TOOLTIP_TEMPLATE.format(row['Nome'])
         ).add_to(m)
 
-    folium.plugins.LocateControl().add_to(m)
+    # Add controls
+    LocateControl().add_to(m)
     folium.LayerControl().add_to(m)
+    
+    # Add legend
+    legend = create_legend(geojson_data)
+    m.get_root().html.add_child(legend)
+
     return m
 
-# --- Layout ---
-st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
-st.title(APP_TITLE)
-st.header(APP_SUB_TITLE)
+# --- Main App ---
+def main():
+    st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
+    st.title(APP_TITLE)
+    st.header(APP_SUB_TITLE)
 
-# --- Search box ---
-search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
-if search_query:
-    filtered_df = df[df["Nome"].str.lower().str.contains(search_query)]
-else:
-    filtered_df = df
+    # Load data
+    df = load_data()
+    geojson_data = load_geojson()
 
-# Display Map with filtered data
-m = create_map(filtered_df)
-st_data = st_folium(m, width=1200, height=700)
-st.caption(APP_CAPTION)
+    # Search functionality
+    search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
+    if search_query:
+        filtered_df = df[df["Nome"].str.lower().str.contains(search_query, regex=False)]
+        if filtered_df.empty:
+            st.warning("Nenhuma unidade encontrada com esse nome")
+    else:
+        filtered_df = df
 
-# Display banners
-for img in IMAGE_BANNER_URLS:
-    st.image(ICON_BASE_URL + img, use_container_width=True)
-st.image(LOGO_PMC)
+    # Display map
+    if not df.empty:
+        m = create_map(filtered_df, geojson_data)
+        st_folium(m, width=1200, height=700)
+    else:
+        st.warning("Nenhum dado disponível para exibir")
+    
+    st.caption(APP_CAPTION)
+
+    # Display banners
+    for url in BANNER_URLS:
+        st.image(url, use_container_width=True)
+    st.image(LOGO_PMC)
+
+if __name__ == "__main__":
+    main()
