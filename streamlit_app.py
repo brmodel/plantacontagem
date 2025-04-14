@@ -187,7 +187,6 @@ def main():
     # Display banners
     for url in BANNER_URLS:
         st.image(url, use_container_width=True)
-    st.image(LOGO_PMC)
 
 if __name__ == "__main__":
     main()
