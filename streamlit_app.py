@@ -34,19 +34,52 @@ ICONES_URL = {k: ICONES_URL_BASE + v for k, v in ICONES.items()}
 ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png"
 BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
-# Template para estilização HTML
+# Template para estilização HTML do Tooltip
 TOOLTIP_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px">
     <p><b>Unidade Produtiva:<br>{}</b></p>
 </div>
 """
 
+# Template para estilização HTML do Popup com funcionalidade de colapsar
 POPUP_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px; min-width: 200px;">
-    <h6 style="margin: 0 0 5px 0;"><b>{}</b></h6>
-    <p style="margin: 2px 0;"><b>Tipo:</b> {}</p>
-    <p style="margin: 2px 0;"><b>Regional:</b> {}</p>
+    <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
+    <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
+    <p style="margin: 2px 0;"><b>Regional:</b> {2}</p>
+    <div class="texto-completo" id="texto-completo-{3}" style="display: none;">
+        {4}
+    </div>
+    <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
 </div>
+<script>
+function toggleTexto(idElemento, botao) {
+    var elemento = document.getElementById(idElemento);
+    if (elemento.style.display === "none") {
+        elemento.style.display = "block";
+        botao.textContent = "Mostrar Menos";
+    } else {
+        elemento.style.display = "none";
+        botao.textContent = "Saiba Mais";
+    }
+}
+</script>
+<style>
+.texto-completo {
+    margin-top: 5px;
+}
+.leia-mais-btn {
+    background: none;
+    border: none;
+    color: blue;
+    cursor: pointer;
+    padding: 0;
+    font-size: 12px;
+}
+.leia-mais-btn:hover {
+    text-decoration: underline;
+}
+</style>
 """
 
 # Carregar Database e GeoJSON em paralelo
@@ -135,13 +168,26 @@ def criar_mapa(data, geojson_data):
     ).add_to(m)
 
     # Criar Unidades Produtivas como marcadores no mapa
-    for _, row in data.iterrows():
+    for index, row in data.iterrows():
         icon_url = ICONES_URL.get(row["Numeral"], ICONE_PADRAO)
         icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
 
+        # Suponha que você tenha uma coluna 'DescricaoCompleta' com o texto longo
+        texto_completo = row.get('DescricaoCompleta', 'Sem descrição detalhada.')
+        marker_id = f"marker-{index}" # Cria um ID único para cada marcador
+
+        popup_html = POPUP_TEMPLATE.format(
+            row['Nome'],
+            row['Tipo'],
+            row['Regional'],
+            marker_id, # Passa o ID para o template
+            texto_completo
+        )
+        popup = folium.Popup(popup_html, max_width=300) # Ajuste o max_width conforme necessário
+
         Marker(
             location=[row["lat"], row["lon"]],
-            popup=POPUP_TEMPLATE.format(row['Nome'], row['Tipo'], row['Regional']),
+            popup=popup,
             icon=icon,
             tooltip=TOOLTIP_TEMPLATE.format(row['Nome'])
         ).add_to(m)
