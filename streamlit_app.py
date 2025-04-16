@@ -6,23 +6,23 @@ from folium import Marker
 import requests
 from folium.plugins import LocateControl
 
-# --- Config ---
-APP_TITLE = "Planta Contagem"
-APP_SUB_TITLE = "Mapa das Unidades Produtivas de Contagem"
-APP_CAPTION = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF), em parceria com a Prefeitura Municipal de Contagem - MG"
-ICON_BASE_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
-ICON_MAPPING = {
+# Configurações
+APP_TITULO = "Planta Contagem"
+APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
+APP_DESC = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF), em parceria com a Prefeitura Municipal de Contagem - MG"
+ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
+ICONES = {
     1: "leaf_green.png",
     2: "leaf_orange.png",
     3: "leaf_blue.png",
     4: "leaf_purple.png",
 }
-COLOR_MAPPING = {
+MAPEAMENTO_CORES = {
     1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5",
     4: "#decbe4", 5: "#fed9a6", 6: "#ffffcc",
     7: "#e5d8bd"
 }
-IMAGE_BANNER_URLS = [
+BANNER_PMC_BASE = [
     "ilustracao_pmc.png",
     "banner_pmc.png"
 ]
@@ -30,11 +30,11 @@ LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 
 # Precomputed URLs
-ICON_URLS = {k: ICON_BASE_URL + v for k, v in ICON_MAPPING.items()}
-DEFAULT_ICON = ICON_BASE_URL + "leaf_green.png"
-BANNER_URLS = [ICON_BASE_URL + img for img in IMAGE_BANNER_URLS]
+ICONES_URL = {k: ICONES_URL_BASE + v for k, v in ICONES.items()}
+ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png"
+BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
-# HTML Templates
+# Template para estilização HTML
 TOOLTIP_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px">
     <p><b>Unidade Produtiva:<br>{}</b></p>
@@ -49,7 +49,7 @@ POPUP_TEMPLATE = """
 </div>
 """
 
-# --- Load Data ---
+# Carregar Database
 @st.cache_data(ttl=600)
 def load_data():
     try:
@@ -72,9 +72,9 @@ def load_geojson():
         st.error(f"Erro ao carregar GeoJSON: {e}")
         return {"type": "FeatureCollection", "features": []}
 
-# --- Map Creation ---
-def create_legend(geojson_data):
-    """Create HTML legend for regional colors"""
+# Criação do Mapa
+def criar_legenda(geojson_data):
+    """Cria legendas nos GEOJSONs"""
     regions = []
     for feature in geojson_data.get('features', []):
         props = feature.get('properties', {})
@@ -83,10 +83,10 @@ def create_legend(geojson_data):
             'name': props.get('Name')
         })
     
-    legend_items = []
+    items_legenda = []
     for region in sorted(regions, key=lambda x: x['id']):
-        color = COLOR_MAPPING.get(region['id'], "#fddaec")
-        legend_items.append(f"""
+        color = MAPEAMENTO_CORES.get(region['id'], "#fddaec")
+        items_legenda.append(f"""
             <div style="display: flex; align-items: center; margin: 2px 0;">
                 <div style="background: {color}; width: 20px; height: 20px; margin-right: 5px;"></div>
                 <span>{region['name']}</span>
@@ -108,22 +108,22 @@ def create_legend(geojson_data):
             max-width: 150px;
         ">
             <div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>
-            {"".join(legend_items)}
+            {"".join(legenda_items)}
         </div>
     """)
 
-def create_map(data, geojson_data):
+def criar_mapa(data, geojson_data):
     m = folium.Map(location=[-19.89323, -43.97145], 
                  tiles="OpenStreetMap", 
                  zoom_start=12.49, 
                  control_scale=True)
 
-    # Add non-interactive GeoJSON
+    # Adiciona GEOJson com as Regionais de Contagem
     folium.GeoJson(
         geojson_data,
         name='Regionais',
         style_function=lambda x: {
-            "fillColor": COLOR_MAPPING.get(x['properties'].get('id'), "#fddaec"),
+            "fillColor": MAPEAMENTO_CORES.get(x['properties'].get('id'), "#fddaec"),
             "color": "black",
             "weight": 1,
             "fillOpacity": 0.3,
@@ -134,9 +134,9 @@ def create_map(data, geojson_data):
         control=True
     ).add_to(m)
 
-    # Add markers
+    # Criar Unidades Produtivas como marcadores no mapa
     for _, row in data.iterrows():
-        icon_url = ICON_URLS.get(row["Numeral"], DEFAULT_ICON)
+        icon_url = ICONES_URL.get(row["Numeral"], ICONE_PADRAO)
         icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
         
         Marker(
@@ -146,50 +146,43 @@ def create_map(data, geojson_data):
             tooltip=TOOLTIP_TEMPLATE.format(row['Nome'])
         ).add_to(m)
 
-    # Add controls
+    # Adicionar controles ao mapa e legendas
     LocateControl().add_to(m)
     folium.LayerControl().add_to(m)
-    
-    # Add legend
-    legend = create_legend(geojson_data)
-    m.get_root().html.add_child(legend)
+    legenda = criar_legenda(geojson_data)
+    m.get_root().html.add_child(legenda)
 
     return m
 
-# --- Main App ---
+# Inicialização do aplicativo e design de página
 def main():
-    # Initialize session state
+    # Carrega o mapa uma única vez por sessão
     if 'data_loaded' not in st.session_state:
         st.session_state.df = load_data()
         st.session_state.geojson_data = load_geojson()
         st.session_state.data_loaded = True
 
-    # Static header
     st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
-    st.title(APP_TITLE)
-    st.header(APP_SUB_TITLE)
-
-    # Search functionality
+    st.title(APP_TITULO)
+    st.header(APP_SUBTITULO)
     search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
     
-    # Filter data
-    filtered_df = st.session_state.df
+    # Filtragem da database pelo campo nome das UPs
+    df_filtrado = st.session_state.df
     if search_query:
-        filtered_df = st.session_state.df[st.session_state.df["Nome"].str.lower().str.contains(search_query, regex=False)]
-        if filtered_df.empty:
+        df_filtrado = st.session_state.df[st.session_state.df["Nome"].str.lower().str.contains(search_query, regex=False)]
+        if df_filtrado.empty:
             st.warning("Nenhuma unidade encontrada com esse nome")
 
-    # Display map
+    # Visualização do mapa
     if not st.session_state.df.empty:
-        m = create_map(filtered_df, st.session_state.geojson_data)
+        m = criar_mapa(filtered_df, st.session_state.geojson_data)
         st_folium(m, width=1400, height=700)
     else:
         st.warning("Nenhum dado disponível para exibir")
     
-    st.caption(APP_CAPTION)
-
-    # Display banners at the end
-    for url in BANNER_URLS:
+    st.caption(APP_DESC)
+    for url in BANNER_PMC:
         st.image(url, use_container_width=True)
 
 if __name__ == "__main__":
