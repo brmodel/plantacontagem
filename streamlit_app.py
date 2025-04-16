@@ -87,7 +87,7 @@ function toggleTexto(idElemento, botao) {
 def load_data():
     try:
         url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
-        data = pd.read_csv(url, usecols=range(6))
+        data = pd.read_csv(url, usecols=range(7))
         clean_data = data.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral']).copy()
         clean_data['Numeral'] = clean_data['Numeral'].astype(int)
         return clean_data
