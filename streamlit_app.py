@@ -48,7 +48,7 @@ POPUP_TEMPLATE = """
     <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
     <p style="margin: 2px 0;"><b>Regional:</b> {2}</p>
     <div class="texto-completo" id="texto-completo-{3}" style="display: none;">
-        {4}
+        {7}
     </div>
     <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
 </div>
