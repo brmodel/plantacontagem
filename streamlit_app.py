@@ -43,8 +43,8 @@ TOOLTIP_TEMPLATE = """
 
 # Template para o CONTEÚDO HTML do Popup (COM O SCRIPT INLINE)
 POPUP_TEMPLATE = """
-<div style="font-family: Arial; font-size: 12px; min-width: 200px;">
-    <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
+<div style="font-family: Arial; font-size: 12px; min-width: 200px; max-width: 466px; word-break: break-word;">
+    <h6 style="margin: 0 0 5px 0; word-break: break-word;"><b>{0}</b></h6>
     <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
     <p style="margin: 2px 0;"><b>Regional:</b> {2}</p>
     <div class="texto-curto" id="texto-curto-{3}">
