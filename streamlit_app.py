@@ -173,7 +173,7 @@ def criar_mapa(data, geojson_data):
         icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
 
         # Suponha que você tenha uma coluna 'DescricaoCompleta' com o texto longo
-        texto_completo = row.get('DescricaoCompleta', 'Sem descrição detalhada.')
+        texto_completo = row.get('info', 'Sem descrição detalhada.')
         marker_id = f"marker-{index}" # Cria um ID único para cada marcador
 
         popup_html = POPUP_TEMPLATE.format(
