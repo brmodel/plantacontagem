@@ -48,7 +48,7 @@ POPUP_TEMPLATE = """
     <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
     <p style="margin: 2px 0;"><b>Regional:</b> {2}</p>
     <div class="texto-completo" id="texto-completo-{3}" style="display: none;">
-        {7}
+        {4}
     </div>
     <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
 </div>
@@ -172,7 +172,6 @@ def criar_mapa(data, geojson_data):
         icon_url = ICONES_URL.get(row["Numeral"], ICONE_PADRAO)
         icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
 
-        # Suponha que você tenha uma coluna 'Info' com o texto longo
         texto_completo = row.get('Info', 'Sem descrição detalhada.')
         marker_id = f"marker-{index}" # Cria um ID único para cada marcador
 
@@ -183,7 +182,7 @@ def criar_mapa(data, geojson_data):
             marker_id, # Passa o ID para o template
             texto_completo
         )
-        popup = folium.Popup(popup_html, max_width=300) # Ajuste o max_width conforme necessário
+        popup = folium.Popup(popup_html, max_width=300)
 
         Marker(
             location=[row["lat"], row["lon"]],
@@ -207,6 +206,11 @@ def main():
         st.session_state.df = load_data()
         st.session_state.geojson_data = load_geojson()
         st.session_state.data_loaded = True
+
+        # Debugging: Verifique as colunas e algumas linhas do DataFrame
+        st.subheader("Debug DataFrame:")
+        st.write(st.session_state.df.head())
+        st.write(st.session_state.df.columns)
 
     st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
     st.title(APP_TITULO)
