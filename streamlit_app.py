@@ -41,7 +41,7 @@ TOOLTIP_TEMPLATE = """
 </div>
 """
 
-# Template para estilização HTML do Popup com funcionalidade de colapsar
+# Template para o CONTEÚDO HTML do Popup (SEM O BLOCO <SCRIPT>)
 POPUP_CONTENT_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px; min-width: 200px;">
     <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
@@ -75,7 +75,6 @@ POPUP_CONTENT_TEMPLATE = """
 
 # Script JavaScript para expandir/colapsar o texto
 SCRIPT_TEMPLATE = """
-<script>
 function toggleTexto(idCurto, idCompleto, botao) {{
     var elementoCurto = document.getElementById(idCurto);
     var elementoCompleto = document.getElementById(idCompleto);
@@ -89,7 +88,6 @@ function toggleTexto(idCurto, idCompleto, botao) {{
         botao.textContent = "Saiba Mais";
     }}
 }}
-</script>
 """
 
 # Carregar Database e GeoJSON em paralelo
@@ -195,7 +193,8 @@ def criar_mapa(data, geojson_data):
             texto_curto,
             texto_completo
         )
-        popup = folium.Popup(folium.Html(popup_content_html + SCRIPT_TEMPLATE, script=True), max_width=500)
+        popup = folium.Popup(folium.Html(f"<div id='popup-content-{marker_id}'>{popup_content_html}</div>", script=True), max_width=500)
+        popup.add_child(folium.Element(f"<script>{SCRIPT_TEMPLATE}</script>"))
 
         Marker(
             location=[row["lat"], row["lon"]],
