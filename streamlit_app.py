@@ -42,7 +42,7 @@ TOOLTIP_TEMPLATE = """
 """
 
 # Template para o CONTEÚDO HTML do Popup (COM O SCRIPT INLINE)
-POPUP_CONTENT_TEMPLATE = """
+POPUP_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px; min-width: 200px;">
     <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
     <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
@@ -141,103 +141,4 @@ def criar_legenda(geojson_data):
             background: white;
             padding: 10px;
             border-radius: 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            font-family: Arial;
-            font-size: 12px;
-            max-width: 150px;
-        ">
-            <div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>
-            {"".join(items_legenda)}
-        </div>
-    """)
-
-def criar_mapa(data, geojson_data):
-    m = folium.Map(location=[-19.89323, -43.97145],
-                    tiles="OpenStreetMap",
-                    zoom_start=12.49,
-                    control_scale=True)
-
-    # Adiciona GEOJson com as Regionais de Contagem
-    folium.GeoJson(
-        geojson_data,
-        name='Regionais',
-        style_function=lambda x: {
-            "fillColor": MAPEAMENTO_CORES.get(x['properties'].get('id'), "#fddaec"),
-            "color": "black",
-            "weight": 1,
-            "fillOpacity": 0.3,
-            "dashArray": "5,5"
-        },
-        tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-        interactive=True,
-        control=True
-    ).add_to(m)
-
-    # Criar Unidades Produtivas como marcadores no mapa
-    max_chars = 150  # Define o número máximo de caracteres a serem exibidos inicialmente
-    for index, row in data.iterrows():
-        icon_url = ICONES_URL.get(row["Numeral"], ICONE_PADRAO)
-        icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
-
-        texto_completo = row.get('Info', 'Sem descrição detalhada.')
-        texto_curto = texto_completo[:max_chars] + ('...' if len(texto_completo) > max_chars else '')
-        marker_id = f"marker-{index}" # Cria um ID único para cada marcador
-
-        popup_html = POPUP_CONTENT_TEMPLATE.format(
-            row['Nome'],
-            row['Tipo'],
-            row['Regional'],
-            marker_id,
-            texto_curto,
-            texto_completo
-        )
-        popup = folium.Popup(popup_html, max_width=500)
-
-        Marker(
-            location=[row["lat"], row["lon"]],
-            popup=popup,
-            icon=icon,
-            tooltip=TOOLTIP_TEMPLATE.format(row['Nome'])
-        ).add_to(m)
-
-    # Adicionar controles ao mapa e legendas
-    LocateControl().add_to(m)
-    folium.LayerControl().add_to(m)
-    legenda = criar_legenda(geojson_data)
-    m.get_root().html.add_child(legenda)
-
-    return m
-
-# Inicialização do aplicativo e design de página
-def main():
-    # Carrega os dados e o GeoJSON uma única vez por sessão
-    if 'data_loaded' not in st.session_state:
-        st.session_state.df = load_data()
-        st.session_state.geojson_data = load_geojson()
-        st.session_state.data_loaded = True
-
-    st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
-    st.title(APP_TITULO)
-    st.header(APP_SUBTITULO)
-    search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
-
-    # Filtragem da database pelo campo nome das UPs
-    df_filtrado = st.session_state.df
-    if search_query:
-        df_filtrado = st.session_state.df[st.session_state.df["Nome"].str.lower().str.contains(search_query, regex=False)]
-        if df_filtrado.empty:
-            st.warning("Nenhuma unidade encontrada com esse nome")
-
-    # Visualização do mapa
-    if not st.session_state.df.empty:
-        m = criar_mapa(df_filtrado, st.session_state.geojson_data)
-        st_folium(m, width=1400, height=700)
-    else:
-        st.warning("Nenhum dado disponível para exibir")
-
-    st.caption(APP_DESC)
-    for url in BANNER_PMC:
-        st.image(url, use_container_width=True)
-
-if __name__ == "__main__":
-    main()
+            box-shadow: 0 2px
