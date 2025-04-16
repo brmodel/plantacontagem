@@ -41,29 +41,20 @@ TOOLTIP_TEMPLATE = """
 </div>
 """
 
-# Template para estilização HTML do Popup com funcionalidade de colapsar
-POPUP_TEMPLATE = """
+# Template para o CONTEÚDO HTML do Popup (COM O SCRIPT INLINE)
+POPUP_CONTENT_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px; min-width: 200px;">
     <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
     <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
     <p style="margin: 2px 0;"><b>Regional:</b> {2}</p>
-    <div class="texto-completo" id="texto-completo-{3}" style="display: none;">
+    <div class="texto-curto" id="texto-curto-{3}">
         {4}
     </div>
-    <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
+    <div class="texto-completo" id="texto-completo-{3}" style="display: none;">
+        {5}
+    </div>
+    <button class="leia-mais-btn" onclick="toggleTexto('texto-curto-{3}', 'texto-completo-{3}', this)">Saiba Mais</button>
 </div>
-<script>
-function toggleTexto(idElemento, botao) {{
-    var elemento = document.getElementById(idElemento);
-    if (elemento.style.display === "none") {{
-        elemento.style.display = "block";
-        botao.textContent = "Mostrar Menos";
-    }} else {{
-        elemento.style.display = "none";
-        botao.textContent = "Saiba Mais";
-    }}
-}}
-</script>
 <style>
 .texto-completo {{
     margin-top: 5px;
@@ -80,6 +71,21 @@ function toggleTexto(idElemento, botao) {{
     text-decoration: underline;
 }}
 </style>
+<script>
+function toggleTexto(idCurto, idCompleto, botao) {{
+    var elementoCurto = document.getElementById(idCurto);
+    var elementoCompleto = document.getElementById(idCompleto);
+    if (elementoCompleto.style.display === "none") {{
+        elementoCurto.style.display = "none";
+        elementoCompleto.style.display = "block";
+        botao.textContent = "Mostrar Menos";
+    }} else {{
+        elementoCurto.style.display = "block";
+        elementoCompleto.style.display = "none";
+        botao.textContent = "Saiba Mais";
+    }}
+}}
+</script>
 """
 
 # Carregar Database e GeoJSON em paralelo
@@ -168,18 +174,21 @@ def criar_mapa(data, geojson_data):
     ).add_to(m)
 
     # Criar Unidades Produtivas como marcadores no mapa
+    max_chars = 150  # Define o número máximo de caracteres a serem exibidos inicialmente
     for index, row in data.iterrows():
         icon_url = ICONES_URL.get(row["Numeral"], ICONE_PADRAO)
         icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
 
         texto_completo = row.get('Info', 'Sem descrição detalhada.')
+        texto_curto = texto_completo[:max_chars] + ('...' if len(texto_completo) > max_chars else '')
         marker_id = f"marker-{index}" # Cria um ID único para cada marcador
 
-        popup_html = POPUP_TEMPLATE.format(
+        popup_html = POPUP_CONTENT_TEMPLATE.format(
             row['Nome'],
             row['Tipo'],
             row['Regional'],
             marker_id,
+            texto_curto,
             texto_completo
         )
         popup = folium.Popup(popup_html, max_width=500)
