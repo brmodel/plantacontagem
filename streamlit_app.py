@@ -44,13 +44,13 @@ TOOLTIP_TEMPLATE = """
 # Template para estilização HTML do Popup com funcionalidade de colapsar
 POPUP_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px; min-width: 200px;">
-    <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
-    <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
-    <p style="margin: 2px 0;"><b>Regional:</b> {2}</p>
-    <div class="texto-completo" id="texto-completo-{3}" style="display: none;">
-        {4}
+    <h6 style="margin: 0 0 5px 0;"><b>{nome}</b></h6>
+    <p style="margin: 2px 0;"><b>Tipo:</b> {tipo}</p>
+    <p style="margin: 2px 0;"><b>Regional:</b> {regional}</p>
+    <div class="texto-completo" id="texto-completo-{marker_id}" style="display: none;">
+        {info}
     </div>
-    <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
+    <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{marker_id}', this)">Saiba Mais</button>
 </div>
 <script>
 function toggleTexto(idElemento, botao) {{
