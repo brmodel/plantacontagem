@@ -41,8 +41,8 @@ TOOLTIP_TEMPLATE = """
 </div>
 """
 
-# Template para estilização HTML do Popup com funcionalidade de colapsar
-POPUP_TEMPLATE = """
+# Template para estilização HTML do Popup com funcionalidade de colapsar (SEM O BLOCO <SCRIPT>)
+POPUP_CONTENT_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px; min-width: 200px;">
     <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
     <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
@@ -52,18 +52,6 @@ POPUP_TEMPLATE = """
     </div>
     <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
 </div>
-<script>
-function toggleTexto(idElemento, botao) {{
-    var elemento = document.getElementById(idElemento);
-    if (elemento.style.display === "none") {{
-        elemento.style.display = "block";
-        botao.textContent = "Mostrar Menos";
-    }} else {{
-        elemento.style.display = "none";
-        botao.textContent = "Saiba Mais";
-    }}
-}}
-</script>
 <style>
 .texto-completo {{
     margin-top: 5px;
@@ -80,6 +68,22 @@ function toggleTexto(idElemento, botao) {{
     text-decoration: underline;
 }}
 </style>
+"""
+
+# Script JavaScript para expandir/colapsar o texto
+SCRIPT_TEMPLATE = """
+<script>
+function toggleTexto(idElemento, botao) {{
+    var elemento = document.getElementById(idElemento);
+    if (elemento.style.display === "none") {{
+        elemento.style.display = "block";
+        botao.textContent = "Mostrar Menos";
+    }} else {{
+        elemento.style.display = "none";
+        botao.textContent = "Saiba Mais";
+    }}
+}}
+</script>
 """
 
 # Carregar Database e GeoJSON em paralelo
@@ -175,14 +179,14 @@ def criar_mapa(data, geojson_data):
         texto_completo = row.get('Info', 'Sem descrição detalhada.')
         marker_id = f"marker-{index}" # Cria um ID único para cada marcador
 
-        popup_html = POPUP_TEMPLATE.format(
+        popup_content_html = POPUP_CONTENT_TEMPLATE.format(
             row['Nome'],
             row['Tipo'],
             row['Regional'],
             marker_id,
             texto_completo
         )
-        popup = folium.Popup(popup_html, max_width=500)
+        popup = folium.Popup(folium.Html(popup_content_html, script=True), max_width=500)
 
         Marker(
             location=[row["lat"], row["lon"]],
