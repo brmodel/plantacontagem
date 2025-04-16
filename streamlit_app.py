@@ -49,7 +49,7 @@ POPUP_TEMPLATE = """
 </div>
 """
 
-# Carregar Database
+# Carregar Database e GeoJSON em paralelo
 @st.cache_data(ttl=600)
 def load_data():
     try:
@@ -82,7 +82,7 @@ def criar_legenda(geojson_data):
             'id': props.get('id'),
             'name': props.get('Name')
         })
-    
+
     items_legenda = []
     for region in sorted(regions, key=lambda x: x['id']):
         color = MAPEAMENTO_CORES.get(region['id'], "#fddaec")
@@ -92,12 +92,12 @@ def criar_legenda(geojson_data):
                 <span>{region['name']}</span>
             </div>
         """)
-    
+
     return folium.Element(f"""
         <div style="
-            position: fixed; 
-            bottom: 50px; 
-            right: 20px; 
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
             z-index: 1000;
             background: white;
             padding: 10px;
@@ -108,15 +108,15 @@ def criar_legenda(geojson_data):
             max-width: 150px;
         ">
             <div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>
-            {"".join(legenda_items)}
+            {"".join(items_legenda)}
         </div>
     """)
 
 def criar_mapa(data, geojson_data):
-    m = folium.Map(location=[-19.89323, -43.97145], 
-                 tiles="OpenStreetMap", 
-                 zoom_start=12.49, 
-                 control_scale=True)
+    m = folium.Map(location=[-19.89323, -43.97145],
+                    tiles="OpenStreetMap",
+                    zoom_start=12.49,
+                    control_scale=True)
 
     # Adiciona GEOJson com as Regionais de Contagem
     folium.GeoJson(
@@ -138,7 +138,7 @@ def criar_mapa(data, geojson_data):
     for _, row in data.iterrows():
         icon_url = ICONES_URL.get(row["Numeral"], ICONE_PADRAO)
         icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
-        
+
         Marker(
             location=[row["lat"], row["lon"]],
             popup=POPUP_TEMPLATE.format(row['Nome'], row['Tipo'], row['Regional']),
@@ -156,7 +156,7 @@ def criar_mapa(data, geojson_data):
 
 # Inicialização do aplicativo e design de página
 def main():
-    # Carrega o mapa uma única vez por sessão
+    # Carrega os dados e o GeoJSON uma única vez por sessão
     if 'data_loaded' not in st.session_state:
         st.session_state.df = load_data()
         st.session_state.geojson_data = load_geojson()
@@ -166,7 +166,7 @@ def main():
     st.title(APP_TITULO)
     st.header(APP_SUBTITULO)
     search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
-    
+
     # Filtragem da database pelo campo nome das UPs
     df_filtrado = st.session_state.df
     if search_query:
@@ -176,11 +176,11 @@ def main():
 
     # Visualização do mapa
     if not st.session_state.df.empty:
-        m = criar_mapa(filtered_df, st.session_state.geojson_data)
+        m = criar_mapa(df_filtrado, st.session_state.geojson_data)
         st_folium(m, width=1400, height=700)
     else:
         st.warning("Nenhum dado disponível para exibir")
-    
+
     st.caption(APP_DESC)
     for url in BANNER_PMC:
         st.image(url, use_container_width=True)
