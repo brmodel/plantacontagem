@@ -53,32 +53,32 @@ POPUP_TEMPLATE = """
     <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
 </div>
 <script>
-function toggleTexto(idElemento, botao) {
+function toggleTexto(idElemento, botao) {{
     var elemento = document.getElementById(idElemento);
-    if (elemento.style.display === "none") {
+    if (elemento.style.display === "none") {{
         elemento.style.display = "block";
         botao.textContent = "Mostrar Menos";
-    } else {
+    }} else {{
         elemento.style.display = "none";
         botao.textContent = "Saiba Mais";
-    }
-}
+    }}
+}}
 </script>
 <style>
-.texto-completo {
+.texto-completo {{
     margin-top: 5px;
-}
-.leia-mais-btn {
+}}
+.leia-mais-btn {{
     background: none;
     border: none;
     color: blue;
     cursor: pointer;
     padding: 0;
     font-size: 12px;
-}
-.leia-mais-btn:hover {
+}}
+.leia-mais-btn:hover {{
     text-decoration: underline;
-}
+}}
 </style>
 """
 
@@ -172,7 +172,7 @@ def criar_mapa(data, geojson_data):
         icon_url = ICONES_URL.get(row["Numeral"], ICONE_PADRAO)
         icon = folium.CustomIcon(icon_url, icon_size=(32, 32), icon_anchor=(16, 16))
 
-        # Suponha que você tenha uma coluna 'DescricaoCompleta' com o texto longo
+        # Suponha que você tenha uma coluna 'Info' com o texto longo
         texto_completo = row.get('Info', 'Sem descrição detalhada.')
         marker_id = f"marker-{index}" # Cria um ID único para cada marcador
 
