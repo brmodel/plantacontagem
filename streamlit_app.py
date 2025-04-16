@@ -10,7 +10,7 @@ from folium.plugins import LocateControl
 APP_TITULO = "Planta Contagem"
 APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
 APP_DESC = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF), em parceria com a Prefeitura Municipal de Contagem - MG"
-ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
+ICONES_URL_BASE = "[https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/](https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/)"
 ICONES = {
     1: "leaf_green.png",
     2: "leaf_orange.png",
@@ -26,8 +26,8 @@ BANNER_PMC_BASE = [
     "ilustracao_pmc.png",
     "banner_pmc.png"
 ]
-LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
-GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
+LOGO_PMC = "[https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true](https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true)"
+GEOJSON_URL = "[https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson](https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson)"
 
 # Precomputed URLs
 ICONES_URL = {k: ICONES_URL_BASE + v for k, v in ICONES.items()}
@@ -41,16 +41,16 @@ TOOLTIP_TEMPLATE = """
 </div>
 """
 
-# Template para estilização HTML do Popup com funcionalidade de colapsar
+# Template para estilização HTML do Popup com funcionalidade de colapsar (USANDO PLACEHOLDERS POSICIONAIS)
 POPUP_TEMPLATE = """
 <div style="font-family: Arial; font-size: 12px; min-width: 200px;">
-    <h6 style="margin: 0 0 5px 0;"><b>{nome}</b></h6>
-    <p style="margin: 2px 0;"><b>Tipo:</b> {tipo}</p>
-    <p style="margin: 2px 0;"><b>Regional:</b> {regional}</p>
-    <div class="texto-completo" id="texto-completo-{marker_id}" style="display: none;">
-        {info}
+    <h6 style="margin: 0 0 5px 0;"><b>{0}</b></h6>
+    <p style="margin: 2px 0;"><b>Tipo:</b> {1}</p>
+    <p style="margin: 2px 0;"><b>Regional:</b> {2}</p>
+    <div class="texto-completo" id="texto-completo-{3}" style="display: none;">
+        {4}
     </div>
-    <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{marker_id}', this)">Saiba Mais</button>
+    <button class="leia-mais-btn" onclick="toggleTexto('texto-completo-{3}', this)">Saiba Mais</button>
 </div>
 <script>
 function toggleTexto(idElemento, botao) {{
@@ -86,7 +86,7 @@ function toggleTexto(idElemento, botao) {{
 @st.cache_data(ttl=600)
 def load_data():
     try:
-        url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
+        url = "[https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074](https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074)"
         data = pd.read_csv(url, usecols=range(7))
         clean_data = data.dropna(subset=['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral', 'Info']).copy()
         clean_data['Numeral'] = clean_data['Numeral'].astype(int)
@@ -179,10 +179,10 @@ def criar_mapa(data, geojson_data):
             row['Nome'],
             row['Tipo'],
             row['Regional'],
-            marker_id, # Passa o ID para o template
+            marker_id,
             texto_completo
         )
-        popup = folium.Popup(popup_html, max_width=300)
+        popup = folium.Popup(popup_html, max_width=500) # Aumentei o max_width
 
         Marker(
             location=[row["lat"], row["lon"]],
@@ -207,12 +207,7 @@ def main():
         st.session_state.geojson_data = load_geojson()
         st.session_state.data_loaded = True
 
-        # Debugging: Verifique as colunas e algumas linhas do DataFrame
-        st.subheader("Debug DataFrame:")
-        st.write(st.session_state.df.head())
-        st.write(st.session_state.df.columns)
-
-    st.logo(LOGO_PMC, size="large", link="https://portal.contagem.mg.gov.br/")
+    st.logo(LOGO_PMC, size="large", link="[https://portal.contagem.mg.gov.br/](https://portal.contagem.mg.gov.br/)")
     st.title(APP_TITULO)
     st.header(APP_SUBTITULO)
     search_query = st.text_input("Pesquisar por Unidades Produtivas:", "").strip().lower()
