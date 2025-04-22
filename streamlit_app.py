@@ -200,6 +200,8 @@ def criar_mapa(data, geojson_data):
                 row.get('Nome', 'Nome não informado'), # {0}
                 row.get('Tipo', 'Tipo não informado'), # {1}
                 row.get('Regional', 'Regional não informada') # {2}
+                row.get('Instagram', 'Sem Instagram') # {3}
+                row.get('Info', 'Sem informações adicionais') # {4}
             )
 
             popup = folium.Popup(popup_html, max_width=500)
@@ -272,13 +274,13 @@ def main():
             st.header(info.get('Nome', 'Nome não informado'))
             st.write(f"**Tipo:** {info.get('Tipo', 'Tipo não informado')}")
             st.write(f"**Regional:** {info.get('Regional', 'Regional não informada')}")
-            st.write(f"**Informações:**")
-            st.markdown(info.get('Info', 'Sem descrição detalhada.'))
             redes = info.get('Instagram')
             if redes and isinstance(redes, str) and redes.strip() != "":
                 st.write(f"**Instagram:** [Link]({redes.strip()})")
-        else:
-            st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
+            else:
+                st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
+            st.write(f"**Informações:**")
+            st.markdown(info.get('Info', 'Sem descrição detalhada.'))
 
 
     # --- Filtragem ---
