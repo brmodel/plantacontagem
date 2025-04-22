@@ -34,18 +34,17 @@ ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png"
 BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
 # --- Templates HTML (Simplificados) ---
-POPUP_TEMPLATE = """
+# Template base para o popup, sem placeholders fixos para Info e Instagram
+POPUP_TEMPLATE_BASE = """
 <div style="
     font-family: Arial, sans-serif;
     font-size: 12px;
     width: auto; max-width: min(90vw, 466px); min-width: 200px; /* Limitação de tamanho/resolução */
     word-break: break-word; box-sizing: border-box; padding: 8px;
 ">
-    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{0}</b></h6>
-    <p style="margin: 4px 0;"><b>Tipo:</b> {1}</p>
-    <p style="margin: 4px 0;"><b>Regional:</b> {2}</p>
-</div>
+    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{}</b></h6> <p style="margin: 4px 0;"><b>Tipo:</b> {}</p> <p style="margin: 4px 0;"><b>Regional:</b> {}</p> {} </div>
 """
+
 TOOLTIP_TEMPLATE = """
 <div style="font-family: Arial, sans-serif; font-size: 12px">
     <p><b>Unidade Produtiva:<br>{}</b></p>
@@ -75,14 +74,16 @@ def load_data():
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
         rows_after_mapping_dropna = data.shape[0]
         if rows_before_mapping_dropna > rows_after_mapping_dropna:
-            # Removida a linha de warning sobre linhas removidas
-            pass
+             pass # Aviso removido
 
         # Converte Numeral para tipo inteiro que aceita NaN (Int64)
         data['Numeral'] = data['Numeral'].astype('Int64')
 
         # Adicionar um ID único baseado no índice do DataFrame *final*
         data['marker_id'] = data.index.map(lambda i: f'up-{i}')
+
+        # As colunas 'Info' e 'Instagram' agora podem conter NaNs, mas o código
+        # que as acessa na sidebar/popup (usando .get()) lida com isso.
 
         return data
     except pd.errors.EmptyDataError:
@@ -185,24 +186,39 @@ def criar_mapa(data, geojson_data):
             try:
                 icon_url = ICONES_URL.get(int(icon_num), ICONE_PADRAO)
             except (ValueError, TypeError):
-                # Removida a linha de warning específica
                 icon_url = ICONE_PADRAO
 
 
             try:
+                # Note: row.get('Nome', 'N/I') usado aqui e no tooltip para lidar com caso Nome tenha NaN
                 icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
             except Exception as e:
                 st.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
                 icon = folium.Icon(color="green", prefix='fa', icon="leaf")
 
-            # Nome, Tipo, Regional podem ser NaN, get() lida com isso.
-            popup_html = POPUP_TEMPLATE.format(
-                row.get('Nome', 'Nome não informado'), # {0}
-                row.get('Tipo', 'Tipo não informado'), # {1}
-                row.get('Regional', 'Regional não informada') # {2}
-                row.get('Instagram', 'Sem Instagram') # {3}
-                row.get('Info', 'Sem informações adicionais') # {4}
+            # --- Construção dinâmica do HTML do popup ---
+            # Começa com a parte base (Nome, Tipo, Regional)
+            # Note: row.get() usado com fallback caso Nome, Tipo, Regional sejam NaN (embora dropna(['Numeral',...])
+            # não garanta isso para Nome, Tipo, Regional, usar get é seguro)
+            popup_content = POPUP_TEMPLATE_BASE.format(
+                row.get('Nome', 'Nome não informado'),
+                row.get('Tipo', 'Tipo não informado'),
+                row.get('Regional', 'Regional não informada'),
+                '' # Placeholder inicial vazio para o conteúdo condicional
             )
+
+            # Adiciona Informações se existirem e não forem vazias/NaN
+            info_text = row.get('Info')
+            if pd.notna(info_text) and str(info_text).strip() != '':
+                 popup_content = popup_content.replace('{}', f"<p style='margin: 4px 0;'><b>Informações:</b></p><p style='margin: 4px 0;'>{info_text}</p>" + '{}')
+
+            # Adiciona Instagram se existir e não for vazio/NaN
+            instagram_link = row.get('Instagram')
+            if pd.notna(instagram_link) and isinstance(instagram_link, str) and instagram_link.strip() != '':
+                 popup_content = popup_content.replace('{}', f"<p style='margin: 4px 0;'><b>Instagram:</b> <a href='{instagram_link.strip()}' target='_blank'>{instagram_link.strip()}</a></p>" + '{}')
+
+            # Remove o placeholder final vazio se nada condicional foi adicionado
+            popup_html = popup_content.replace('{}', '')
 
             popup = folium.Popup(popup_html, max_width=500)
 
@@ -210,7 +226,7 @@ def criar_mapa(data, geojson_data):
                 location=[lat, lon],
                 popup=popup,
                 icon=icon,
-                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
+                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')) # Usa get para Nome no tooltip também
             ).add_to(m)
             marker_count += 1
 
@@ -274,13 +290,20 @@ def main():
             st.header(info.get('Nome', 'Nome não informado'))
             st.write(f"**Tipo:** {info.get('Tipo', 'Tipo não informado')}")
             st.write(f"**Regional:** {info.get('Regional', 'Regional não informada')}")
+
+            # Exibe Instagram apenas se existir e não for vazio/NaN
             redes = info.get('Instagram')
-            if redes and isinstance(redes, str) and redes.strip() != "":
+            if pd.notna(redes) and isinstance(redes, str) and redes.strip() != "":
                 st.write(f"**Instagram:** [Link]({redes.strip()})")
-            else:
-                st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
-            st.write(f"**Informações:**")
-            st.markdown(info.get('Info', 'Sem descrição detalhada.'))
+
+            # Exibe Informações apenas se existirem e não forem vazias/NaN
+            info_text_sidebar = info.get('Info')
+            if pd.notna(info_text_sidebar) and str(info_text_sidebar).strip() != '':
+                 st.write(f"**Informações:**")
+                 st.markdown(info_text_sidebar)
+
+        else:
+            st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
 
 
     # --- Filtragem ---
@@ -322,6 +345,7 @@ def main():
                 if found_row is not None:
                     st.session_state.selected_marker_info = found_row.to_dict()
                 else:
+                    # Limpa a sidebar se o clique for em uma feição do GeoJSON ou área sem marcador
                     st.session_state.selected_marker_info = None
 
     elif st.session_state.load_error:
