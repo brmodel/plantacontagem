@@ -29,8 +29,8 @@ LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 
 # Lista de colunas essenciais - usada para carregar e validar.
-# !!! CORRIGIDO: O nome da coluna é "Instagram" na planilha.
-essential_cols = ['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral', 'Info', 'Instagram'] # Corrigido para "Instagram"
+# CORRIGIDO: O nome da coluna é "Instagram" na planilha.
+essential_cols = ['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral', 'Info', 'Instagram']
 
 
 # --- URLs Pré-calculadas ---
@@ -76,7 +76,7 @@ def load_data():
         # Continuar com a limpeza dos dados
         # Remove linhas onde QUALQUER coluna essencial (pelos nomes carregados, incluindo "Instagram") está faltando
         initial_rows = data.shape[0]
-        # !!! Importante: Aqui usamos 'Instagram' conforme o nome real da planilha !!!
+        # Importante: Aqui usamos 'Instagram' conforme o nome real da planilha
         data.dropna(subset=essential_cols, inplace=True) # Usa a lista essential_cols corrigida
         rows_after_essential_dropna = data.shape[0]
         if initial_rows > rows_after_essential_dropna:
@@ -90,7 +90,6 @@ def load_data():
 
         # Esta dropna garante que as colunas CRUCIAIS para o mapa (lat, lon, Numeral) estejam preenchidas APÓS a conversão numérica
         rows_before_mapping_dropna = data.shape[0]
-        # !!! Importante: Aqui a dropna ainda foca nas colunas de mapeamento, mantendo Numeral, lat, lon
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
         rows_after_mapping_dropna = data.shape[0]
         if rows_before_mapping_dropna > rows_after_mapping_dropna:
@@ -143,8 +142,48 @@ def load_geojson():
         st.error(f"Erro inesperado ao carregar GeoJSON: {e}")
         return default_geojson
 
-
 # --- Funções de Criação do Mapa e Legenda ---
+# !!! CORRIGIDO: Definição de criar_legenda movida para ANTES de criar_mapa !!!
+def criar_legenda(geojson_data):
+    regions = []
+    features = geojson_data.get('features') if isinstance(geojson_data, dict) else None
+    if isinstance(features, list):
+        for feature in features:
+            props = feature.get('properties') if isinstance(feature, dict) else {}
+            if isinstance(props, dict):
+                region_id = props.get('id')
+                region_name = props.get('Name')
+                if isinstance(region_id, (int, float)) and region_name is not None:
+                    regions.append({'id': int(region_id), 'name': region_name})
+                elif region_id is not None and region_name is not None:
+                    st.warning(f"ID da regional '{region_id}' não é numérico. Ignorando na legenda.")
+
+
+    items_legenda = []
+    # Ordena a legenda pelo ID da regional
+    for region in sorted(regions, key=lambda x: x.get('id', float('inf'))):
+        color = MAPEAMENTO_CORES.get(region.get('id'), "#cccccc")
+        items_legenda.append(f"""
+            <div style="display: flex; align-items: center; margin: 3px 0;">
+                <div style="background: {color}; width: 18px; height: 18px; margin-right: 6px; border: 1px solid #999; flex-shrink: 0;"></div>
+                <span style="font-size: 11px;">{region.get('name', 'N/A')}</span>
+            </div>
+        """)
+
+    return folium.Element(f"""
+        <div style="
+            position: fixed; bottom: 40px; right: 10px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.85); padding: 8px 12px;
+            border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif; max-width: 160px; max-height: 250px;
+            overflow-y: auto; font-size: 12px;
+        ">
+            <div style="font-weight: bold; margin-bottom: 5px; font-size: 13px;">Regionais</div>
+            {"".join(items_legenda)}
+        </div>
+    """)
+
+
 def criar_mapa(data, geojson_data):
     # Removido: logging.info("Iniciando criação do mapa Folium.")
     # Coordenadas centrais para Contagem, MG
@@ -226,7 +265,7 @@ def criar_mapa(data, geojson_data):
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
     folium.LayerControl(position='topright').add_to(m)
     if geojson_data and geojson_data.get("features"):
-        legenda = criar_legenda(geojson_data)
+        legenda = criar_legenda(geojson_data) # Chama a função criar_legenda (agora definida antes)
         m.get_root().html.add_child(legenda)
         # Removido: logging.info("Legenda das regionais adicionada ao mapa.")
 
@@ -302,11 +341,11 @@ def main():
             st.write(f"**Informações:**")
             # Permite Markdown simples na info da sidebar, se a coluna contiver formatação
             st.markdown(info.get('Info', 'Sem descrição detalhada.'))
-            # Adiciona link para redes sociais se existir.
-            # !!! Importante: Aqui usamos 'Instagram' conforme o nome real da planilha !!!
-            redes = info.get('Instagram') # Corrigido para "Instagram"
+            # Adiciona link para Instagram se existir.
+            # Importante: Aqui usamos 'Instagram' conforme o nome real da planilha
+            redes = info.get('Instagram') # Acessando a coluna "Instagram"
             if redes and isinstance(redes, str) and redes.strip() != "":
-                st.write(f"**Instagram:** [Link]({redes.strip()})") # Corrigido texto na sidebar
+                st.write(f"**Instagram:** [Link]({redes.strip()})") # Exibe "Instagram" na sidebar
         else:
             st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
 
