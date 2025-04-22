@@ -39,7 +39,7 @@ TOOLTIP_TEMPLATE = """
 </div>
 """
 
-# Template Popup COM LARGURA RESPONSIVA E IDs PARA JS
+# Template Popup COM LARGURA RESPONSIVA E CHAMADA VIA window.parent
 POPUP_TEMPLATE = """
 <div style="
     font-family: Arial, sans-serif;
@@ -60,7 +60,9 @@ POPUP_TEMPLATE = """
     <div class="texto-completo" id="texto-completo-{3}" style="display: none; margin-top: 5px;">
         {5}
     </div>
-    <button class="leia-mais-btn" onclick="toggleTexto('texto-curto-{3}', 'texto-completo-{3}', this)">Saiba Mais</button>
+    /* MODIFICAÇÃO AQUI v */
+    <button class="leia-mais-btn" onclick="window.parent.toggleTexto('texto-curto-{3}', 'texto-completo-{3}', this)">Saiba Mais</button>
+    /* MODIFICAÇÃO AQUI ^ */
 </div>
 <style>
 .leia-mais-btn {{
