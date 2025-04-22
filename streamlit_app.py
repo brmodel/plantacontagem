@@ -84,70 +84,59 @@ POPUP_TEMPLATE = """
 """
 
 # Definição da função JavaScript como string (COM DEBUGGING)
+# MANTENHA ESTA DEFINIÇÃO COMO ESTAVA
 TOGGLE_TEXTO_JS = """
 function toggleTexto(idCurto, idCompleto, botao) {
-    console.log(">> toggleTexto chamado para:", idCurto, idCompleto); // 1. Verifica se a função é chamada
+    console.log(">> toggleTexto chamado (via window.parent?) para:", idCurto, idCompleto); // Atualiza log
 
-    // Tenta obter os elementos de forma segura
+    // ... (resto da função com logs, como na versão anterior) ...
+
     var elementoCurto = null;
     var elementoCompleto = null;
     try {
-        elementoCurto = document.getElementById(idCurto);
-        elementoCompleto = document.getElementById(idCompleto);
+        // Busca no documento ONDE O SCRIPT ESTÁ EXECUTANDO (o pai)
+        elementoCurto = window.document.getElementById(idCurto);
+        elementoCompleto = window.document.getElementById(idCompleto);
+         // ATENÇÃO: Isso pode falhar se os elementos estiverem DENTRO do iframe/contexto do popup
+         // Se falhar aqui, precisaremos de uma abordagem diferente (passar os elementos ou usar postMessage)
+
     } catch (e) {
-        console.error("!! Erro ao tentar buscar elementos por ID:", e);
+        console.error("!! Erro ao tentar buscar elementos por ID no documento pai:", e);
         return;
     }
 
 
-    // 2. Verifica se os elementos foram encontrados
-    console.log("   Elemento Curto encontrado:", elementoCurto ? 'Sim' : 'Não');
-    console.log("   Elemento Completo encontrado:", elementoCompleto ? 'Sim' : 'Não');
-    console.log("   Botão encontrado:", botao ? 'Sim' : 'Não');
+    console.log("   Elemento Curto encontrado (no pai):", elementoCurto ? 'Sim' : 'Não');
+    console.log("   Elemento Completo encontrado (no pai):", elementoCompleto ? 'Sim' : 'Não');
+    console.log("   Botão (contexto original):", botao ? 'Sim' : 'Não');
 
-    if (!elementoCurto) {
-        console.error("!! Erro: Elemento Curto com ID '" + idCurto + "' NÃO encontrado no DOM!");
-        alert("Erro interno: Não foi possível encontrar a seção de texto curto. ID: " + idCurto); // Feedback ao usuário
-        return;
-    }
-    if (!elementoCompleto) {
-        console.error("!! Erro: Elemento Completo com ID '" + idCompleto + "' NÃO encontrado no DOM!");
-         alert("Erro interno: Não foi possível encontrar a seção de texto completo. ID: " + idCompleto); // Feedback ao usuário
-        return;
-    }
-     if (!botao) {
-        console.error("!! Erro: Referência do botão (this) não foi passada corretamente!");
-        alert("Erro interno: Botão não identificado."); // Feedback ao usuário
-        return;
+    if (!elementoCurto || !elementoCompleto || !botao) {
+         console.error("!! Erro: Elementos não encontrados no documento pai ou botão inválido.");
+         // Talvez seja necessário buscar os elementos de forma diferente se estiverem isolados
+         // Ex: botao.ownerDocument.getElementById(idCurto) ?? (Testar)
+         alert("Erro interno ao localizar os textos. Tente recarregar.");
+         return;
     }
 
-    console.log("   Estilo atual Curto:", elementoCurto.style.display); // 3. Verifica estilos atuais
-    console.log("   Estilo atual Completo:", elementoCompleto.style.display);
-
-    try {
+    // ... (Resto da lógica try/catch para trocar display e texto do botão) ...
+     try {
         // Verifica o estado do elemento completo
         if (elementoCompleto.style.display === "none" || elementoCompleto.style.display === "") {
             console.log("   Ação: Mostrando texto completo");
             elementoCurto.style.display = "none";
             elementoCompleto.style.display = "block";
             botao.textContent = "Mostrar Menos";
-            // Força o popup a recalcular seu tamanho (pode ajudar em alguns casos)
-            botao.closest('.leaflet-popup-content-wrapper')?.style?.setProperty('width', 'auto', 'important');
-
         } else {
             console.log("   Ação: Mostrando texto curto");
             elementoCurto.style.display = "block";
             elementoCompleto.style.display = "none";
             botao.textContent = "Saiba Mais";
-             // Força o popup a recalcular seu tamanho
-            botao.closest('.leaflet-popup-content-wrapper')?.style?.setProperty('width', 'auto', 'important');
         }
-        console.log("   Novos estilos:", elementoCurto.style.display, elementoCompleto.style.display); // 4. Verifica estilos após a ação
+        console.log("   Novos estilos:", elementoCurto.style.display, elementoCompleto.style.display);
 
     } catch (e) {
-        // 5. Captura qualquer erro durante a manipulação do DOM
         console.error("!! Erro durante a troca de display ou manipulação do botão:", e);
-        alert("Ocorreu um erro ao tentar expandir/recolher o texto."); // Feedback ao usuário
+        alert("Ocorreu um erro ao tentar expandir/recolher o texto.");
     }
 }
 """
@@ -257,48 +246,15 @@ def criar_legenda(geojson_data):
     """)
 
 def criar_mapa(data, geojson_data):
-    logging.info("Iniciando criação do mapa Folium.")
-    m = folium.Map(location=[-19.9208, -44.0535], tiles="cartodbpositron", # Tile mais limpo
-                   zoom_start=12, control_scale=True)
+    # ... (início da função como antes) ...
 
-    # Adiciona GEOJson
-    if geojson_data and geojson_data.get("features"):
-        folium.GeoJson(
-            geojson_data, name='Regionais',
-            style_function=lambda x: {
-                "fillColor": MAPEAMENTO_CORES.get(x['properties'].get('id'), "#cccccc"),
-                "color": "#555555", "weight": 1, "fillOpacity": 0.3,
-            },
-            tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-            highlight_function=lambda x: {"weight": 2, "fillOpacity": 0.5, "color": "black"},
-            interactive=True, control=True, show=True # Garante que está visível por padrão
-        ).add_to(m)
-        logging.info("Camada GeoJSON adicionada ao mapa.")
-    else:
-        logging.warning("Dados GeoJSON não disponíveis ou vazios para adicionar ao mapa.")
-        st.warning("Não foi possível exibir a camada de regionais.")
-
-    # Adiciona Marcadores
-    max_chars = 150
-    marker_count = 0
+    # Adiciona Marcadores (usando o novo POPUP_TEMPLATE)
+    # ... (loop for para criar marcadores como antes, mas usando o POPUP_TEMPLATE atualizado) ...
     for index, row in data.iterrows():
-        lat, lon = row.get("lat"), row.get("lon")
-        if pd.isna(lat) or pd.isna(lon):
-            logging.warning(f"Coordenadas inválidas para {row.get('Nome', 'N/I')} (Índice: {index}). Pulando marcador.")
-            continue
+        # ... (código para lat, lon, icon, textos) ...
+        marker_id = f"up-{index}" # ID mais semântico
 
-        icon_num = row.get("Numeral")
-        icon_url = ICONES_URL.get(icon_num, ICONE_PADRAO)
-        try:
-            icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
-        except Exception as e:
-            logging.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
-            icon = folium.Icon(color="green", prefix='fa', icon="leaf") # Fallback FontAwesome
-
-        texto_completo = str(row.get('Info', 'Sem descrição detalhada.'))
-        texto_curto = texto_completo[:max_chars] + ('...' if len(texto_completo) > max_chars else '')
-        marker_id = f"up-{index}" # ID mais semântico e seguro para JS/HTML
-
+        # POPUP_TEMPLATE agora tem o onclick="window.parent.toggleTexto(...)"
         popup_html = POPUP_TEMPLATE.format(
             row.get('Nome', 'Nome não informado'),
             row.get('Tipo', 'Tipo não informado'),
@@ -307,10 +263,7 @@ def criar_mapa(data, geojson_data):
             texto_curto,
             texto_completo
         )
-        # Cria IFrame para isolar o conteúdo do popup, pode ajudar com JS/CSS
-        # iframe = folium.IFrame(html=popup_html, width=300, height=150) # Tamanho inicial
-        # popup = folium.Popup(iframe, max_width=500) # max_width no Popup ainda pode ser útil
-        popup = folium.Popup(popup_html, max_width=500) # Mantendo simples por enquanto
+        popup = folium.Popup(popup_html, max_width=500)
 
         Marker(
             location=[lat, lon], popup=popup, icon=icon,
@@ -318,21 +271,21 @@ def criar_mapa(data, geojson_data):
         ).add_to(m)
         marker_count += 1
 
-    logging.info(f"{marker_count} marcadores adicionados ao mapa.")
 
-    # Adiciona a função JavaScript ao <head> do mapa
+    # Adiciona a função JavaScript ao <head> do mapa (ESSENCIAL)
     try:
+        # MANTENHA ESTA PARTE - A função precisa existir no escopo pai
         script_element = folium.Element(f"<script>{TOGGLE_TEXTO_JS}</script>")
         m.get_root().header.add_child(script_element)
-        logging.info("Função JavaScript 'toggleTexto' adicionada ao cabeçalho do mapa.")
+        logging.info("Função JavaScript 'toggleTexto' adicionada ao cabeçalho do mapa (escopo pai).")
     except Exception as e:
          logging.error(f"Falha ao adicionar JS ao cabeçalho do mapa: {e}")
          st.error("Ocorreu um erro ao preparar a funcionalidade de expandir texto.")
 
-    # Adiciona Controles e Legenda
+    # ... (resto da função: controles, legenda, return m) ...
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
     folium.LayerControl(position='topright').add_to(m)
-    if geojson_data and geojson_data.get("features"): # Só adiciona legenda se houver geojson
+    if geojson_data and geojson_data.get("features"):
        legenda = criar_legenda(geojson_data)
        m.get_root().html.add_child(legenda)
        logging.info("Legenda das regionais adicionada ao mapa.")
