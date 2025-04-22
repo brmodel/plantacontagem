@@ -28,8 +28,8 @@ BANNER_PMC_BASE = ["ilustracao_pmc.png", "banner_pmc.png"]
 LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 
-# Lista de colunas essenciais - usada para carregar e validar.
-# CORRIGIDO: O nome da coluna é "Instagram" na planilha.
+# Lista de colunas essenciais - usada para carregar.
+# O nome da coluna Instagram está correto.
 essential_cols = ['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral', 'Info', 'Instagram']
 
 
@@ -64,56 +64,54 @@ def load_data():
     # Use a URL de exportação CSV correta para o pandas ler o conteúdo raw
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
     try:
-        # Usando range(8) conforme solicitado. Assumimos que as colunas essenciais
-        # são as primeiras 8 colunas por índice (0 a 7) no CSV e que o pandas
-        # atribuirá corretamente os nomes do cabeçalho a essas colunas.
-        # Este método DEPENDE da ordem das colunas na planilha.
+        # Carrega as 8 primeiras colunas por índice (0 a 7).
+        # Espera-se que o cabeçalho contenha os nomes em essential_cols nesta ordem ou próximo.
         data = pd.read_csv(url, usecols=range(8))
 
         # Após carregar com range(8), o DataFrame 'data' deve ter os nomes do cabeçalho do CSV.
-        # Precisamos garantir que os nomes essenciais existem (agora incluindo "Instagram").
-
-        # Continuar com a limpeza dos dados
-        # Remove linhas onde QUALQUER coluna essencial (pelos nomes carregados, incluindo "Instagram") está faltando
-        initial_rows = data.shape[0]
-        # Importante: Aqui usamos 'Instagram' conforme o nome real da planilha
-        data.dropna(subset=essential_cols, inplace=True) # Usa a lista essential_cols corrigida
-        rows_after_essential_dropna = data.shape[0]
-        if initial_rows > rows_after_essential_dropna:
-             st.warning(f"{initial_rows - rows_after_essential_dropna} linhas removidas por falta de dados em colunas essenciais.")
+        # Precisamos garantir que os nomes essenciais existem (incluindo "Instagram").
+        # Verifica se todas as colunas essenciais foram carregadas com os nomes esperados
+        if not all(col in data.columns for col in essential_cols):
+             missing_cols = [col for col in essential_cols if col not in data.columns]
+             st.error(f"Erro: As colunas essenciais {missing_cols} não foram encontradas no CSV carregado. Verifique os nomes e a ordem das primeiras 8 colunas na planilha.")
+             return pd.DataFrame()
 
 
-        # Convertendo Numeral, lat, lon para numérico, tratando erros como NaN
+        # --- Nova lógica de limpeza ---
+        # 1. Converte Numeral, lat, lon para numérico primeiro.
+        # Valores não numéricos válidos (como texto ou fórmulas que retornam erro) virarão NaN.
         data['Numeral'] = pd.to_numeric(data['Numeral'], errors='coerce')
         data['lat'] = pd.to_numeric(data['lat'], errors='coerce')
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
 
-        # Esta dropna garante que as colunas CRUCIAIS para o mapa (lat, lon, Numeral) estejam preenchidas APÓS a conversão numérica
+        # 2. Remove linhas APENAS se os dados CRUCIAIS para o mapeamento (lat, lon, Numeral) estiverem ausentes (NaN)
         rows_before_mapping_dropna = data.shape[0]
-        data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
+        data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True) # Remove somente se estes 3 estiverem faltando
         rows_after_mapping_dropna = data.shape[0]
         if rows_before_mapping_dropna > rows_after_mapping_dropna:
-            st.warning(f"{rows_before_mapping_dropna - rows_after_mapping_dropna} linhas removidas por valores inválidos ou ausentes em Numeral, lat ou lon APÓS conversão numérica.")
+            st.warning(f"{rows_before_mapping_dropna - rows_after_mapping_dropna} linhas removidas por valores inválidos ou ausentes em Numeral, lat ou lon (necessários para o mapa).")
 
+        # Linhas que faltam apenas Info, Instagram, Nome, Tipo ou Regional NÃO serão removidas por esta dropna.
 
-        # Convertendo Numeral para tipo inteiro que aceita NaN (Int64)
-        # Isso deve ser feito APÓS as dropna que garantem que Numeral não é NaN.
+        # 3. Converte Numeral para tipo inteiro que aceita NaN (Int64) após remover NaNs dele.
+        # Isso é seguro porque a dropna acima removeu NaNs de Numeral.
         data['Numeral'] = data['Numeral'].astype('Int64')
 
-
         # Adicionar um ID único baseado no índice do DataFrame *final* (após dropna)
+        # Isso garante que o ID corresponde à linha que foi mantida.
         data['marker_id'] = data.index.map(lambda i: f'up-{i}')
 
+        # As colunas 'Info' e 'Instagram' agora podem conter NaNs, mas o código
+        # que as acessa na sidebar (info.get('Info', ...)) lida com isso.
 
         return data # Retorna o DataFrame processado
     except pd.errors.EmptyDataError:
         st.error("O arquivo CSV da planilha parece estar vazio ou não contém cabeçalhos.")
         return pd.DataFrame()
     except ValueError as e:
-        # Este pode ser o erro original com usecols=range(8), erro de conversão numérica,
-        # OU um erro se um dos nomes de coluna em essential_cols (como "Instagram") não existir
-        # no DataFrame carregado por range(8).
-        st.error(f"Erro ao processar colunas ou dados da planilha: {e}. Verifique a estrutura do CSV, os tipos de dados, E SE OS NOMES DAS COLUNAS EM essential_cols correspondem ao cabeçalho das primeiras 8 colunas do CSV.")
+        # Pode ocorrer se usecols=range(8) carregar algo inesperado ou se o nome da coluna
+        # em subset=['Numeral', 'lat', 'lon'] estiver incorreto.
+        st.error(f"Erro ao processar colunas ou dados da planilha: {e}. Verifique a estrutura do CSV, os tipos de dados, e os nomes das primeiras 8 colunas.")
         return pd.DataFrame()
     except Exception as e:
         st.error(f"Erro inesperado ao carregar dados: {e}")
@@ -143,7 +141,7 @@ def load_geojson():
         return default_geojson
 
 # --- Funções de Criação do Mapa e Legenda ---
-# !!! CORRIGIDO: Definição de criar_legenda movida para ANTES de criar_mapa !!!
+# Definição de criar_legenda
 def criar_legenda(geojson_data):
     regions = []
     features = geojson_data.get('features') if isinstance(geojson_data, dict) else None
@@ -183,7 +181,7 @@ def criar_legenda(geojson_data):
         </div>
     """)
 
-
+# Definição de criar_mapa
 def criar_mapa(data, geojson_data):
     # Removido: logging.info("Iniciando criação do mapa Folium.")
     # Coordenadas centrais para Contagem, MG
@@ -211,30 +209,21 @@ def criar_mapa(data, geojson_data):
     if isinstance(data, pd.DataFrame) and not data.empty:
         for index, row in data.iterrows():
             # Verifica se as colunas lat e lon existem e são válidas na linha
-            # Se as dropna anteriores funcionaram, elas devem existir e ser numéricas.
-            if 'lat' not in row or 'lon' not in row or pd.isna(row['lat']) or pd.isna(row['lon']) or not isinstance(row['lat'], (int, float)) or not isinstance(row['lon'], (int, float)):
-                 st.warning(f"Colunas 'lat' ou 'lon' ausentes, inválidas ou vazias na linha (Índice: {index}). Pulando marcador.")
-                 continue
-
+            # Graças à dropna(['Numeral', 'lat', 'lon']), estas colunas devem existir e ser numéricas não NaN aqui.
             lat, lon = row["lat"], row["lon"]
 
             # Verifica se a coluna 'Numeral' existe e é válida na linha
-            if 'Numeral' not in row or pd.isna(row['Numeral']):
-                 st.warning(f"Coluna 'Numeral' ausente ou vazia na linha (Índice: {index}). Usando ícone padrão.")
-                 icon_url = ICONE_PADRAO
-            else:
-                icon_num = row["Numeral"]
-                # Garante que icon_num é um inteiro válido antes de usá-lo como chave.
-                # A dropna e astype('Int64') devem garantir isso.
-                # Acesso seguro ao dicionário ICONES_URL
-                try:
-                    icon_url = ICONES_URL.get(int(icon_num), ICONE_PADRAO)
-                except (ValueError, TypeError): # Em caso de Numeral não ser conversível para int
-                    st.warning(f"Valor de 'Numeral' inválido '{icon_num}' na linha (Índice: {index}). Usando ícone padrão.")
-                    icon_url = ICONE_PADRAO
+            # Graças à dropna(['Numeral', 'lat', 'lon']), esta coluna deve existir e ser numérica não NaN aqui.
+            icon_num = row["Numeral"]
+
+            # Acesso seguro ao dicionário ICONES_URL, convertendo Numeral para int
+            # A dropna e astype('Int64') garantem que Numeral é um Int64 não NaN.
+            # int() converterá Int64 para int primitivo para usar como chave.
+            icon_url = ICONES_URL.get(int(icon_num), ICONE_PADRAO)
 
 
             try:
+                # Note: row.get('Nome', 'N/I') usado aqui e no tooltip para lidar com caso Nome tenha NaN
                 icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
             except Exception as e:
                 st.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
@@ -243,6 +232,7 @@ def criar_mapa(data, geojson_data):
 
             # Formata o HTML simples do popup (sem botão ou JS)
             # Garantindo que o get() tem um fallback caso a coluna não exista por algum motivo (segurança)
+            # Nome, Tipo, Regional podem ser NaN, get() lida com isso.
             popup_html = POPUP_TEMPLATE.format(
                 row.get('Nome', 'Nome não informado'), # {0}
                 row.get('Tipo', 'Tipo não informado'), # {1}
@@ -255,7 +245,7 @@ def criar_mapa(data, geojson_data):
                 location=[lat, lon],
                 popup=popup,
                 icon=icon,
-                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
+                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')) # Usa get para Nome no tooltip também
                 # Não passamos marker_id diretamente para o Marker, st_folium cuida disso no retorno
             ).add_to(m)
             marker_count += 1
@@ -265,7 +255,7 @@ def criar_mapa(data, geojson_data):
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
     folium.LayerControl(position='topright').add_to(m)
     if geojson_data and geojson_data.get("features"):
-        legenda = criar_legenda(geojson_data) # Chama a função criar_legenda (agora definida antes)
+        legenda = criar_legenda(geojson_data) # Chama a função criar_legenda
         m.get_root().html.add_child(legenda)
         # Removido: logging.info("Legenda das regionais adicionada ao mapa.")
 
@@ -335,15 +325,16 @@ def main():
         if st.session_state.selected_marker_info:
             info = st.session_state.selected_marker_info
             # Exibe as informações completas na sidebar
-            st.header(info.get('Nome', 'Nome não informado'))
-            st.write(f"**Tipo:** {info.get('Tipo', 'Tipo não informado')}")
-            st.write(f"**Regional:** {info.get('Regional', 'Regional não informada')}")
+            st.header(info.get('Nome', 'Nome não informado')) # get() para Nome também
+            st.write(f"**Tipo:** {info.get('Tipo', 'Tipo não informado')}") # get() para Tipo também
+            st.write(f"**Regional:** {info.get('Regional', 'Regional não informada')}") # get() para Regional também
             st.write(f"**Informações:**")
-            # Permite Markdown simples na info da sidebar, se a coluna contiver formatação
+            # Permite Markdown simples na info da sidebar, se a coluna contiver formatação.
+            # Usa get() para Info, lidando com NaN
             st.markdown(info.get('Info', 'Sem descrição detalhada.'))
             # Adiciona link para Instagram se existir.
             # Importante: Aqui usamos 'Instagram' conforme o nome real da planilha
-            redes = info.get('Instagram') # Acessando a coluna "Instagram"
+            redes = info.get('Instagram') # Acessando a coluna "Instagram", get() lida com NaN
             if redes and isinstance(redes, str) and redes.strip() != "":
                 st.write(f"**Instagram:** [Link]({redes.strip()})") # Exibe "Instagram" na sidebar
         else:
@@ -355,12 +346,17 @@ def main():
     # Só aplica filtro se os dados foram carregados com sucesso
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_filtrado = st.session_state.df
-        if search_query:
+        # Verifica se a coluna 'Nome' existe antes de tentar filtrar por ela
+        if 'Nome' in st.session_state.df.columns and search_query:
             df_filtrado = st.session_state.df[
                 st.session_state.df["Nome"].str.lower().str.contains(search_query, na=False, regex=False)
             ]
             if df_filtrado.empty:
                 st.warning(f"Nenhuma unidade encontrada contendo '{search_query}' no nome.")
+        elif search_query: # Caso a coluna 'Nome' não exista mas a busca foi feita
+             st.warning("A coluna 'Nome' não foi encontrada nos dados, a busca não pôde ser aplicada.")
+             df_filtrado = pd.DataFrame() # Garante que o mapa não seja exibido sem nome
+
 
     # --- Exibição do Mapa ---
     # O mapa só é exibido se não houver erro crítico nos dados principais E houver dados para exibir após o filtro
@@ -391,9 +387,8 @@ def main():
                 # para encontrar a unidade clicada pelas coordenadas.
                 for index, row in df_filtrado.iterrows():
                     # Compara as coordenadas do clique com as coordenadas da linha usando tolerância
-                    # Usamos um tolerance razoável para imprecisões de ponto flutuante.
-                    # Verifica se 'lat' e 'lon' existem na linha antes de compará-las
-                    if 'lat' in row and 'lon' in row and np.isclose(row['lat'], clicked_lat, atol=1e-6) and np.isclose(row['lon'], clicked_lon, atol=1e-6):
+                    # Verifica se 'lat' e 'lon' existem na linha antes de compará-las E se são numéricas válidas
+                    if 'lat' in row and 'lon' in row and pd.notna(row['lat']) and pd.notna(row['lon']) and np.isclose(row['lat'], clicked_lat, atol=1e-6) and np.isclose(row['lon'], clicked_lon, atol=1e-6):
                         found_row = row
                         # Removido: logging.info(f"Encontrada linha correspondente (Índice: {index}) para o clique Lat/Lon.")
                         break # Encontramos a linha correspondente, saímos do loop
@@ -407,7 +402,9 @@ def main():
                     # (Não precisamos chamar st.rerun() explicitamente aqui)
                 else:
                     # Removido: logging.warning(f"Clique em Lat: {clicked_lat}, Lon: {clicked_lon} não correspondeu a nenhuma linha no DF filtrado.Sidebar não atualizada.")
-                    # Limpa a sidebar se o clique não for em um marcador conhecido
+                    # Limpa a sidebar se o clique não for em um marcador conhecido (ex: clique no GeoJSON)
+                    # Se o clique for em uma feição do GeoJSON, map_output['last_object_clicked'] terá lat/lng,
+                    # mas 'found_row' será None. Limpar a sidebar neste caso faz sentido.
                     st.session_state.selected_marker_info = None
 
     elif st.session_state.load_error:
@@ -415,9 +412,14 @@ def main():
         pass # Não exibe mapa se houver erro fatal no carregamento
 
     elif not st.session_state.df.empty and df_filtrado.empty:
-        # Os dados originais carregaram, mas o filtro não encontrou nada
-        # A mensagem de warning já foi mostrada na seção de Filtragem
-        pass # Não exibe mapa se o filtro retornar vazio
+        # Os dados originais carregaram, mas o filtro não encontrou nada.
+        # A mensagem de warning já foi mostrada na seção de Filtragem.
+        # Não exibe mapa se o filtro retornar vazio, a menos que não houvesse filtro inicial.
+        # Se search_query era vazio e df_filtrado está vazio, significa que TODOS os dados
+        # foram filtrados pela dropna, então a mensagem de warning da dropna já foi mostrada.
+        if not search_query:
+             st.info("Nenhuma unidade produtiva encontrada nos dados carregados após validação.")
+
 
     elif st.session_state.df.empty and not st.session_state.load_error:
         # Os dados carregaram, mas a planilha estava vazia desde o início
