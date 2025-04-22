@@ -36,6 +36,7 @@ BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 # --- Templates HTML (Simplificados) ---
 
 # Template para o Popup (apenas info básica, SEM botão "Saiba Mais" ou JS/CSS inline)
+# REMOVIDOS os comentários Python dentro das chaves de formatação {}
 POPUP_TEMPLATE = """
 <div style="
     font-family: Arial, sans-serif;
@@ -43,11 +44,11 @@ POPUP_TEMPLATE = """
     width: auto; max-width: min(90vw, 466px); min-width: 200px; /* Limitação de tamanho/resolução */
     word-break: break-word; box-sizing: border-box; padding: 8px;
 ">
-    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{0}</b></h6> {/* Nome */}
-    <p style="margin: 4px 0;"><b>Tipo:</b> {1}</p> {/* Tipo */}
-    <p style="margin: 4px 0;"><b>Regional:</b> {2}</p> {/* Regional */}
+    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{0}</b></h6>
+    <p style="margin: 4px 0;"><b>Tipo:</b> {1}</p>
+    <p style="margin: 4px 0;"><b>Regional:</b> {2}</p>
 </div>
-""" # Sem botão, sem JS, sem estilos específicos aqui
+""" # Sem botão, sem JS, sem estilos específicos aqui. Comentários /* */ removidos das chaves.
 
 TOOLTIP_TEMPLATE = """
 <div style="font-family: Arial, sans-serif; font-size: 12px">
@@ -79,7 +80,7 @@ def load_data():
 
         data['Numeral'] = data['Numeral'].astype('Int64')
 
-        # Manter marker_id baseado no índice, útil para debugging ou futuras funcionalidades
+        # Adicionar um ID único baseado no índice para facilitar a lookup
         data['marker_id'] = data.index.map(lambda i: f'up-{i}')
 
         logging.info(f"Dados limpos carregados: {data.shape[0]} linhas.")
@@ -197,29 +198,21 @@ def criar_mapa(data, geojson_data):
             logging.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
             icon = folium.Icon(color="green", prefix='fa', icon="leaf")
 
-        # ID do marcador (usado para lookup na sidebar)
-        marker_id = row.get('marker_id', f'up-{index}')
-
         # Formata o HTML simples do popup (sem botão ou JS)
+        # Garantindo que o get() tem um fallback caso a coluna não exista por algum motivo (segurança)
         popup_html = POPUP_TEMPLATE.format(
             row.get('Nome', 'Nome não informado'), # {0}
             row.get('Tipo', 'Tipo não informado'), # {1}
             row.get('Regional', 'Regional não informada') # {2}
-            # Não há mais placeholder para o botão
         )
 
         popup = folium.Popup(popup_html, max_width=500)
 
-        # Adiciona o marcador ao mapa
-        # O ID do marcador aqui é o ID interno do Folium/Leaflet, não o nosso 'marker_id' do dataframe
-        # A identificação pelo Lat/Lon retornado por st_folium é mais direta
         Marker(
             location=[lat, lon],
             popup=popup,
             icon=icon,
-            tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')),
-            # Você pode tentar adicionar um 'id' aqui, mas st_folium pode não retornar isso confiavelmente para cliques de marcador
-            # id=marker_id # Isto não funciona nativamente com returned_objects para clicks de marcadores simples
+            tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
         ).add_to(m)
         marker_count += 1
 
@@ -264,10 +257,8 @@ def main():
 
         st.session_state.data_loaded = True
 
-        # Não recarrega automaticamente após o carregamento inicial se houver dados.
-        # A interação com o mapa irá disparar os reruns necessários.
-        # if not st.session_state.load_error:
-        #      st.rerun() # Removido rerun automático
+        # Não recarrega automaticamente após o carregamento inicial
+        # A interação com o mapa (clique) irá disparar os reruns necessários.
 
     # --- Layout Principal (Colunas) ---
     col1, col2 = st.columns([3, 1])
@@ -280,6 +271,8 @@ def main():
         st.session_state.search_input_value = search_query # Atualiza o estado com o valor atual
 
     # --- Lógica da Sidebar ---
+    # A sidebar deve ser definida ANTES da chamada st_folium para que ela exista no primeiro rerun
+    # mesmo antes de qualquer clique.
     st.sidebar.title("Detalhes da Unidade")
     # Verifica se há informação de marcador selecionado no estado
     if st.session_state.selected_marker_info:
@@ -305,65 +298,62 @@ def main():
                 st.warning(f"Nenhuma unidade encontrada contendo '{search_query}' no nome.")
 
     # --- Exibição do Mapa ---
+    # O mapa só é exibido se não houver erro crítico nos dados principais
     if not st.session_state.load_error:
         if not df_filtrado.empty:
             logging.info(f"Renderizando mapa com {len(df_filtrado)} unidades filtradas.")
+            # Passa o geojson_data. Se geojson falhou, passa um objeto vazio seguro.
             geojson_to_map = st.session_state.geojson_data if st.session_state.geojson_data is not None else {"type": "FeatureCollection", "features": []}
             m = criar_mapa(df_filtrado, geojson_to_map)
             # st_folium renderiza o mapa e retorna o estado da interação.
-            # Retornamos 'last_object_clicked' para pegar o lat/lon do clique no marcador ou GeoJson.
+            # Retornamos 'last_object_clicked' para pegar o lat/lon do clique em marcadores ou GeoJson.
             map_output = st_folium(m, width='100%', height=600, key="folium_map", returned_objects=['last_object_clicked'])
 
             # --- Lógica para Capturar Clique e Atualizar Sidebar ---
-            # Verifica se um objeto no mapa foi clicado
+            # Verifica se um objeto no mapa foi clicado (retornado por st_folium)
             if map_output and map_output.get('last_object_clicked'):
                 clicked_obj = map_output['last_object_clicked']
                 logging.info(f"Objeto clicado no mapa: {clicked_obj}")
 
-                # Verifica se o objeto clicado tem coordenadas (marcadores e GeoJson)
+                # Verifica se o objeto clicado tem coordenadas (marcadores e feições GeoJson pontuais/centroides)
                 if 'lat' in clicked_obj and 'lng' in clicked_obj:
                     clicked_lat = clicked_obj['lat']
                     clicked_lon = clicked_obj['lng']
-                    logging.info(f"Objeto clicado em Lat: {clicked_lat}, Lon: {clicked_lon}")
+                    logging.info(f"Clique detectado em Lat: {clicked_lat}, Lon: {clicked_lon}")
 
                     # Tenta encontrar a linha do DataFrame que corresponde a estas coordenadas
-                    # Usamos numpy.isclose para comparação robusta de ponto flutuante
-                    # Buscamos no DataFrame ORIGINAL (st.session_state.df) para garantir que pegamos a info completa,
-                    # mas podemos otimizar buscando no df_filtrado se a performance for uma questão.
-                    # Buscar no original é mais seguro para garantir que a sidebar mostre a info mesmo se o item
-                    # estiver fora do filtro atual, caso o usuário clique nele *antes* de aplicar o filtro.
-                    # Contudo, o clique só pode ocorrer em itens *visíveis* (no df_filtrado).
-                    # Busquemos no df_filtrado, que é o que está no mapa.
                     found_row = None
-                    # Iterar sobre as linhas do DataFrame filtrado atualmente exibido no mapa
+                    # Iteramos sobre as linhas do DataFrame filtrado atualmente exibido no mapa
+                    # Isso é mais eficiente do que buscar no DF completo se houver muitos dados e filtro ativo.
+                    # Se um item for clicado, ele DEVE estar no df_filtrado.
                     for index, row in df_filtrado.iterrows():
-                        # Compara as coordenadas do clique com as coordenadas da linha
-                        # Usamos um tolerance relativamente pequeno
-                        if np.isclose(row['lat'], clicked_lat, atol=1e-6) and np.isclose(row['lon'], clicked_lon, atol=1e-6):
-                            found_row = row
-                            logging.info(f"Encontrada linha correspondente (Índice: {index}) para o clique.")
-                            break # Encontramos a linha correspondente
+                         # Compara as coordenadas do clique com as coordenadas da linha usando tolerância
+                         # Usamos um tolerance razoável para imprecisões de ponto flutuante.
+                         if np.isclose(row['lat'], clicked_lat, atol=1e-6) and np.isclose(row['lon'], clicked_lon, atol=1e-6):
+                             found_row = row
+                             logging.info(f"Encontrada linha correspondente (Índice: {index}) para o clique Lat/Lon.")
+                             break # Encontramos a linha correspondente, saímos do loop
 
                     if found_row is not None:
                         # Armazena as informações completas da linha encontrada no session_state
                         # O .to_dict() converte a Série Pandas (linha do DF) para um dicionário
                         st.session_state.selected_marker_info = found_row.to_dict()
-                        logging.info("Sidebar info atualizada no session_state.")
+                        logging.info("Sidebar info atualizada no session_state com dados do clique.")
                         # Streamlit detecta a mudança no session_state e dispara um rerun automaticamente
                         # (Não precisamos chamar st.rerun() explicitamente aqui)
                     else:
-                        # Se clicou em algo com Lat/Lon mas não encontrou correspondência no DF filtrado
-                        # (pode ser um clique muito próximo entre marcadores, ou um clique em GeoJson que não mapeamos 1:1)
-                        logging.warning(f"Clique em Lat: {clicked_lat}, Lon: {clicked_lon} não correspondeu a nenhuma linha no DF filtrado.")
-                        # Opcional: Limpar a sidebar se o clique não for em um marcador conhecido
-                        # st.session_state.selected_marker_info = None
-
+                         logging.warning(f"Clique em Lat: {clicked_lat}, Lon: {clicked_lon} não correspondeu a nenhuma linha no DF filtrado.Sidebar não atualizada.")
+                         # Opcional: Limpar a sidebar se o clique não for em um marcador conhecido
+                         # st.session_state.selected_marker_info = None # Limpa se não encontrar
 
         elif not search_query and not st.session_state.df.empty:
+             # Caso não haja filtro de busca e o DF original não está vazio, mas df_filtrado está (situação rara)
              st.info("Digite um nome na caixa de pesquisa para filtrar as unidades.")
         elif st.session_state.df.empty:
+             # Os dados principais carregaram, mas a planilha estava vazia desde o início
              st.info("Nenhuma unidade produtiva encontrada nos dados carregados.")
-        # O caso search_query com df_filtrado.empty já exibe um warning
+        # O caso search_query com df_filtrado.empty já exibe um warning em 'Filtragem'
+
 
     # Rodapé
     st.markdown("---")
