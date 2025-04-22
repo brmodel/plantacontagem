@@ -7,6 +7,7 @@ from folium import Marker
 import requests
 from folium.plugins import LocateControl
 import logging # Para logs mais detalhados se necessário
+import numpy as np # Para comparações de ponto flutuante seguras
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
@@ -32,109 +33,21 @@ ICONES_URL = {k: ICONES_URL_BASE + v for k, v in ICONES.items()}
 ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png"
 BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
-# --- Templates HTML (Separados para evitar conflitos de formatação) ---
+# --- Templates HTML (Simplificados) ---
 
-# 1. Template para o CORPO HTML do Popup (com placeholders para .format())
-# Contém a estrutura principal e a chamada onclick="toggleTexto(...)"
-POPUP_HTML_BODY_TEMPLATE = """
+# Template para o Popup (apenas info básica, SEM botão "Saiba Mais" ou JS/CSS inline)
+POPUP_TEMPLATE = """
 <div style="
     font-family: Arial, sans-serif;
     font-size: 12px;
-    width: auto; /* Ajusta-se ao conteúdo */
-    max-width: min(90vw, 466px); /* Usa o menor entre 90% da tela e 466px */
-    min-width: 200px; /* Largura mínima */
-    word-break: break-word;
-    box-sizing: border-box; /* Inclui padding/border no tamanho total */
-    padding: 8px; /* Adiciona um respiro interno */
+    width: auto; max-width: min(90vw, 466px); min-width: 200px; /* Limitação de tamanho/resolução */
+    word-break: break-word; box-sizing: border-box; padding: 8px;
 ">
-    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{0}</b></h6>
-    <p style="margin: 4px 0;"><b>Tipo:</b> {1}</p>
-    <p style="margin: 4px 0;"><b>Regional:</b> {2}</p>
-    <div class="texto-curto" id="texto-curto-{3}">
-        {4}
-    </div>
-    <div class="texto-completo" id="texto-completo-{3}" style="display: none; margin-top: 5px;">
-        {5}
-    </div>
-    <button class="leia-mais-btn" onclick="toggleTexto('texto-curto-{3}', 'texto-completo-{3}', this)">Saiba Mais</button>
+    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{0}</b></h6> {/* Nome */}
+    <p style="margin: 4px 0;"><b>Tipo:</b> {1}</p> {/* Tipo */}
+    <p style="margin: 4px 0;"><b>Regional:</b> {2}</p> {/* Regional */}
 </div>
-""" # Chaves {} são placeholders para .format(). Chaves literais em estilos inline não precisam de escape aqui.
-
-# 2. Bloco de estilo CSS (chaves {} literais)
-POPUP_CSS_STYLE = """
-<style>
-.leia-mais-btn {
-    background: none;
-    border: none;
-    color: #007bff; /* Azul mais padrão */
-    cursor: pointer;
-    padding: 0;
-    font-size: 11px; /* Um pouco maior */
-    margin-top: 10px; /* Mais espaço */
-    display: block;
-    font-weight: bold;
-}
-.leia-mais-btn:hover {
-    text-decoration: underline;
-    color: #0056b3; /* Azul mais escuro no hover */
-}
-</style>
-""" # Chaves {} não são escapadas, pois esta string não passa por .format()
-
-# 3. Bloco de script JavaScript (chaves {} literais)
-POPUP_JS_SCRIPT = """
-<script>
-function toggleTexto(idCurto, idCompleto, botao) {
-    console.log(">> toggleTexto chamado para:", idCurto, idCompleto);
-
-    var elementoCurto = null;
-    var elementoCompleto = null;
-    try {
-        // Busca os elementos DENTRO DO DOCUMENTO ATUAL (o do popup/iframe)
-        elementoCurto = document.getElementById(idCurto);
-        elementoCompleto = document.getElementById(idCompleto);
-    } catch (e) {
-        console.error("!! Erro ao tentar buscar elementos por ID no popup:", e);
-        return;
-    }
-
-    console.log("    Elemento Curto encontrado:", elementoCurto ? 'Sim' : 'Não');
-    console.log("    Elemento Completo encontrado:", elementoCompleto ? 'Sim' : 'Não');
-    console.log("    Botão encontrado:", botao ? 'Sim' : 'Não');
-
-    if (!elementoCurto || !elementoCompleto || !botao) {
-         console.error("!! Erro: Elementos não encontrados ou botão inválido dentro do popup.");
-         // alert("Erro interno: Elementos não encontrados no popup."); // Evitar alerts em popups
-         return;
-    }
-
-    try {
-        if (elementoCompleto.style.display === "none" || elementoCompleto.style.display === "") {
-            console.log("    Ação: Mostrando texto completo");
-            elementoCurto.style.display = "none";
-            elementoCompleto.style.display = "block";
-            botao.textContent = "Mostrar Menos";
-             // A tentativa de forçar o redimensionamento do popup via JS direto pode não funcionar bem em iframes
-             // console.log("    Tentando forçar redimensionamento do popup.");
-             // try { botao.closest('.leaflet-popup-content-wrapper')._leaflet_popup.update(); } catch(e) { console.error("Erro ao tentar redimensionar popup:", e); }
-
-        } else {
-            console.log("    Ação: Mostrando texto curto");
-            elementoCurto.style.display = "block";
-            elementoCompleto.style.display = "none";
-            botao.textContent = "Saiba Mais";
-             // console.log("    Tentando forçar redimensionamento do popup.");
-             // try { botao.closest('.leaflet-popup-content-wrapper')._leaflet_popup.update(); } catch(e) { console.error("Erro ao tentar redimensionar popup:", e); }
-        }
-         console.log("    Novos estilos:", elementoCurto.style.display, elementoCompleto.style.display);
-
-    } catch (e) {
-        console.error("!! Erro durante a troca de display ou manipulação do botão no popup:", e);
-        // alert("Ocorreu um erro ao tentar expandir/recolher o texto."); // Evitar alerts
-    }
-}
-</script>
-""" # Chaves {} não são escapadas, pois esta string não passa por .format()
+""" # Sem botão, sem JS, sem estilos específicos aqui
 
 TOOLTIP_TEMPLATE = """
 <div style="font-family: Arial, sans-serif; font-size: 12px">
@@ -165,6 +78,9 @@ def load_data():
              logging.warning(f"{rows_before - rows_after} linhas removidas devido a valores inválidos em Numeral, lat ou lon.")
 
         data['Numeral'] = data['Numeral'].astype('Int64')
+
+        # Manter marker_id baseado no índice, útil para debugging ou futuras funcionalidades
+        data['marker_id'] = data.index.map(lambda i: f'up-{i}')
 
         logging.info(f"Dados limpos carregados: {data.shape[0]} linhas.")
         return data
@@ -265,9 +181,7 @@ def criar_mapa(data, geojson_data):
         logging.info("Camada GeoJSON adicionada ao mapa.")
     else:
         logging.warning("Dados GeoJSON não disponíveis ou vazios para adicionar ao mapa.")
-        # Não exibe warning de novo, já foi exibido em main()
 
-    max_chars = 150
     marker_count = 0
     for index, row in data.iterrows():
         lat, lon = row.get("lat"), row.get("lon")
@@ -283,30 +197,29 @@ def criar_mapa(data, geojson_data):
             logging.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
             icon = folium.Icon(color="green", prefix='fa', icon="leaf")
 
-        texto_completo = str(row.get('Info', 'Sem descrição detalhada.'))
-        texto_curto = texto_completo[:max_chars] + ('...' if len(texto_completo) > max_chars else '')
-        marker_id = f"up-{index}"
+        # ID do marcador (usado para lookup na sidebar)
+        marker_id = row.get('marker_id', f'up-{index}')
 
-        # Constrói o HTML final do popup combinando as partes separadas
-        # O .format() só é aplicado ao HTML_BODY_TEMPLATE
-        popup_html = (
-            POPUP_HTML_BODY_TEMPLATE.format(
-                row.get('Nome', 'Nome não informado'), # {0}
-                row.get('Tipo', 'Tipo não informado'), # {1}
-                row.get('Regional', 'Regional não informada'), # {2}
-                marker_id, # {3}
-                texto_curto, # {4}
-                texto_completo # {5}
-            ) + POPUP_CSS_STYLE + POPUP_JS_SCRIPT # Concatena CSS e JS (com chaves literais)
+        # Formata o HTML simples do popup (sem botão ou JS)
+        popup_html = POPUP_TEMPLATE.format(
+            row.get('Nome', 'Nome não informado'), # {0}
+            row.get('Tipo', 'Tipo não informado'), # {1}
+            row.get('Regional', 'Regional não informada') # {2}
+            # Não há mais placeholder para o botão
         )
 
         popup = folium.Popup(popup_html, max_width=500)
 
+        # Adiciona o marcador ao mapa
+        # O ID do marcador aqui é o ID interno do Folium/Leaflet, não o nosso 'marker_id' do dataframe
+        # A identificação pelo Lat/Lon retornado por st_folium é mais direta
         Marker(
             location=[lat, lon],
             popup=popup,
             icon=icon,
-            tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
+            tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')),
+            # Você pode tentar adicionar um 'id' aqui, mas st_folium pode não retornar isso confiavelmente para cliques de marcador
+            # id=marker_id # Isto não funciona nativamente com returned_objects para clicks de marcadores simples
         ).add_to(m)
         marker_count += 1
 
@@ -326,6 +239,13 @@ def criar_mapa(data, geojson_data):
 def main():
     st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
+    # Inicializa o estado para a informação da unidade selecionada
+    if 'selected_marker_info' not in st.session_state:
+        st.session_state.selected_marker_info = None
+    # Inicializa o estado para o valor da busca
+    if 'search_input_value' not in st.session_state:
+        st.session_state.search_input_value = ''
+
     if 'data_loaded' not in st.session_state:
         st.session_state.load_error = False
         with st.spinner("Carregando dados das unidades..."):
@@ -344,18 +264,36 @@ def main():
 
         st.session_state.data_loaded = True
 
-        if not st.session_state.load_error:
-             st.rerun() # Recarrega para sair dos spinners
+        # Não recarrega automaticamente após o carregamento inicial se houver dados.
+        # A interação com o mapa irá disparar os reruns necessários.
+        # if not st.session_state.load_error:
+        #      st.rerun() # Removido rerun automático
 
+    # --- Layout Principal (Colunas) ---
     col1, col2 = st.columns([3, 1])
     with col1:
         st.title(APP_TITULO)
         st.header(APP_SUBTITULO)
     with col2:
         st.markdown(f"[![Logo PMC]({LOGO_PMC})]({LOGO_PMC})", unsafe_allow_html=True)
-        search_query = st.text_input("Pesquisar por Nome:", key="search_input", value=st.session_state.get('search_input_value', '')).strip().lower()
-        st.session_state.search_input_value = search_query
+        search_query = st.text_input("Pesquisar por Nome:", key="search_input", value=st.session_state.search_input_value).strip().lower()
+        st.session_state.search_input_value = search_query # Atualiza o estado com o valor atual
 
+    # --- Lógica da Sidebar ---
+    st.sidebar.title("Detalhes da Unidade")
+    # Verifica se há informação de marcador selecionado no estado
+    if st.session_state.selected_marker_info:
+        info = st.session_state.selected_marker_info
+        # Exibe as informações completas na sidebar
+        st.sidebar.header(info.get('Nome', 'Nome não informado'))
+        st.sidebar.write(f"**Tipo:** {info.get('Tipo', 'Tipo não informado')}")
+        st.sidebar.write(f"**Regional:** {info.get('Regional', 'Regional não informada')}")
+        st.sidebar.write(f"**Informações:**")
+        st.sidebar.write(info.get('Info', 'Sem descrição detalhada.'))
+    else:
+        st.sidebar.info("Clique em um marcador no mapa para ver os detalhes aqui.") # Texto de instrução atualizado
+
+    # --- Filtragem ---
     df_filtrado = pd.DataFrame()
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_filtrado = st.session_state.df
@@ -366,17 +304,68 @@ def main():
             if df_filtrado.empty:
                 st.warning(f"Nenhuma unidade encontrada contendo '{search_query}' no nome.")
 
+    # --- Exibição do Mapa ---
     if not st.session_state.load_error:
         if not df_filtrado.empty:
             logging.info(f"Renderizando mapa com {len(df_filtrado)} unidades filtradas.")
             geojson_to_map = st.session_state.geojson_data if st.session_state.geojson_data is not None else {"type": "FeatureCollection", "features": []}
             m = criar_mapa(df_filtrado, geojson_to_map)
-            st_folium(m, width='100%', height=600, key="folium_map", returned_objects=[])
+            # st_folium renderiza o mapa e retorna o estado da interação.
+            # Retornamos 'last_object_clicked' para pegar o lat/lon do clique no marcador ou GeoJson.
+            map_output = st_folium(m, width='100%', height=600, key="folium_map", returned_objects=['last_object_clicked'])
+
+            # --- Lógica para Capturar Clique e Atualizar Sidebar ---
+            # Verifica se um objeto no mapa foi clicado
+            if map_output and map_output.get('last_object_clicked'):
+                clicked_obj = map_output['last_object_clicked']
+                logging.info(f"Objeto clicado no mapa: {clicked_obj}")
+
+                # Verifica se o objeto clicado tem coordenadas (marcadores e GeoJson)
+                if 'lat' in clicked_obj and 'lng' in clicked_obj:
+                    clicked_lat = clicked_obj['lat']
+                    clicked_lon = clicked_obj['lng']
+                    logging.info(f"Objeto clicado em Lat: {clicked_lat}, Lon: {clicked_lon}")
+
+                    # Tenta encontrar a linha do DataFrame que corresponde a estas coordenadas
+                    # Usamos numpy.isclose para comparação robusta de ponto flutuante
+                    # Buscamos no DataFrame ORIGINAL (st.session_state.df) para garantir que pegamos a info completa,
+                    # mas podemos otimizar buscando no df_filtrado se a performance for uma questão.
+                    # Buscar no original é mais seguro para garantir que a sidebar mostre a info mesmo se o item
+                    # estiver fora do filtro atual, caso o usuário clique nele *antes* de aplicar o filtro.
+                    # Contudo, o clique só pode ocorrer em itens *visíveis* (no df_filtrado).
+                    # Busquemos no df_filtrado, que é o que está no mapa.
+                    found_row = None
+                    # Iterar sobre as linhas do DataFrame filtrado atualmente exibido no mapa
+                    for index, row in df_filtrado.iterrows():
+                        # Compara as coordenadas do clique com as coordenadas da linha
+                        # Usamos um tolerance relativamente pequeno
+                        if np.isclose(row['lat'], clicked_lat, atol=1e-6) and np.isclose(row['lon'], clicked_lon, atol=1e-6):
+                            found_row = row
+                            logging.info(f"Encontrada linha correspondente (Índice: {index}) para o clique.")
+                            break # Encontramos a linha correspondente
+
+                    if found_row is not None:
+                        # Armazena as informações completas da linha encontrada no session_state
+                        # O .to_dict() converte a Série Pandas (linha do DF) para um dicionário
+                        st.session_state.selected_marker_info = found_row.to_dict()
+                        logging.info("Sidebar info atualizada no session_state.")
+                        # Streamlit detecta a mudança no session_state e dispara um rerun automaticamente
+                        # (Não precisamos chamar st.rerun() explicitamente aqui)
+                    else:
+                        # Se clicou em algo com Lat/Lon mas não encontrou correspondência no DF filtrado
+                        # (pode ser um clique muito próximo entre marcadores, ou um clique em GeoJson que não mapeamos 1:1)
+                        logging.warning(f"Clique em Lat: {clicked_lat}, Lon: {clicked_lon} não correspondeu a nenhuma linha no DF filtrado.")
+                        # Opcional: Limpar a sidebar se o clique não for em um marcador conhecido
+                        # st.session_state.selected_marker_info = None
+
+
         elif not search_query and not st.session_state.df.empty:
              st.info("Digite um nome na caixa de pesquisa para filtrar as unidades.")
         elif st.session_state.df.empty:
              st.info("Nenhuma unidade produtiva encontrada nos dados carregados.")
+        # O caso search_query com df_filtrado.empty já exibe um warning
 
+    # Rodapé
     st.markdown("---")
     st.caption(APP_DESC)
     if len(BANNER_PMC) > 1:
