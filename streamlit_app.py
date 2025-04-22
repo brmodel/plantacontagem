@@ -32,9 +32,10 @@ ICONES_URL = {k: ICONES_URL_BASE + v for k, v in ICONES.items()}
 ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png"
 BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
-# --- Templates HTML (Separados) ---
+# --- Templates HTML (Separados para evitar conflitos de formatação) ---
 
 # 1. Template para o CORPO HTML do Popup (com placeholders para .format())
+# Contém a estrutura principal e a chamada onclick="toggleTexto(...)"
 POPUP_HTML_BODY_TEMPLATE = """
 <div style="
     font-family: Arial, sans-serif;
@@ -57,7 +58,7 @@ POPUP_HTML_BODY_TEMPLATE = """
     </div>
     <button class="leia-mais-btn" onclick="toggleTexto('texto-curto-{3}', 'texto-completo-{3}', this)">Saiba Mais</button>
 </div>
-""" # NOTA: Nenhuma chave {} é escapada aqui, pois só contém placeholders para .format()
+""" # Chaves {} são placeholders para .format(). Chaves literais em estilos inline não precisam de escape aqui.
 
 # 2. Bloco de estilo CSS (chaves {} literais)
 POPUP_CSS_STYLE = """
@@ -78,7 +79,7 @@ POPUP_CSS_STYLE = """
     color: #0056b3; /* Azul mais escuro no hover */
 }
 </style>
-""" # NOTA: As chaves {} não são escapadas aqui
+""" # Chaves {} não são escapadas, pois esta string não passa por .format()
 
 # 3. Bloco de script JavaScript (chaves {} literais)
 POPUP_JS_SCRIPT = """
@@ -89,6 +90,7 @@ function toggleTexto(idCurto, idCompleto, botao) {
     var elementoCurto = null;
     var elementoCompleto = null;
     try {
+        // Busca os elementos DENTRO DO DOCUMENTO ATUAL (o do popup/iframe)
         elementoCurto = document.getElementById(idCurto);
         elementoCompleto = document.getElementById(idCompleto);
     } catch (e) {
@@ -102,6 +104,7 @@ function toggleTexto(idCurto, idCompleto, botao) {
 
     if (!elementoCurto || !elementoCompleto || !botao) {
          console.error("!! Erro: Elementos não encontrados ou botão inválido dentro do popup.");
+         // alert("Erro interno: Elementos não encontrados no popup."); // Evitar alerts em popups
          return;
     }
 
@@ -111,20 +114,27 @@ function toggleTexto(idCurto, idCompleto, botao) {
             elementoCurto.style.display = "none";
             elementoCompleto.style.display = "block";
             botao.textContent = "Mostrar Menos";
+             // A tentativa de forçar o redimensionamento do popup via JS direto pode não funcionar bem em iframes
+             // console.log("    Tentando forçar redimensionamento do popup.");
+             // try { botao.closest('.leaflet-popup-content-wrapper')._leaflet_popup.update(); } catch(e) { console.error("Erro ao tentar redimensionar popup:", e); }
+
         } else {
             console.log("    Ação: Mostrando texto curto");
             elementoCurto.style.display = "block";
             elementoCompleto.style.display = "none";
             botao.textContent = "Saiba Mais";
+             // console.log("    Tentando forçar redimensionamento do popup.");
+             // try { botao.closest('.leaflet-popup-content-wrapper')._leaflet_popup.update(); } catch(e) { console.error("Erro ao tentar redimensionar popup:", e); }
         }
          console.log("    Novos estilos:", elementoCurto.style.display, elementoCompleto.style.display);
 
     } catch (e) {
         console.error("!! Erro durante a troca de display ou manipulação do botão no popup:", e);
+        // alert("Ocorreu um erro ao tentar expandir/recolher o texto."); // Evitar alerts
     }
 }
 </script>
-""" # NOTA: As chaves {} não são escapadas aqui
+""" # Chaves {} não são escapadas, pois esta string não passa por .format()
 
 TOOLTIP_TEMPLATE = """
 <div style="font-family: Arial, sans-serif; font-size: 12px">
@@ -140,24 +150,20 @@ def load_data():
     try:
         data = pd.read_csv(url, usecols=range(7))
         logging.info(f"Dados brutos carregados: {data.shape[0]} linhas.")
-        # Garante que colunas essenciais não sejam nulas ANTES da conversão de tipo
         essential_cols = ['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral', 'Info']
         data.dropna(subset=essential_cols, inplace=True)
         logging.info(f"Linhas após dropna inicial: {data.shape[0]}.")
 
-        # Conversão de tipos com tratamento de erro explícito
         data['Numeral'] = pd.to_numeric(data['Numeral'], errors='coerce')
         data['lat'] = pd.to_numeric(data['lat'], errors='coerce')
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
 
-        # Remove linhas onde conversões falharam (resultaram em NaN)
         rows_before = data.shape[0]
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
         rows_after = data.shape[0]
         if rows_before > rows_after:
              logging.warning(f"{rows_before - rows_after} linhas removidas devido a valores inválidos em Numeral, lat ou lon.")
 
-        # Converte Numeral para Int64 (permite NaN) após dropna
         data['Numeral'] = data['Numeral'].astype('Int64')
 
         logging.info(f"Dados limpos carregados: {data.shape[0]} linhas.")
@@ -171,15 +177,15 @@ def load_data():
     except Exception as e:
         st.error(f"Erro inesperado ao carregar dados: {e}")
         logging.exception("Erro inesperado no load_data")
-    return pd.DataFrame() # Retorna DataFrame vazio em caso de erro
+    return pd.DataFrame()
 
 @st.cache_data(ttl=3600)
 def load_geojson():
     logging.info(f"Tentando carregar GeoJSON de: {GEOJSON_URL}")
     default_geojson = {"type": "FeatureCollection", "features": []}
     try:
-        response = requests.get(GEOJSON_URL, timeout=15) # Adiciona timeout
-        response.raise_for_status() # Verifica erro HTTP (4xx ou 5xx)
+        response = requests.get(GEOJSON_URL, timeout=15)
+        response.raise_for_status()
         geojson_data = response.json()
         if not isinstance(geojson_data, dict) or "features" not in geojson_data:
             st.warning("Estrutura do GeoJSON inválida.")
@@ -193,13 +199,13 @@ def load_geojson():
     except requests.exceptions.RequestException as e:
         st.error(f"Erro de rede ao carregar GeoJSON: {e}")
         logging.error(f"Erro de rede GeoJSON: {e}")
-    except ValueError as e: # Captura erro de JSON inválido
+    except ValueError as e:
         st.error(f"Erro ao decodificar GeoJSON: {e}")
         logging.error(f"Erro de decodificação JSON: {e}")
     except Exception as e:
         st.error(f"Erro inesperado ao carregar GeoJSON: {e}")
         logging.exception("Erro inesperado no load_geojson")
-    return default_geojson # Retorna default em caso de erro
+    return default_geojson
 
 
 # --- Funções de Criação do Mapa e Legenda ---
@@ -240,13 +246,11 @@ def criar_legenda(geojson_data):
         </div>
     """)
 
-
 def criar_mapa(data, geojson_data):
     logging.info("Iniciando criação do mapa Folium.")
     m = folium.Map(location=[-19.9208, -44.0535], tiles="cartodbpositron",
                    zoom_start=12, control_scale=True)
 
-    # Adiciona GEOJson
     if geojson_data and geojson_data.get("features"):
         folium.GeoJson(
             geojson_data, name='Regionais',
@@ -261,9 +265,8 @@ def criar_mapa(data, geojson_data):
         logging.info("Camada GeoJSON adicionada ao mapa.")
     else:
         logging.warning("Dados GeoJSON não disponíveis ou vazios para adicionar ao mapa.")
-        st.warning("Não foi possível exibir a camada de regionais.")
+        # Não exibe warning de novo, já foi exibido em main()
 
-    # Adiciona Marcadores
     max_chars = 150
     marker_count = 0
     for index, row in data.iterrows():
@@ -277,14 +280,15 @@ def criar_mapa(data, geojson_data):
         try:
             icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
         except Exception as e:
-            logging.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão (Folium default).")
+            logging.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
             icon = folium.Icon(color="green", prefix='fa', icon="leaf")
 
         texto_completo = str(row.get('Info', 'Sem descrição detalhada.'))
         texto_curto = texto_completo[:max_chars] + ('...' if len(texto_completo) > max_chars else '')
-        marker_id = f"up-{index}" # ID único para JS/HTML
+        marker_id = f"up-{index}"
 
-        # Constrói o HTML final do popup combinando as partes
+        # Constrói o HTML final do popup combinando as partes separadas
+        # O .format() só é aplicado ao HTML_BODY_TEMPLATE
         popup_html = (
             POPUP_HTML_BODY_TEMPLATE.format(
                 row.get('Nome', 'Nome não informado'), # {0}
@@ -293,7 +297,7 @@ def criar_mapa(data, geojson_data):
                 marker_id, # {3}
                 texto_curto, # {4}
                 texto_completo # {5}
-            ) + POPUP_CSS_STYLE + POPUP_JS_SCRIPT # Concatena CSS e JS sem formatação
+            ) + POPUP_CSS_STYLE + POPUP_JS_SCRIPT # Concatena CSS e JS (com chaves literais)
         )
 
         popup = folium.Popup(popup_html, max_width=500)
@@ -308,15 +312,12 @@ def criar_mapa(data, geojson_data):
 
     logging.info(f"{marker_count} marcadores adicionados ao mapa.")
 
-    # Adiciona Controles e Legenda
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
     folium.LayerControl(position='topright').add_to(m)
     if geojson_data and geojson_data.get("features"):
        legenda = criar_legenda(geojson_data)
        m.get_root().html.add_child(legenda)
        logging.info("Legenda das regionais adicionada ao mapa.")
-    else:
-        logging.warning("GeoJSON inválido ou vazio, legenda das regionais não será exibida.")
 
     logging.info("Criação do mapa Folium concluída.")
     return m
@@ -325,7 +326,6 @@ def criar_mapa(data, geojson_data):
 def main():
     st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
-    # Carregamento de dados
     if 'data_loaded' not in st.session_state:
         st.session_state.load_error = False
         with st.spinner("Carregando dados das unidades..."):
@@ -344,12 +344,9 @@ def main():
 
         st.session_state.data_loaded = True
 
-        # Recarrega a página uma vez após o carregamento para limpar spinners
-        # (A menos que haja um erro crítico nos dados principais)
         if not st.session_state.load_error:
-             st.rerun()
+             st.rerun() # Recarrega para sair dos spinners
 
-    # Layout
     col1, col2 = st.columns([3, 1])
     with col1:
         st.title(APP_TITULO)
@@ -359,7 +356,6 @@ def main():
         search_query = st.text_input("Pesquisar por Nome:", key="search_input", value=st.session_state.get('search_input_value', '')).strip().lower()
         st.session_state.search_input_value = search_query
 
-    # Filtragem
     df_filtrado = pd.DataFrame()
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_filtrado = st.session_state.df
@@ -370,22 +366,17 @@ def main():
             if df_filtrado.empty:
                 st.warning(f"Nenhuma unidade encontrada contendo '{search_query}' no nome.")
 
-    # Exibição do Mapa
-    if not st.session_state.load_error: # Só prossegue se os dados principais carregaram
+    if not st.session_state.load_error:
         if not df_filtrado.empty:
             logging.info(f"Renderizando mapa com {len(df_filtrado)} unidades filtradas.")
             geojson_to_map = st.session_state.geojson_data if st.session_state.geojson_data is not None else {"type": "FeatureCollection", "features": []}
             m = criar_mapa(df_filtrado, geojson_to_map)
             st_folium(m, width='100%', height=600, key="folium_map", returned_objects=[])
         elif not search_query and not st.session_state.df.empty:
-             # Dados carregaram, mas não há filtro e o DF original não está vazio
              st.info("Digite um nome na caixa de pesquisa para filtrar as unidades.")
         elif st.session_state.df.empty:
-             # Os dados principais carregaram, mas a planilha estava vazia
              st.info("Nenhuma unidade produtiva encontrada nos dados carregados.")
-        # O caso search_query com df_filtrado.empty já exibe um warning
 
-    # Rodapé
     st.markdown("---")
     st.caption(APP_DESC)
     if len(BANNER_PMC) > 1:
