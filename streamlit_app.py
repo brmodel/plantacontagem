@@ -62,9 +62,9 @@ def load_data():
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
     logging.info(f"Tentando carregar dados de: {url}")
     try:
-        data = pd.read_csv(url, usecols=range(7))
+        data = pd.read_csv(url, usecols=range(8))
         logging.info(f"Dados brutos carregados: {data.shape[0]} linhas.")
-        essential_cols = ['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral', 'Info']
+        essential_cols = ['Nome', 'lon', 'lat', 'Tipo', 'Regional', 'Numeral', 'Info', 'Redes Sociais']
         data.dropna(subset=essential_cols, inplace=True)
         logging.info(f"Linhas após dropna inicial: {data.shape[0]}.")
 
