@@ -177,7 +177,7 @@ def criar_legenda(geojson_data):
                 position: fixed; bottom: 50px; right: 20px; z-index: 1000;
                 background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px;
-                max-width: 180px; max-height: 300px; overflow-y: auto;
+                max-width: 180px; max-height: 350px; overflow-y: auto;
             ">
                 {html_regional}
                 {html_icones}
@@ -188,14 +188,8 @@ def criar_legenda(geojson_data):
 
 # Modificada para aceitar o elemento da legenda como argumento
 def criar_mapa(data, geojson_data, legenda_to_add):
-    # Remove o argumento tiles="cartodbpositron" aqui
-    m = folium.Map(location=[-19.8888, -44.0535], zoom_start=12, control_scale=True)
-
-    # Adiciona a camada 'cartodbpositron' (ou outra) manualmente como TileLayer
-    folium.TileLayer('cartodbpositron', name='Positron').add_to(m)
-    # Opcional: adicione outras camadas base se desejar que o usuário possa alternar
-    folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(m)
-
+    m = folium.Map(location=[-19.8888, -44.0535], tiles="cartodbpositron",
+                   zoom_start=12, control_scale=True)
 
     # Adiciona camada GeoJSON das regionais
     if geojson_data and geojson_data.get("features"):
@@ -209,7 +203,6 @@ def criar_mapa(data, geojson_data, legenda_to_add):
             highlight_function=lambda x: {"weight": 2.5, "fillOpacity": 0.6, "color": "black"}, # Melhora highlight
             interactive=True, control=True, show=True
         ).add_to(m)
-
 
     # --- Adiciona Marcadores das Unidades Produtivas com Layer Control ---
     if isinstance(data, pd.DataFrame) and not data.empty:
@@ -264,7 +257,7 @@ def criar_mapa(data, geojson_data, legenda_to_add):
                 st.warning(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
                 icon = folium.Icon(color="green", prefix='fa', icon="leaf")
 
-            # Construção do HTML do Popup
+            # --- Construção do HTML do Popup (SEM 'Info') ---
             popup_parts = [] # Lista para partes condicionais do popup
 
             # Adiciona link do Instagram se existir
@@ -324,8 +317,7 @@ def criar_mapa(data, geojson_data, legenda_to_add):
 
     # Adiciona Controles ao Mapa
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
-    # LayerControl adicionado AQUI para incluir as camadas base e os FeatureGroups criados acima
-    # Não é necessário mudar esta linha, pois ela detectará as camadas adicionadas
+    # LayerControl adicionado AQUI para incluir os FeatureGroups criados acima
     folium.LayerControl(position='topright').add_to(m)
 
     # Adiciona o elemento da legenda recebido ao mapa
