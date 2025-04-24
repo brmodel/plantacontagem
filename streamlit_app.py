@@ -33,14 +33,13 @@ ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png" # Ícone padrão caso Numeral 
 BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
 ICONE_LEGENDA = {
-    1: "UP Comunitária",
-    2: "UP Institucional",
-    3: "UP Comunitária/Institucional",
+    1: "Comunitária",
+    2: "Institucional",
+    3: "Comunitária/Institucional",
     4: "Feira da Cidade",
 }
 
 # --- Templates HTML ---
-# Popup: Não inclui 'Info' diretamente, só placeholders básicos + conteúdo adicional (Instagram)
 POPUP_TEMPLATE_BASE = """
 <div style="
     font-family: Arial, sans-serif; font-size: 12px;
@@ -154,7 +153,6 @@ def criar_legenda(geojson_data):
 
     # --- Parte 2: Legenda dos Ícones (Tipos de Unidade) ---
     items_legenda_icones = []
-    # Itera sobre os ícones definidos globalmente, ordenados pela chave numérica
     for key, icon_url in sorted(ICONES_URL.items()):
         # Pega o rótulo do dicionário global ICONE_LEGENDA
         legenda = ICONE_LEGENDA.get(key, f"Tipo {key}") # Fallback caso não haja rótulo
