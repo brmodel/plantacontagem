@@ -54,7 +54,7 @@ POPUP_TEMPLATE_BASE = """
 """
 
 TOOLTIP_TEMPLATE = """
-<div style="font-family: Arial, sans-serif; font-size: 12px">
+<div style="font-family: Arial, sans-serif; font-size: 14px">
     <p><b>Unidade Produtiva:<br>{}</b></p>
 </div>
 """
