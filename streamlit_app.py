@@ -24,16 +24,12 @@ BANNER_PMC_BASE = ["ilustracao_pmc.png", "banner_pmc.png"]
 LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 
-# A lista essential_cols foi removida pois não é mais usada para validação ou dropna
-
-
 # --- URLs Pré-calculadas ---
 ICONES_URL = {k: ICONES_URL_BASE + v for k, v in ICONES.items()}
 ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png"
 BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
 # --- Templates HTML (Simplificados) ---
-# Template base para o popup, sem placeholders fixos para Info e Instagram
 POPUP_TEMPLATE_BASE = """
 <div style="
     font-family: Arial, sans-serif;
@@ -60,8 +56,6 @@ def load_data():
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
     try:
         # Carrega as 8 primeiras colunas por índice (0 a 7).
-        # Removemos a validação por nome conforme solicitado.
-        # ESTE MÉTODO DEPENDE QUE AS PRIMEIRAS 8 COLUNAS TENHAM SEMPRE A ORDEM ESPERADA.
         data = pd.read_csv(url, usecols=range(8))
 
         # Converte Numeral, lat, lon para numérico, tratando erros como NaN
@@ -70,25 +64,19 @@ def load_data():
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
 
         # Remove linhas APENAS se os dados CRUCIAIS para o mapeamento (lat, lon, Numeral) estiverem ausentes (NaN)
-        rows_before_mapping_dropna = data.shape[0]
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
-        rows_after_mapping_dropna = data.shape[0]
-        if rows_before_mapping_dropna > rows_after_mapping_dropna:
-             pass # Aviso removido
 
         # Converte Numeral para tipo inteiro que aceita NaN (Int64)
         data['Numeral'] = data['Numeral'].astype('Int64')
 
-        # Adicionar um ID único baseado no índice do DataFrame *final*
-        data['marker_id'] = data.index.map(lambda i: f'up-{i}')
+        # Adicionar um ID único baseado no índice do DataFrame *final* (opcional, pode ser útil)
+        # data['marker_id'] = data.index.map(lambda i: f'up-{i}') # Não estritamente necessário para a lógica atual
 
         return data
     except pd.errors.EmptyDataError:
         st.error("O arquivo CSV da planilha parece estar vazio ou não contém cabeçalhos.")
         return pd.DataFrame()
     except ValueError as e:
-        # Este erro pode ocorrer se usecols=range(8) carregar algo inesperado
-        # ou se os nomes de coluna em subset=['Numeral', 'lat', 'lon'] não existirem.
         st.error(f"Erro ao processar colunas ou dados da planilha: {e}. Verifique a estrutura do CSV, os tipos de dados, e os nomes das primeiras 8 colunas.")
         return pd.DataFrame()
     except Exception as e:
@@ -175,27 +163,35 @@ def criar_mapa(data, geojson_data):
             highlight_function=lambda x: {"weight": 2, "fillOpacity": 0.5, "color": "black"},
             interactive=True, control=True, show=True
         ).add_to(m)
-    else:
-        pass
 
-    marker_count = 0
     if isinstance(data, pd.DataFrame) and not data.empty:
         # Precisão para arredondar coordenadas para a chave do dicionário de lookup
         coord_precision = 6
         # Criar um dicionário de lookup (coordenada arredondada -> dados da linha)
-        # Esta otimização é feita no criar_mapa pois o DataFrame 'data' já está filtrado aqui
-        # Assume que 'lat' e 'lon' existem e são numéricos (garantido pela dropna)
-        data['rounded_coords'] = list(zip(np.round(data['lat'], coord_precision), np.round(data['lon'], coord_precision)))
-        # Usa to_dict('records') para obter uma lista de dicionários, que é mais fácil de buscar
-        st.session_state.marker_lookup = dict(zip(data['rounded_coords'], data.to_dict('records')))
+        # É criado aqui pois 'data' já está potencialmente filtrado
+        # Usa to_dict('records') para obter uma lista de dicionários
+        try:
+            # Garante que lat/lon sejam numéricos antes de arredondar
+            valid_coords = data[['lat', 'lon']].apply(pd.to_numeric, errors='coerce').dropna()
+            rounded_coords = list(zip(np.round(valid_coords['lat'], coord_precision),
+                                      np.round(valid_coords['lon'], coord_precision)))
+            # Alinha os dados com as coordenadas válidas
+            valid_data_dict = data.loc[valid_coords.index].to_dict('records')
+            # Atualiza o lookup no session_state
+            st.session_state.marker_lookup = dict(zip(rounded_coords, valid_data_dict))
+        except Exception as e:
+             st.warning(f"Erro ao criar o dicionário de lookup de marcadores: {e}. A seleção por clique pode falhar.")
+             st.session_state.marker_lookup = {} # Garante que existe, mesmo vazio
 
 
         for index, row in data.iterrows():
-            # Graças à dropna(['Numeral', 'lat', 'lon']), estas colunas devem existir e ser numéricas não NaN aqui.
+            # Verifica se lat/lon são válidos antes de criar o marcador
+            if pd.isna(row["lat"]) or pd.isna(row["lon"]):
+                 continue # Pula esta linha se lat ou lon for inválido
+
             lat, lon = row["lat"], row["lon"]
             icon_num = row["Numeral"]
 
-            # Acesso seguro ao dicionário ICONES_URL, convertendo Numeral para int
             try:
                 icon_url = ICONES_URL.get(int(icon_num), ICONE_PADRAO)
             except (ValueError, TypeError):
@@ -204,35 +200,30 @@ def criar_mapa(data, geojson_data):
             try:
                 icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
             except Exception as e:
-                st.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
-                icon = folium.Icon(color="green", prefix='fa', icon="leaf")
+                st.warning(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
+                icon = folium.Icon(color="green", prefix='fa', icon="leaf") # Ícone padrão Folium
 
             # --- Construção dinâmica do HTML do popup ---
-            # Começa com a parte base (Nome, Tipo, Regional)
+            popup_parts = []
+            info_text = row.get('Info')
+            if pd.notna(info_text) and str(info_text).strip() != '':
+                popup_parts.append(f"<p style='margin: 4px 0;'><b>Informações:</b></p><p style='margin: 4px 0;'>{info_text}</p>")
+
+            instagram_link = row.get('Instagram')
+            if pd.notna(instagram_link) and isinstance(instagram_link, str) and instagram_link.strip() != '':
+                 instagram_link_safe = instagram_link.strip()
+                 # Adiciona https:// se não estiver presente para garantir que seja um link válido
+                 if not instagram_link_safe.startswith(('http://', 'https://')):
+                      instagram_link_safe = 'https://' + instagram_link_safe
+                 popup_parts.append(f"<p style='margin: 4px 0;'><b>Instagram:</b> <a href='{instagram_link_safe}' target='_blank'>{instagram_link.strip()}</a></p>")
+
             popup_content = POPUP_TEMPLATE_BASE.format(
                 row.get('Nome', 'Nome não informado'),
                 row.get('Tipo', 'Tipo não informado'),
                 row.get('Regional', 'Regional não informada'),
-                '' # Placeholder inicial vazio para o conteúdo condicional
+                "".join(popup_parts) # Junta as partes condicionais
             )
-
-            # Adiciona Informações se existirem e não forem vazias/NaN
-            info_text = row.get('Info')
-            if pd.notna(info_text) and str(info_text).strip() != '':
-                 # Substitui o primeiro '{}' encontrado
-                 popup_content = popup_content.replace('{}', f"<p style='margin: 4px 0;'><b>Informações:</b></p><p style='margin: 4px 0;'>{info_text}</p>" + '{}', 1)
-
-            # Adiciona Instagram se existir e não for vazio/NaN
-            instagram_link = row.get('Instagram')
-            if pd.notna(instagram_link) and isinstance(instagram_link, str) and instagram_link.strip() != '':
-                 # Substitui o primeiro '{}' restante
-                 popup_content = popup_content.replace('{}', f"<p style='margin: 4px 0;'><b>Instagram:</b> <a href='{instagram_link.strip()}' target='_blank'>{instagram_link.strip()}</a></p>" + '{}', 1)
-
-            # Remove o placeholder final vazio se nada condicional foi adicionado
-            popup_html = popup_content.replace('{}', '')
-
-
-            popup = folium.Popup(popup_html, max_width=500)
+            popup = folium.Popup(popup_content, max_width=500)
 
             Marker(
                 location=[lat, lon],
@@ -240,7 +231,6 @@ def criar_mapa(data, geojson_data):
                 icon=icon,
                 tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
             ).add_to(m)
-            marker_count += 1
 
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
     folium.LayerControl(position='topright').add_to(m)
@@ -252,7 +242,7 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded") # Expandido para ver melhor no início
 
     # Inicializa o estado para a informação da unidade selecionada, o valor da busca, e o dicionário de lookup
     if 'selected_marker_info' not in st.session_state:
@@ -261,15 +251,15 @@ def main():
         st.session_state.search_input_value = ''
     if 'marker_lookup' not in st.session_state:
         st.session_state.marker_lookup = {} # Dicionário de lookup inicializado
-
-
-    # --- Carregamento de Dados Inicial ---
-    # Carrega dados e GeoJSON apenas na primeira execução ou reset do cache
     if 'data_loaded' not in st.session_state:
-        st.session_state.load_error = False
-        st.session_state.df = pd.DataFrame()
-        st.session_state.geojson_data = None
+         st.session_state.data_loaded = False # Controle para carregamento inicial
+         st.session_state.load_error = False
+         st.session_state.df = pd.DataFrame()
+         st.session_state.geojson_data = None
 
+
+    # --- Carregamento de Dados Inicial (apenas uma vez ou quando cache expira) ---
+    if not st.session_state.data_loaded:
         with st.spinner("Carregando dados das unidades..."):
             loaded_df = load_data()
             if not loaded_df.empty:
@@ -281,10 +271,9 @@ def main():
             geojson = load_geojson()
             if geojson and geojson.get("features"):
                 st.session_state.geojson_data = geojson
-            else:
-                st.warning("Não foi possível carregar os dados das regionais para o mapa.")
+            # Não definir load_error aqui, o mapa pode funcionar sem GeoJSON
 
-        st.session_state.data_loaded = True
+        st.session_state.data_loaded = True # Marca que os dados foram carregados
 
     # --- Layout Principal ---
     col1, col2 = st.columns([3, 1])
@@ -292,112 +281,124 @@ def main():
         st.title(APP_TITULO)
         st.header(APP_SUBTITULO)
     with col2:
-        st.markdown(f"[![Logo PMC]({LOGO_PMC})]({LOGO_PMC})", unsafe_allow_html=True)
-        search_query = st.text_input("Pesquisar por Nome:", key="search_input_widget",
+        st.image(LOGO_PMC, width=150) # Usar st.image para controle de tamanho
+        # Usar um callback para limpar a seleção ao mudar a busca
+        def clear_selection_on_search():
+             st.session_state.selected_marker_info = None
+             # Mantem o valor da busca atualizado no estado
+             st.session_state.search_input_value = st.session_state.search_input_widget
+
+        search_query = st.text_input("Pesquisar por Nome:",
+                                     key="search_input_widget",
+                                     on_change=clear_selection_on_search,
                                      value=st.session_state.search_input_value).strip().lower()
 
-        if search_query != st.session_state.search_input_value:
-            st.session_state.search_input_value = search_query
-            # Quando a busca muda, limpar a seleção da sidebar
-            st.session_state.selected_marker_info = None
-
-
-    # --- Lógica da Sidebar ---
+    # --- Lógica da Sidebar (Executada a cada re-run *antes* do mapa) ---
     with st.sidebar:
         st.title("Detalhes da Unidade")
-        # A sidebar exibe selected_marker_info que foi ATUALIZADO no rerun anterior
+        # A sidebar lê o valor de selected_marker_info que foi definido na re-execução ANTERIOR
         if st.session_state.selected_marker_info:
             info = st.session_state.selected_marker_info
             st.header(info.get('Nome', 'Nome não informado'))
             st.write(f"**Tipo:** {info.get('Tipo', 'Tipo não informado')}")
             st.write(f"**Regional:** {info.get('Regional', 'Regional não informada')}")
 
-            # Exibe Instagram apenas se existir e não for vazio/NaN
             redes = info.get('Instagram')
             if pd.notna(redes) and isinstance(redes, str) and redes.strip() != "":
-                st.write(f"**Instagram:** [Link]({redes.strip()})")
+                 link_ig = redes.strip()
+                 if not link_ig.startswith(('http://', 'https://')):
+                      link_ig = 'https://' + link_ig
+                 st.write(f"**Instagram:** [Link]({link_ig})")
 
-            # Exibe Informações apenas se existirem e não forem vazias/NaN
             info_text_sidebar = info.get('Info')
             if pd.notna(info_text_sidebar) and str(info_text_sidebar).strip() != '':
-                 st.write(f"**Informações:**")
-                 st.markdown(info_text_sidebar)
-
+                st.write(f"**Informações:**")
+                st.markdown(info_text_sidebar)
         else:
-            # Este é o estado inicial ou quando nenhum marcador está selecionado
+            # Estado inicial ou após limpar a seleção (ex: nova busca, clique fora de marcador)
             st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
 
 
-    # --- Filtragem ---
+    # --- Filtragem (baseado na busca atual) ---
     df_filtrado = pd.DataFrame()
+    # Usa o DataFrame carregado no estado da sessão
     if not st.session_state.load_error and not st.session_state.df.empty:
-        df_filtrado = st.session_state.df
-        # Verifica se a coluna 'Nome' existe antes de tentar filtrar por ela (segurança, embora load_data deva garantir)
-        if 'Nome' in st.session_state.df.columns and search_query:
-            df_filtrado = st.session_state.df[
-                st.session_state.df["Nome"].str.lower().str.contains(search_query, na=False, regex=False)
+        df_original = st.session_state.df
+        if 'Nome' in df_original.columns and search_query:
+            # Aplica filtro se houver busca
+            df_filtrado = df_original[
+                df_original["Nome"].str.lower().str.contains(search_query, na=False, regex=False)
             ]
             if df_filtrado.empty:
                 st.warning(f"Nenhuma unidade encontrada contendo '{search_query}' no nome.")
-        elif search_query: # Caso a coluna 'Nome' não exista mas a busca foi feita
-             st.warning("A coluna 'Nome' não foi encontrada nos dados, a busca não pôde ser aplicada.")
-             df_filtrado = pd.DataFrame() # Garante que o mapa não seja exibido sem dados de nome
+        elif search_query:
+            # Se busca foi feita mas coluna Nome não existe
+            st.warning("A coluna 'Nome' não foi encontrada nos dados, a busca não pôde ser aplicada.")
+            df_filtrado = pd.DataFrame() # Garante dataframe vazio
+        else:
+            # Sem busca, usa todos os dados
+            df_filtrado = df_original
+    # Se houve erro de carga ou df original está vazio, df_filtrado continua vazio
 
-    # --- Exibição do Mapa ---
-    if not st.session_state.load_error and not df_filtrado.empty:
+
+    # --- Exibição do Mapa e Processamento do Clique (Executado *depois* da sidebar) ---
+    if not df_filtrado.empty: # Só exibe mapa se houver dados (originais ou filtrados)
         geojson_to_map = st.session_state.geojson_data if st.session_state.geojson_data is not None else {"type": "FeatureCollection", "features": []}
-        # Passa o DataFrame filtrado para criar_mapa, onde o lookup será construído/atualizado
+
+        # Cria o mapa com os dados filtrados. Importante: o lookup é (re)criado aqui.
         m = criar_mapa(df_filtrado, geojson_to_map)
 
-        # st_folium renderiza o mapa e retorna o estado da interação.
-        # Retornamos 'last_object_clicked' para pegar o lat/lon do clique em marcadores ou GeoJson.
-        # A chave 'folium_map' garante que o estado do mapa seja preservado.
+        # Renderiza o mapa. `map_output` receberá o resultado da interação (ex: clique) da *última* interação.
         map_output = st_folium(m, width='100%', height=600, key="folium_map", returned_objects=['last_object_clicked'])
 
-        # --- Lógica para Capturar Clique e Atualizar Sidebar ---
-        # Verifica se um objeto no mapa foi clicado NESTE RERUN
+        # --- Lógica para Capturar Clique e Atualizar Sidebar para a *PRÓXIMA* re-execução ---
+        # map_output contém dados se houve um clique na interação anterior que causou esta re-execução.
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
 
-            # Verifica se o objeto clicado tem coordenadas (marcadores e feições GeoJSON pontuais/centroides)
+            # Verifica se o clique foi em um marcador (tem lat/lon)
             if 'lat' in clicked_obj and 'lng' in clicked_obj:
                 clicked_lat = clicked_obj['lat']
                 clicked_lon = clicked_obj['lng']
 
-                # --- Otimização: Usar dicionário de lookup em vez de iterar ---
-                # Arredonda as coordenadas do clique para a mesma precisão usada na chave do dicionário
-                coord_precision = 6 # Deve ser a mesma precisão usada em criar_mapa
+                # --- Usa o dicionário de lookup (que foi atualizado em criar_mapa com df_filtrado) ---
+                coord_precision = 6 # Mesma precisão usada em criar_mapa
                 clicked_key = (round(clicked_lat, coord_precision), round(clicked_lon, coord_precision))
 
-                # Busca no dicionário de lookup
-                # selected_marker_info é atualizado AQUI com os dados do clique ATUAL
-                # Se a chave não existir (clique muito fora de um marcador ou em um GeoJSON sem ponto exato), get retorna None
-                st.session_state.selected_marker_info = st.session_state.marker_lookup.get(clicked_key)
+                # Procura no lookup atual. Se encontrar, ATUALIZA o session_state.
+                # Esta atualização será lida pela sidebar na PRÓXIMA re-execução.
+                found_info = st.session_state.marker_lookup.get(clicked_key)
+                if found_info:
+                     # Compara com o estado atual para evitar re-runs desnecessários se o mesmo marcador for clicado novamente
+                     if st.session_state.selected_marker_info != found_info:
+                          st.session_state.selected_marker_info = found_info
+                          # Força um rerun IMEDIATO para que a sidebar atualize "instantaneamente" (na verdade, é um novo rerun)
+                          # Isso pode ou não ser desejável dependendo da complexidade do app
+                          st.rerun()
+                else:
+                     # Se o clique foi em um local válido (lat/lon) mas não correspondeu a um marcador no lookup atual
+                     # (pode acontecer se o filtro mudou entre o clique e o rerun)
+                     if st.session_state.selected_marker_info is not None:
+                         st.session_state.selected_marker_info = None
+                         st.rerun() # Limpa a sidebar
 
             else:
-                # Se o objeto clicado não tem lat/lng (ex: clique na camada GeoJSON, mas não em um ponto específico retornado)
-                # Limpa a seleção da sidebar
-                st.session_state.selected_marker_info = None
-        # else:
-            # No primeiro rerun, map_output pode ser None. selected_marker_info mantém seu valor.
-            # A sidebar já lida com selected_marker_info sendo None exibindo a mensagem inicial.
-
+                # Clique em outra coisa (ex: GeoJSON) ou fora de tudo. Limpa a seleção.
+                if st.session_state.selected_marker_info is not None:
+                     st.session_state.selected_marker_info = None
+                     st.rerun() # Limpa a sidebar
+        # Se não houve clique nesta interação (map_output['last_object_clicked'] é None),
+        # st.session_state.selected_marker_info mantém seu valor anterior.
 
     elif st.session_state.load_error:
         # Mensagem de erro já foi mostrada em load_data
-        pass
-
-    elif not st.session_state.df.empty and df_filtrado.empty:
-        # Os dados originais carregaram, mas o filtro não encontrou nada.
-        # A mensagem de warning já foi mostrada na seção de Filtragem.
-        # Exibe info message apenas se não havia busca ativa
-        if not search_query:
-             st.info("Nenhuma unidade produtiva encontrada nos dados carregados após validação.")
-
-
-    elif st.session_state.df.empty and not st.session_state.load_error:
-        # Os dados carregaram, mas a planilha estava vazia desde o início
-        st.info("Nenhuma unidade produtiva encontrada nos dados carregados.")
+        st.error("Falha ao carregar os dados das unidades. Não é possível exibir o mapa.")
+    elif not st.session_state.df.empty and df_filtrado.empty and search_query:
+        # Dados carregados, mas filtro não encontrou nada (warning já exibido)
+        pass # Não precisa mostrar mais nada
+    else: # Caso inicial (sem dados) ou outros casos não cobertos
+         if not search_query: # Só mostra se não for resultado de uma busca vazia
+             st.info("Não há unidades produtivas para exibir no mapa.")
 
 
     # Rodapé
