@@ -460,17 +460,7 @@ def main():
 
         # Cria o mapa com os dados filtrados e o elemento da legenda pre-criado
         m = criar_mapa(df_filtrado, geojson_to_map, legenda_element)
-
-        # Debugging print para o objeto mapa antes de renderizar
-        # print("\n--- Map Object Debug (before st_folium) ---")
-        # print(f"Map object type: {type(m)}")
-        # if m and m.get_root() and m.get_root().html:
-        #      print(f"Map HTML children count: {len(m.get_root().html._children)}")
-        #      # You could inspect the children if needed, but can be verbose
-        #      # print(f"Map HTML children types: {[type(child) for child in m.get_root().html._children.values()]}")
-        # print("--- End Map Object Debug ---\n")
-
-
+        
         # Renderiza o mapa usando st_folium e captura interações
         map_output = st_folium(
             m,
@@ -484,25 +474,6 @@ def main():
         # Verifica se houve um clique na última interação que causou este rerun
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
-
-            # --- Debugging Prints (uncomment to enable) ---
-            # print("\n--- Click Debug ---")
-            # print(f"Clicked object received from st_folium: {clicked_obj}")
-            # if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
-            #     print(f"Clicked coordinates: lat={clicked_obj['lat']}, lon={clicked_obj['lng']}")
-            #     coord_precision = 6
-            #     rounded_clicked_key = (round(clicked_obj['lat'], coord_precision), round(clicked_obj['lng'], coord_precision))
-            #     print(f"Rounded click key for lookup: {rounded_clicked_key}")
-            #     # Print a few keys from the current lookup dictionary
-            #     # print(f"First 5 keys in marker_lookup: {list(st.session_state.marker_lookup.keys())[:5]}...")
-            #     found_info_debug = st.session_state.marker_lookup.get(rounded_clicked_key)
-            #     if found_info_debug:
-            #         print(f"Found info in lookup for key: {found_info_debug.get('Nome', 'N/I')}")
-            #     else:
-            #         print("No info found in lookup for this key.")
-            # print("--- End Click Debug ---\n")
-            # ----------------------------------------------
-
 
             # Verifica se o clique foi em um marcador (tem lat/lng)
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
