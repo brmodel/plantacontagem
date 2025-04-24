@@ -284,7 +284,8 @@ def criar_mapa(data, geojson_data, legenda_to_add):
                 location=[lat, lon],
                 popup=popup, # Popup agora sem a seção 'Info'
                 icon=icon,
-                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')) # Tooltip simples
+                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')),
+                control=True
             ).add_to(m)
 
     # Adiciona Controles ao Mapa
