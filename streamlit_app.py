@@ -186,13 +186,10 @@ def criar_legenda(geojson_data):
         return None # Retorna None se não houver nada para mostrar na legenda
 
 def criar_mapa(data, geojson_data):
-    """Cria o objeto mapa Folium com marcadores, GeoJSON e legenda."""
-    # Centro aproximado de Contagem
-    map_center = [-19.91, -44.06]
-    m = folium.Map(location=map_center, tiles="cartodbpositron",
+    m = folium.Map(location=-19.8888, -44.0535, tiles="cartodbpositron",
                    zoom_start=12, control_scale=True)
 
-    # Adiciona camada GeoJSON das regionais (se disponível)
+    # Adiciona camada GeoJSON das regionais
     if geojson_data and geojson_data.get("features"):
         folium.GeoJson(
             geojson_data, name='Regionais',
@@ -221,7 +218,7 @@ def criar_mapa(data, geojson_data):
              st.warning(f"Erro ao criar lookup de marcadores: {e}. Seleção por clique pode falhar.")
              st.session_state.marker_lookup = {}
 
-        # Itera sobre as linhas do DataFrame filtrado para criar marcadores
+        # Busca no DataFrame filtrado para criar marcadores
         for index, row in data.iterrows():
             # Pula se lat/lon não for válido (embora dropna deva ter cuidado disso)
             if pd.isna(row["lat"]) or pd.isna(row["lon"]):
