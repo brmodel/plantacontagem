@@ -177,7 +177,7 @@ def criar_legenda(geojson_data):
                 position: fixed; bottom: 50px; right: 20px; z-index: 1000;
                 background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px;
-                max-width: 180px; max-height: 300px; overflow-y: auto;
+                max-width: 180px; max-height: 350px; overflow-y: auto;
             ">
                 {html_regional}
                 {html_icones}
