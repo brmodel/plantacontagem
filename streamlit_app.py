@@ -241,7 +241,7 @@ def criar_mapa(data, geojson_data, legenda_to_add):
 
             try:
                 # Cria ícone customizado
-                icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
+                icon = folium.CustomIcon(icon_url, icon_size=(25, 25), icon_anchor=(0, 20), popup_anchor=(0, -10))
             except Exception as e:
                 # Fallback para ícone Folium padrão se CustomIcon falhar (URL inválida, etc)
                 st.warning(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
