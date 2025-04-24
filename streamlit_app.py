@@ -14,11 +14,11 @@ APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
 APP_DESC = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF), em parceria com a Prefeitura Municipal de Contagem - MG"
 ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
 ICONES = {
-    1: "leaf_green.png", 2: "leaf_orange.png", 3: "leaf_blue.png", 4: "leaf_purple.png",
+  1: "leaf_green.png", 2: "leaf_blue.png", 3: "leaf_orange.png", 4: "leaf_purple.png",
 }
 MAPEAMENTO_CORES = {
-    1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5", 4: "#decbe4",
-    5: "#fed9a6", 6: "#ffffcc", 7: "#e5d8bd"
+  1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5", 4: "#decbe4",
+  5: "#fed9a6", 6: "#ffffcc", 7: "#e5d8bd"
 }
 BANNER_PMC_BASE = ["ilustracao_pmc.png", "banner_pmc.png"]
 LOGO_PMC = "https://github.com/brmodel/plantacontagem/blob/main/images/contagem_sem_fome.png?raw=true"
