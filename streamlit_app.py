@@ -282,10 +282,9 @@ def criar_mapa(data, geojson_data, legenda_to_add):
             # Cria o Marcador
             Marker(
                 location=[lat, lon],
-                popup=popup, # Popup agora sem a seção 'Info'
+                popup=popup,
                 icon=icon,
-                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')),
-                control=True
+                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
             ).add_to(m)
 
     # Adiciona Controles ao Mapa
