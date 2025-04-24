@@ -273,12 +273,6 @@ def criar_mapa(data, geojson_data, legenda_to_add):
                      </p>
                    """)
 
-            # Exibe a seção 'Info' SOMENTE na sidebar, não no popup
-            # info_text_popup = row.get('Info', '').strip()
-            # if info_text_popup:
-            #     popup_parts.append(f"<p style='margin: 4px 0;'><b>Informações:</b> {info_text_popup}</p>")
-
-
             # Monta o conteúdo do popup usando o template base
             popup_content = POPUP_TEMPLATE_BASE.format(
                 row.get('Nome', 'Nome não informado'),
