@@ -59,7 +59,7 @@ TOOLTIP_TEMPLATE = """
 # --- Funções de Carregamento de Dados ---
 @st.cache_data(ttl=600)
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
+  url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
     try:
         data = pd.read_csv(url, usecols=range(8))
 
