@@ -189,7 +189,7 @@ def criar_legenda(geojson_data):
 # Modificada para aceitar o elemento da legenda como argumento
 def criar_mapa(data, geojson_data, legenda_to_add):
     m = folium.Map(location=[-19.8888, -44.0535], tiles="cartodbpositron",
-                   zoom_start=12, control_scale=True, control=False)
+                   zoom_start=12, control_scale=True)
 
     # Adiciona camada GeoJSON das regionais
     if geojson_data and geojson_data.get("features"):
