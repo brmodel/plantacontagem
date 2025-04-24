@@ -186,7 +186,7 @@ def criar_legenda(geojson_data):
         return None # Retorna None se não houver nada para mostrar na legenda
 
 def criar_mapa(data, geojson_data):
-    m = folium.Map(location=-19.8888, -44.0535, tiles="cartodbpositron",
+    m = folium.Map(location=[-19.8888, -44.0535], tiles="cartodbpositron",
                    zoom_start=12, control_scale=True)
 
     # Adiciona camada GeoJSON das regionais
