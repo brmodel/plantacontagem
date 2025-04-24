@@ -42,11 +42,7 @@ POPUP_TEMPLATE_BASE = """
     width: auto; max-width: min(90vw, 466px); min-width: 200px; /* Limitação de tamanho/resolução */
     word-break: break-word; box-sizing: border-box; padding: 8px;
 ">
-    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{}</b></h6>
-    <p style="margin: 4px 0;"><b>Tipo:</b> {}</p>
-    <p style="margin: 4px 0;"><b>Regional:</b> {}</p>
-    {}
-</div>
+    <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{}</b></h6> <p style="margin: 4px 0;"><b>Tipo:</b> {}</p> <p style="margin: 4px 0;"><b>Regional:</b> {}</p> {} </div>
 """
 
 TOOLTIP_TEMPLATE = """
@@ -60,7 +56,6 @@ TOOLTIP_TEMPLATE = """
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
     try:
-        # Usando range(8) conforme solicitado. Depende da ordem das colunas na planilha.
         data = pd.read_csv(url, usecols=range(8))
 
         # Verifica se todas as colunas essenciais foram carregadas com os nomes esperados
@@ -87,6 +82,9 @@ def load_data():
         # Adicionar um ID único baseado no índice do DataFrame *final*
         data['marker_id'] = data.index.map(lambda i: f'up-{i}')
 
+        # As colunas 'Info' e 'Instagram' agora podem conter NaNs, mas o código
+        # que as acessa na sidebar/popup (usando .get()) lida com isso.
+
         return data
     except pd.errors.EmptyDataError:
         st.error("O arquivo CSV da planilha parece estar vazio ou não contém cabeçalhos.")
@@ -111,55 +109,50 @@ def load_geojson():
         return geojson_data
     except requests.exceptions.Timeout:
         st.error(f"Erro ao carregar GeoJSON: Tempo limite excedido ({GEOJSON_URL})")
-        return default_geojson
     except requests.exceptions.RequestException as e:
         st.error(f"Erro de rede ao carregar GeoJSON: {e}")
-        return default_geojson
     except ValueError as e:
         st.error(f"Erro ao decodificar GeoJSON: {e}")
-        return default_geojson
     except Exception as e:
         st.error(f"Erro inesperado ao carregar GeoJSON: {e}")
         return default_geojson
 
 # --- Funções de Criação do Mapa e Legenda ---
-# CORRIGIDO: Usando a versão anterior da função criar_legenda
 def criar_legenda(geojson_data):
-    """Cria legendas nos GEOJSONs"""
     regions = []
-    for feature in geojson_data.get('features', []): # Usando get com fallback seguro
-        props = feature.get('properties', {}) # Usando get com fallback seguro
-        regions.append({
-            'id': props.get('id'), # Usando get com fallback seguro
-            'name': props.get('Name') # Usando get com fallback seguro
-        })
+    features = geojson_data.get('features') if isinstance(geojson_data, dict) else None
+    if isinstance(features, list):
+        for feature in features:
+            props = feature.get('properties') if isinstance(feature, dict) else {}
+            if isinstance(props, dict):
+                region_id = props.get('id')
+                region_name = props.get('Name')
+                if isinstance(region_id, (int, float)) and region_name is not None:
+                    regions.append({'id': int(region_id), 'name': region_name})
+                elif region_id is not None and region_name is not None:
+                    st.warning(f"ID da regional '{region_id}' não é numérico. Ignorando na legenda.")
+
 
     items_legenda = []
     # Ordena a legenda pelo ID da regional
-    for region in sorted(regions, key=lambda x: x.get('id', float('inf'))): # Usando get com fallback seguro para a chave de ordenação
-        color = MAPEAMENTO_CORES.get(region.get('id'), "#fddaec") # Usando get com fallback seguro para o ID
+    for region in sorted(regions, key=lambda x: x.get('id', float('inf'))):
+        color = MAPEAMENTO_CORES.get(region.get('id'), "#cccccc")
         items_legenda.append(f"""
-            <div style="display: flex; align-items: center; margin: 2px 0;">
-                <div style="background: {color}; width: 20px; height: 20px; margin-right: 5px;"></div>
-                <span>{region.get('name', 'N/A')}</span> # Usando get com fallback seguro para o nome
+            <div style="display: flex; align-items: center; margin: 3px 0;">
+                <div style="background: {color}; width: 18px; height: 18px; margin-right: 6px; border: 1px solid #999; flex-shrink: 0;"></div>
+                <span style="font-size: 11px;">{region.get('name', 'N/A')}</span>
             </div>
         """)
 
     return folium.Element(f"""
         <div style="
-            position: fixed;
-            bottom: 50px;
-            right: 20px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            font-family: Arial;
-            font-size: 12px;
-            max-width: 150px;
+            position: fixed; bottom: 40px; right: 10px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.85); padding: 8px 12px;
+            border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif; max-width: 160px; max-height: 250px;
+            overflow-y: auto; font-size: 12px;
         ">
-            <div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>
+            <div style="font-weight: bold; margin-bottom: 5px; font-size: 13px;">Regionais</div>
             {"".join(items_legenda)}
         </div>
     """)
@@ -195,7 +188,9 @@ def criar_mapa(data, geojson_data):
             except (ValueError, TypeError):
                 icon_url = ICONE_PADRAO
 
+
             try:
+                # Note: row.get('Nome', 'N/I') usado aqui e no tooltip para lidar com caso Nome tenha NaN
                 icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
             except Exception as e:
                 st.error(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
@@ -203,6 +198,8 @@ def criar_mapa(data, geojson_data):
 
             # --- Construção dinâmica do HTML do popup ---
             # Começa com a parte base (Nome, Tipo, Regional)
+            # Note: row.get() usado com fallback caso Nome, Tipo, Regional sejam NaN (embora dropna(['Numeral',...])
+            # não garanta isso para Nome, Tipo, Regional, usar get é seguro)
             popup_content = POPUP_TEMPLATE_BASE.format(
                 row.get('Nome', 'Nome não informado'),
                 row.get('Tipo', 'Tipo não informado'),
@@ -229,14 +226,14 @@ def criar_mapa(data, geojson_data):
                 location=[lat, lon],
                 popup=popup,
                 icon=icon,
-                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
+                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')) # Usa get para Nome no tooltip também
             ).add_to(m)
             marker_count += 1
 
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
     folium.LayerControl(position='topright').add_to(m)
     if geojson_data and geojson_data.get("features"):
-        legenda = criar_legenda(geojson_data) # Chama a função criar_legenda
+        legenda = criar_legenda(geojson_data)
         m.get_root().html.add_child(legenda)
 
     return m
@@ -348,6 +345,7 @@ def main():
                 if found_row is not None:
                     st.session_state.selected_marker_info = found_row.to_dict()
                 else:
+                    # Limpa a sidebar se o clique for em uma feição do GeoJSON ou área sem marcador
                     st.session_state.selected_marker_info = None
 
     elif st.session_state.load_error:
