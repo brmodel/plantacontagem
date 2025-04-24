@@ -161,7 +161,7 @@ def criar_legenda(geojson_data):
     """)
 
 def criar_mapa(data, geojson_data):
-    m = folium.Map(location=[-19.8208, -44.0535], tiles="cartodbpositron",
+    m = folium.Map(location=[-19.8808, -44.0535], tiles="cartodbpositron",
                    zoom_start=12, control_scale=True)
 
     if geojson_data and geojson_data.get("features"):
