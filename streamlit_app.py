@@ -32,13 +32,11 @@ ICONES_URL = {k: ICONES_URL_BASE + v for k, v in ICONES.items()}
 ICONE_PADRAO = ICONES_URL_BASE + "leaf_green.png" # Ícone padrão caso Numeral não mapeado
 BANNER_PMC = [ICONES_URL_BASE + img for img in BANNER_PMC_BASE]
 
-# !!! IMPORTANTE: SUBSTITUA OS TEXTOS ABAIXO PELOS NOMES REAIS DOS TIPOS DE UNIDADE !!!
-# Este dicionário mapeia o número do ícone (chave) para o texto exibido na legenda.
-ICONE_LABELS = {
-    1: "Tipo 1 (Verde)",   # Ex: Horta Comunitária
-    2: "Tipo 2 (Azul)",    # Ex: Agricultura Urbana
-    3: "Tipo 3 (Laranja)", # Ex: Pomar
-    4: "Tipo 4 (Roxo)",    # Ex: Produção de Mudas
+ICONE_LEGENDA = {
+    1: "UP Comunitária",
+    2: "UP Institucional",
+    3: "UP Comunitária/Institucional",
+    4: "Feira da Cidade",
 }
 
 # --- Templates HTML ---
@@ -158,12 +156,12 @@ def criar_legenda(geojson_data):
     items_legenda_icones = []
     # Itera sobre os ícones definidos globalmente, ordenados pela chave numérica
     for key, icon_url in sorted(ICONES_URL.items()):
-        # Pega o rótulo do dicionário global ICONE_LABELS
-        label = ICONE_LABELS.get(key, f"Tipo {key}") # Fallback caso não haja rótulo
+        # Pega o rótulo do dicionário global ICONE_LEGENDA
+        legenda = ICONE_LEGENDA.get(key, f"Tipo {key}") # Fallback caso não haja rótulo
         items_legenda_icones.append(f"""
              <div style="display: flex; align-items: center; margin: 2px 0;">
-                 <img src="{icon_url}" alt="{label}" title="{label}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;">
-                 <span>{label}</span>
+                 <img src="{icon_url}" alt="{legenda}" title="{legenda}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;">
+                 <span>{legenda}</span>
              </div>
          """)
     # Adiciona título para a seção de ícones
