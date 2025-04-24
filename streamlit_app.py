@@ -165,29 +165,20 @@ def criar_mapa(data, geojson_data):
         ).add_to(m)
 
     if isinstance(data, pd.DataFrame) and not data.empty:
-        # Precisão para arredondar coordenadas para a chave do dicionário de lookup
         coord_precision = 6
-        # Criar um dicionário de lookup (coordenada arredondada -> dados da linha)
-        # É criado aqui pois 'data' já está potencialmente filtrado
-        # Usa to_dict('records') para obter uma lista de dicionários
         try:
-            # Garante que lat/lon sejam numéricos antes de arredondar
             valid_coords = data[['lat', 'lon']].apply(pd.to_numeric, errors='coerce').dropna()
             rounded_coords = list(zip(np.round(valid_coords['lat'], coord_precision),
                                       np.round(valid_coords['lon'], coord_precision)))
-            # Alinha os dados com as coordenadas válidas
             valid_data_dict = data.loc[valid_coords.index].to_dict('records')
-            # Atualiza o lookup no session_state
             st.session_state.marker_lookup = dict(zip(rounded_coords, valid_data_dict))
         except Exception as e:
              st.warning(f"Erro ao criar o dicionário de lookup de marcadores: {e}. A seleção por clique pode falhar.")
-             st.session_state.marker_lookup = {} # Garante que existe, mesmo vazio
-
+             st.session_state.marker_lookup = {}
 
         for index, row in data.iterrows():
-            # Verifica se lat/lon são válidos antes de criar o marcador
             if pd.isna(row["lat"]) or pd.isna(row["lon"]):
-                 continue # Pula esta linha se lat ou lon for inválido
+                 continue
 
             lat, lon = row["lat"], row["lon"]
             icon_num = row["Numeral"]
@@ -201,33 +192,36 @@ def criar_mapa(data, geojson_data):
                 icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
             except Exception as e:
                 st.warning(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
-                icon = folium.Icon(color="green", prefix='fa', icon="leaf") # Ícone padrão Folium
+                icon = folium.Icon(color="green", prefix='fa', icon="leaf")
 
-            # --- Construção dinâmica do HTML do popup ---
-            popup_parts = []
-            info_text = row.get('Info')
-            if pd.notna(info_text) and str(info_text).strip() != '':
-                popup_parts.append(f"<p style='margin: 4px 0;'><b>Informações:</b></p><p style='margin: 4px 0;'>{info_text}</p>")
+            # --- Construção dinâmica do HTML do popup (SEM A SEÇÃO 'Info') ---
+            popup_parts = [] # Inicializa lista para partes do popup
 
+            # Bloco que adicionava 'Info' foi REMOVIDO daqui:
+            # info_text = row.get('Info')
+            # if pd.notna(info_text) and str(info_text).strip() != '':
+            #    popup_parts.append(f"<p style='margin: 4px 0;'><b>Informações:</b></p><p style='margin: 4px 0;'>{info_text}</p>")
+
+            # Mantém a lógica para Instagram (se existir)
             instagram_link = row.get('Instagram')
             if pd.notna(instagram_link) and isinstance(instagram_link, str) and instagram_link.strip() != '':
                  instagram_link_safe = instagram_link.strip()
-                 # Adiciona https:// se não estiver presente para garantir que seja um link válido
                  if not instagram_link_safe.startswith(('http://', 'https://')):
                       instagram_link_safe = 'https://' + instagram_link_safe
                  popup_parts.append(f"<p style='margin: 4px 0;'><b>Instagram:</b> <a href='{instagram_link_safe}' target='_blank'>{instagram_link.strip()}</a></p>")
 
+            # Formata o template base apenas com as partes restantes (Nome, Tipo, Regional, Instagram)
             popup_content = POPUP_TEMPLATE_BASE.format(
                 row.get('Nome', 'Nome não informado'),
                 row.get('Tipo', 'Tipo não informado'),
                 row.get('Regional', 'Regional não informada'),
-                "".join(popup_parts) # Junta as partes condicionais
+                "".join(popup_parts) # Junta as partes (agora sem 'Info')
             )
             popup = folium.Popup(popup_content, max_width=500)
 
             Marker(
                 location=[lat, lon],
-                popup=popup,
+                popup=popup, # Popup agora sem a seção 'Info'
                 icon=icon,
                 tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
             ).add_to(m)
