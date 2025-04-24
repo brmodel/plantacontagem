@@ -177,7 +177,7 @@ def criar_legenda(geojson_data):
                 position: fixed; bottom: 50px; right: 20px; z-index: 1000;
                 background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px;
-                max-width: 180px; max-height: 350px; overflow-y: auto;
+                max-width: 180px; max-height: 300px; overflow-y: auto;
             ">
                 {html_regional}
                 {html_icones}
@@ -204,7 +204,7 @@ def criar_mapa(data, geojson_data, legenda_to_add):
             interactive=True, control=True, show=True
         ).add_to(m)
 
-    # Adiciona Marcadores das Unidades Produtivas
+    # --- Adiciona Marcadores das Unidades Produtivas com Layer Control ---
     if isinstance(data, pd.DataFrame) and not data.empty:
         # Cria/Atualiza o dicionário de lookup no estado da sessão para performance no clique
         coord_precision = 6
@@ -223,7 +223,17 @@ def criar_mapa(data, geojson_data, legenda_to_add):
              st.warning(f"Erro ao criar lookup de marcadores: {e}. Seleção por clique pode falhar.")
              st.session_state.marker_lookup = {}
 
-        # Busca no DataFrame filtrado para criar marcadores
+        # Cria FeatureGroups para cada tipo de unidade baseado na legenda
+        feature_groups = {}
+        for num, name in ICONE_LEGENDA.items():
+            feature_groups[num] = folium.FeatureGroup(name=name)
+
+        # Cria um FeatureGroup para categorias não mapeadas, se necessário
+        default_feature_group = folium.FeatureGroup(name='Outras Categorias')
+        default_group_needed = False
+
+
+        # Busca no DataFrame filtrado para criar marcadores e adicioná-los aos FeatureGroups
         for index, row in data.iterrows():
             # Pula se lat/lon não for válido (embora dropna deva ter cuidado disso)
             if pd.isna(row["lat"]) or pd.isna(row["lon"]):
@@ -241,7 +251,7 @@ def criar_mapa(data, geojson_data, legenda_to_add):
 
             try:
                 # Cria ícone customizado
-                icon = folium.CustomIcon(icon_url, icon_size=(25, 25), icon_anchor=(0, 20), popup_anchor=(0, -10))
+                icon = folium.CustomIcon(icon_url, icon_size=(30, 30), icon_anchor=(15, 15), popup_anchor=(0, -10))
             except Exception as e:
                 # Fallback para ícone Folium padrão se CustomIcon falhar (URL inválida, etc)
                 st.warning(f"Erro ao carregar ícone {icon_url} para {row.get('Nome', 'N/I')}: {e}. Usando ícone padrão.")
@@ -280,16 +290,35 @@ def criar_mapa(data, geojson_data, legenda_to_add):
 
 
             # Cria o Marcador
-            Marker(
+            marker = Marker(
                 location=[lat, lon],
-                popup=popup,
+                popup=popup, # Popup agora sem a seção 'Info'
                 icon=icon,
-                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I'))
-            ).add_to(m)
+                tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')) # Tooltip simples
+            )
+
+            # Adiciona o marcador ao FeatureGroup correspondente
+            if icon_num in feature_groups:
+                marker.add_to(feature_groups[icon_num])
+            else:
+                # Adiciona ao grupo padrão se a categoria não for mapeada
+                marker.add_to(default_feature_group)
+                default_group_needed = True # Define a flag se algum marcador for adicionado aqui
+
+
+        # Adiciona todos os FeatureGroups criados ao mapa
+        for group in feature_groups.values():
+            group.add_to(m)
+
+        # Adiciona o grupo padrão ao mapa SOMENTE se ele contiver algum marcador
+        if default_group_needed:
+            default_feature_group.add_to(m)
+
 
     # Adiciona Controles ao Mapa
     LocateControl(strings={"title": "Mostrar minha localização", "popup": "Você está aqui"}).add_to(m)
-    folium.LayerControl(position='topright').add_to(m) # Controle de camadas
+    # LayerControl adicionado AQUI para incluir os FeatureGroups criados acima
+    folium.LayerControl(position='topright').add_to(m)
 
     # Adiciona o elemento da legenda recebido ao mapa
     if legenda_to_add:
@@ -316,6 +345,7 @@ def main():
         st.session_state.load_error = False # Flag para erro no carregamento de dados
         st.session_state.df = pd.DataFrame() # DataFrame principal
         st.session_state.geojson_data = None # Dados GeoJSON
+
 
     # --- Carregamento de Dados Inicial ---
     # Executa apenas na primeira vez ou se o cache expirar
@@ -525,7 +555,6 @@ def main():
                 st.image(url, use_container_width=True)
     elif BANNER_PMC: # Exibe único banner se houver apenas um
         st.image(BANNER_PMC[0], use_container_width=True)
-
 
 # --- Ponto de Entrada Principal ---
 if __name__ == "__main__":
