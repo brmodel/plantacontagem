@@ -298,7 +298,7 @@ def criar_mapa(data, geojson_data):
             # Cria o Marcador
             marker = Marker(
                 location=[lat, lon],
-                popup=popup, # Popup agora sem a seção 'Info'
+                popup=popup,
                 icon=icon,
                 tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome', 'N/I')) # Tooltip simples
             )
@@ -370,22 +370,7 @@ def main():
             geojson = load_geojson()
             st.session_state.geojson_data = geojson
         st.session_state.data_loaded = True
-        # REMOVIDO: Marca que a legenda precisa ser atualizada (feito automaticamente em criar_mapa)
-        # st.session_state.legend_needs_update = True
-
-    # --- REMOVIDO: Criação/Atualização do Elemento da Legenda fora de criar_mapa ---
-    # if st.session_state.legend_needs_update:
-    #    geojson_para_legenda = st.session_state.get('geojson_data')
-    #    legenda_criada = None
-    #    try:
-    #        legenda_criada = criar_legenda(geojson_para_legenda)
-    #        st.session_state.legenda_element = legenda_criada
-    #    except Exception as e:
-    #        st.warning(f"Não foi possível gerar o elemento da legenda: {e}")
-    #        st.session_state.legenda_element = None
-    #    st.session_state.legend_needs_update = False
-
-
+        
     # --- Layout Principal (Título, Logo, Busca) ---
     col1, col2 = st.columns([3, 1]) # Divide em 2 colunas
     with col1:
@@ -441,7 +426,6 @@ def main():
     # Procede apenas se os dados foram carregados sem erro
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_original = st.session_state.df
-        # Aplica filtro de busca se houver query e a coluna 'Nome' existir
         if search_query and 'Nome' in df_original.columns:
             try:
                 df_filtrado = df_original[
