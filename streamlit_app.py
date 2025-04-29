@@ -95,6 +95,10 @@ def load_data():
         st.error(f"Erro inesperado ao carregar dados: {e}")
         return pd.DataFrame()
 
+st.set_page_config(
+        page_title=APP_TITULO,
+)
+
 @st.cache_data(ttl=3600)
 def load_geojson():
     """Carrega os dados GeoJSON das regionais de Contagem."""
