@@ -84,7 +84,6 @@ def load_data():
              if col in data.columns:
                  data[col] = data[col].astype(str).replace('nan', '', regex=False).replace('<NA>', '', regex=False)
 
-
         return data
     except pd.errors.EmptyDataError:
         st.error("Erro: A planilha parece estar vazia ou sem cabeçalhos.")
@@ -125,7 +124,7 @@ def load_geojson():
 # --- Funções de Criação do Mapa e Legenda ---
 
 def criar_legenda(geojson_data):
-    """Cria legendas HTML para Regionais (cor) e Tipos de Unidade (ícones)."""
+    """Cria legendas HTML para Regionais (cor) e Tipos de Unidade (ícones). Retorna um folium.Element."""
     # --- Parte 1: Legenda das Regionais (Cores) ---
     regions = []
     if geojson_data and isinstance(geojson_data, dict) and 'features' in geojson_data: # Validação extra
@@ -187,9 +186,9 @@ def criar_legenda(geojson_data):
     else:
         return None # Retorna None se não houver nada para mostrar na legenda
 
-# Modificada para aceitar o elemento da legenda como argumento
-def criar_mapa(data, geojson_data, legenda_to_add):
-    """Cria o objeto do mapa Folium com camadas e marcadores."""
+# Função criar_mapa modificada: Não recebe mais o elemento da legenda como argumento
+def criar_mapa(data, geojson_data):
+    """Cria o objeto do mapa Folium com camadas e marcadores, e ADICIONA a legenda internamente."""
     m = folium.Map(location=[-19.8888, -44.0535], tiles="cartodbpositron",
                    zoom_start=12, control_scale=True)
 
@@ -206,6 +205,15 @@ def criar_mapa(data, geojson_data, legenda_to_add):
             interactive=True, control=True, show=True
         ).add_to(m)
 
+    # --- Criação e Adição da Legenda: FEITO AQUI DENTRO AGORA ---
+    # Cria o elemento da legenda para este rerun
+    legenda_element = criar_legenda(geojson_data)
+    # Adiciona o elemento da legenda ao root HTML do mapa
+    if legenda_element:
+        m.get_root().html.add_child(legenda_element)
+    # --- Fim da Criação e Adição da Legenda ---
+
+
     # --- Adiciona Marcadores das Unidades Produtivas com Layer Control ---
     if isinstance(data, pd.DataFrame) and not data.empty:
         # Cria/Atualiza o dicionário de lookup no estado da sessão para performance no clique
@@ -214,7 +222,7 @@ def criar_mapa(data, geojson_data, legenda_to_add):
             # Garante que lat/lon são numéricos antes de arredondar/usar
             valid_coords = data[['lat', 'lon']].apply(pd.to_numeric, errors='coerce').dropna()
             rounded_coords = list(zip(np.round(valid_coords['lat'], coord_precision),
-                                      np.round(valid_coords['lon'], coord_precision)))
+                                       np.round(valid_coords['lon'], coord_precision)))
             # Alinha os dados (como dicionário) com as coordenadas válidas
             valid_data_dict = data.loc[valid_coords.index].to_dict('records')
             st.session_state.marker_lookup = dict(zip(rounded_coords, valid_data_dict))
@@ -241,7 +249,7 @@ def criar_mapa(data, geojson_data, legenda_to_add):
         for index, row in data.iterrows():
             # Pula se lat/lon não for válido (embora dropna deva ter cuidado disso)
             if pd.isna(row["lat"]) or pd.isna(row["lon"]):
-                continue
+                 continue
 
             lat, lon = row["lat"], row["lon"]
             icon_num = row["Numeral"] # Já garantido ser Int64 ou similar
@@ -267,15 +275,15 @@ def criar_mapa(data, geojson_data, legenda_to_add):
             # Adiciona link do Instagram se existir
             instagram_link = row.get('Instagram', '').strip() # Pega como string e remove espaços
             if instagram_link: # Verifica se não está vazio
-                link_ig_safe = instagram_link
-                # Garante que o link tenha protocolo
-                if not link_ig_safe.startswith(('http://', 'https://')):
-                    link_ig_safe = 'https://' + link_ig_safe
-                popup_parts.append(f"""
-                     <p style='margin: 4px 0;'>
-                         <b>Instagram:</b> <a href='{link_ig_safe}' target='_blank' rel='noopener noreferrer'>{instagram_link}</a>
-                     </p>
-                   """)
+                 link_ig_safe = instagram_link
+                 # Garante que o link tenha protocolo
+                 if not link_ig_safe.startswith(('http://', 'https://')):
+                      link_ig_safe = 'https://' + link_ig_safe
+                 popup_parts.append(f"""
+                      <p style='margin: 4px 0;'>
+                           <b>Instagram:</b> <a href='{link_ig_safe}' target='_blank' rel='noopener noreferrer'>{instagram_link}</a>
+                      </p>
+                     """)
 
             # Monta o conteúdo do popup usando o template base
             popup_content = POPUP_TEMPLATE_BASE.format(
@@ -297,20 +305,20 @@ def criar_mapa(data, geojson_data, legenda_to_add):
 
             # Adiciona o marcador ao FeatureGroup correspondente
             if icon_num in feature_groups:
-                marker.add_to(feature_groups[icon_num])
+                 marker.add_to(feature_groups[icon_num])
             else:
-                # Adiciona ao grupo padrão se a categoria não for mapeada
-                marker.add_to(default_feature_group)
-                default_group_needed = True # Define a flag se algum marcador for adicionado aqui
+                 # Adiciona ao grupo padrão se a categoria não for mapeada
+                 marker.add_to(default_feature_group)
+                 default_group_needed = True # Define a flag se algum marcador for adicionado aqui
 
 
         # Adiciona todos os FeatureGroups criados ao mapa
         for group in feature_groups.values():
-            group.add_to(m)
+             group.add_to(m)
 
         # Adiciona o grupo padrão ao mapa SOMENTE se ele contiver algum marcador
         if default_group_needed:
-            default_feature_group.add_to(m)
+             default_feature_group.add_to(m)
 
 
     # Adiciona Controles ao Mapa
@@ -318,9 +326,9 @@ def criar_mapa(data, geojson_data, legenda_to_add):
     # LayerControl adicionado AQUI para incluir os FeatureGroups criados acima
     folium.LayerControl(position='topright').add_to(m)
 
-    # Adiciona o elemento da legenda recebido ao mapa
-    if legenda_to_add:
-        m.get_root().html.add_child(legenda_to_add)
+    # REMOVIDO: Adição da legenda que vinha como argumento. Agora é criada e adicionada acima.
+    # if legenda_to_add:
+    #    m.get_root().html.add_child(legenda_to_add)
 
     return m
 
@@ -342,13 +350,15 @@ def main():
         st.session_state.load_error = False
         st.session_state.df = pd.DataFrame()
         st.session_state.geojson_data = None
-    # >>> Estados para controle da legenda <<<
-    if 'legenda_element' not in st.session_state:
-        st.session_state.legenda_element = None
-    if 'legend_needs_update' not in st.session_state:
-        st.session_state.legend_needs_update = True
+    # --- Estados para controle da legenda REMOVIDOS ---
+    # if 'legenda_element' not in st.session_state:
+    #    st.session_state.legenda_element = None
+    # if 'legend_needs_update' not in st.session_state:
+    #    st.session_state.legend_needs_update = True
+
 
     # --- Carregamento de Dados Inicial ---
+    # Este bloco permanece para carregar dados e geojson
     if not st.session_state.data_loaded:
         with st.spinner("Carregando dados das unidades..."):
             loaded_df = load_data()
@@ -360,23 +370,21 @@ def main():
             geojson = load_geojson()
             st.session_state.geojson_data = geojson
         st.session_state.data_loaded = True
-        # Marca que a legenda precisa ser atualizada após carregar dados
-        st.session_state.legend_needs_update = True
+        # REMOVIDO: Marca que a legenda precisa ser atualizada (feito automaticamente em criar_mapa)
+        # st.session_state.legend_needs_update = True
 
-    # --- Criação/Atualização do Elemento da Legenda ---
-    if st.session_state.legend_needs_update:
-        geojson_para_legenda = st.session_state.get('geojson_data')
-        legenda_criada = None
-        try:
-            # Cria a legenda (a função interna lida com geojson None/inválido)
-            legenda_criada = criar_legenda(geojson_para_legenda)
-            st.session_state.legenda_element = legenda_criada # Armazena no estado
-            # print("DEBUG: Elemento da legenda criado/atualizado.") # Descomente para depurar
-        except Exception as e:
-            st.warning(f"Não foi possível gerar o elemento da legenda: {e}")
-            st.session_state.legenda_element = None # Garante None em caso de erro
-        # Marca que a atualização foi feita (mesmo se falhou, para não tentar de novo até próxima carga)
-        st.session_state.legend_needs_update = False
+    # --- REMOVIDO: Criação/Atualização do Elemento da Legenda fora de criar_mapa ---
+    # if st.session_state.legend_needs_update:
+    #    geojson_para_legenda = st.session_state.get('geojson_data')
+    #    legenda_criada = None
+    #    try:
+    #        legenda_criada = criar_legenda(geojson_para_legenda)
+    #        st.session_state.legenda_element = legenda_criada
+    #    except Exception as e:
+    #        st.warning(f"Não foi possível gerar o elemento da legenda: {e}")
+    #        st.session_state.legenda_element = None
+    #    st.session_state.legend_needs_update = False
+
 
     # --- Layout Principal (Título, Logo, Busca) ---
     col1, col2 = st.columns([3, 1]) # Divide em 2 colunas
@@ -464,11 +472,12 @@ def main():
     # Só exibe o mapa se houver dados filtrados para mostrar
     if not df_filtrado.empty:
         geojson_to_map = st.session_state.get('geojson_data')
-        # >>> Recupera o elemento da legenda do estado <<<
-        legenda_para_mapa = st.session_state.get('legenda_element')
+        # REMOVIDO: Não precisa mais recuperar o elemento da legenda do estado, pois ele é criado dentro de criar_mapa
+        # legenda_para_mapa = st.session_state.get('legenda_element')
 
-        # Cria o mapa com os dados filtrados e o elemento da legenda
-        m = criar_mapa(df_filtrado, geojson_to_map, legenda_para_mapa)
+        # Cria o mapa com os dados filtrados. A legenda é criada e adicionada DENTRO de criar_mapa agora.
+        # A chamada não inclui mais o argumento da legenda.
+        m = criar_mapa(df_filtrado, geojson_to_map) # Chamada modificada
 
         # Renderiza o mapa usando st_folium e captura interações
         map_output = st_folium(
@@ -479,40 +488,41 @@ def main():
             returned_objects=['last_object_clicked'] # Pede para retornar info do último clique
         )
 
-        # --- Lógica de Atualização da Sidebar Pós-Clique --- <<<< RESTAURADA AQUI
+        # --- Lógica de Atualização da Sidebar Pós-Clique ---
         # Verifica se houve um clique na última interação que causou este rerun
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
 
             # Verifica se o clique foi em um marcador (tem lat/lng)
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
-                clicked_lat = clicked_obj['lat']
-                clicked_lon = clicked_obj['lng']
-                coord_precision = 6 # Mesma precisão usada ao criar o lookup
+                 clicked_lat = clicked_obj['lat']
+                 clicked_lon = clicked_obj['lng']
+                 coord_precision = 6 # Mesma precisão usada ao criar o lookup
 
-                # Arredonda as coordenadas clicadas para o lookup
-                rounded_clicked_key = (round(clicked_lat, coord_precision), round(clicked_lon, coord_precision))
+                 # Arredonda as coordenadas clicadas para o lookup
+                 rounded_clicked_key = (round(clicked_lat, coord_precision), round(clicked_lon, coord_precision))
 
-                # Procura no dicionário de lookup atualizado
-                # Usar .get() é mais seguro caso marker_lookup não tenha sido criado
-                found_info = st.session_state.get('marker_lookup', {}).get(rounded_clicked_key)
+                 # Procura no dicionário de lookup atualizado
+                 # Usar .get() é mais seguro caso marker_lookup não tenha sido criado
+                 found_info = st.session_state.get('marker_lookup', {}).get(rounded_clicked_key)
 
-                # Compara com o estado atual para evitar reruns desnecessários
-                if found_info is not None and found_info != st.session_state.selected_marker_info:
-                    st.session_state.selected_marker_info = found_info # Atualiza estado
-                    st.rerun() # Força rerun para atualizar a sidebar "imediatamente"
-                # Se clicou num marcador mas não achou no lookup (improvável, mas possível)
-                elif found_info is None and st.session_state.selected_marker_info is not None:
-                     # Limpa seleção se estava selecionado algo antes
-                     st.session_state.selected_marker_info = None
-                     st.rerun()
+                 # Compara com o estado atual para evitar reruns desnecessários
+                 if found_info is not None and found_info != st.session_state.selected_marker_info:
+                     st.session_state.selected_marker_info = found_info # Atualiza estado
+                     st.rerun() # Força rerun para atualizar a sidebar "imediatamente"
+                 # Se clicou num marcador mas não achou no lookup (improvável, mas possível)
+                 elif found_info is None and st.session_state.selected_marker_info is not None:
+                      # Limpa seleção se estava selecionado algo antes
+                      st.session_state.selected_marker_info = None
+                      st.rerun()
 
             else:
-                # Se clicou em algo sem lat/lng (ex: GeoJSON) ou fora de tudo, limpa seleção
-                # Apenas faz rerun se algo estava selecionado antes
-                if st.session_state.selected_marker_info is not None:
-                    st.session_state.selected_marker_info = None
-                    st.rerun() # Força rerun para limpar a sidebar
+                 # Se clicou em algo sem lat/lng (ex: GeoJSON) ou fora de tudo, limpa seleção
+                 # Apenas faz rerun se algo estava selecionado antes
+                 if st.session_state.selected_marker_info is not None:
+                      st.session_state.selected_marker_info = None
+                      st.rerun()
+
 
     # --- Mensagens Alternativas (Erro, Sem Dados, etc.) ---
     elif st.session_state.load_error:
@@ -526,7 +536,7 @@ def main():
          st.info("Carregando dados iniciais...")
     else: # Caso onde não há dados (df original vazio e sem erro de carga)
         if st.session_state.df.empty and not st.session_state.load_error:
-            st.info("Não há dados de unidades produtivas disponíveis para carregar ou exibir.")
+             st.info("Não há dados de unidades produtivas disponíveis para carregar ou exibir.")
         # Outros casos (como df_filtrado vazio sem busca) já foram tratados ou não precisam de msg
 
 
