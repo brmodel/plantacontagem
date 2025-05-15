@@ -304,7 +304,7 @@ def main():
     st.markdown("---"); st.caption(APP_DESC)
 
     # Defina a altura desejada para os banners do rodapé (em pixels)
-    BANNER_RODAPE_HEIGHT_PX = 80 # Exemplo: 80 pixels de altura
+    BANNER_RODAPE_HEIGHT_PX = 200 # Exemplo: 80 pixels de altura
 
     def display_banner_html(url: str, height_px: int) -> str:
         """
