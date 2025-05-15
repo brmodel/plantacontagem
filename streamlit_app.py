@@ -28,10 +28,16 @@ MAPEAMENTO_CORES = {
     1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5", 4: "#decbe4",
     5: "#fed9a6", 6: "#ffffcc", 7: "#e5d8bd"
 }
-BANNER_PMC_BASE_FILENAMES = ["governo_federal.png", "alimenta_cidades.png"]
-LOGO_PMC_FILENAME = "banner_pmc.png"
+
+# Nomes base dos arquivos para os banners do rodapé (excluindo o logo da PMC por enquanto)
+BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png"]
+LOGO_PMC_FILENAME = "banner_pmc.png" # Arquivo do logo da PMC, também usado como banner no rodapé
+
+# Lista combinada de nomes de arquivos para os banners do rodapé
+FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
+
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
-MAX_SIDEBAR_INFO_CHARS = 250
+MAX_SIDEBAR_INFO_CHARS = 200
 
 # Configurações do Mapa Interativo
 CENTRO_INICIAL_MAPA = [-19.8888, -44.0535] # Coordenadas de Contagem
@@ -65,8 +71,13 @@ def get_image_bytes(image_url: str) -> bytes | None:
 # --- URLs e Rótulos Pré-calculados ---
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
-LOGO_PMC_URL = ICONES_URL_BASE + LOGO_PMC_FILENAME
-BANNER_PMC_URLS = [ICONES_URL_BASE + fname for fname in BANNER_PMC_BASE_FILENAMES]
+
+# URL para o logo da PMC no cabeçalho
+LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
+
+# URLs para os banners do rodapé (agora incluindo o banner_pmc.png)
+BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
+
 
 # --- Templates HTML ---
 POPUP_TEMPLATE_BASE = """
@@ -138,8 +149,6 @@ def criar_legenda(geojson_data):
     return None
 
 def criar_mapa(data, geojson_data):
-    # O location e zoom_start aqui definem o estado inicial do objeto Folium,
-    # mas st_folium pode substituí-los com seus próprios parâmetros center/zoom.
     m = folium.Map(location=CENTRO_INICIAL_MAPA, tiles="cartodbpositron", zoom_start=ZOOM_INICIAL_MAPA, control_scale=True)
     if geojson_data and isinstance(geojson_data, dict) and geojson_data.get("features"):
         folium.GeoJson( geojson_data, name='Regionais',
@@ -193,7 +202,6 @@ def main():
     if 'selected_marker_info' not in st.session_state: st.session_state.selected_marker_info = None
     if 'search_input_value' not in st.session_state: st.session_state.search_input_value = ''
     if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {}
-    # Inicializa o estado do centro e zoom do mapa
     if 'map_center' not in st.session_state: st.session_state.map_center = CENTRO_INICIAL_MAPA
     if 'map_zoom' not in st.session_state: st.session_state.map_zoom = ZOOM_INICIAL_MAPA
     
@@ -205,21 +213,19 @@ def main():
             loaded_df = load_data()
             if not loaded_df.empty: st.session_state.df = loaded_df
             else: st.session_state.load_error = True
-            st.session_state.geojson_data = load_geojson() # Carrega GeoJSON também
+            st.session_state.geojson_data = load_geojson()
         st.session_state.data_loaded = True
         
     col1, col2 = st.columns([3, 1])
     with col1: st.title(APP_TITULO); st.header(APP_SUBTITULO)
     with col2:
-        logo_bytes = get_image_bytes(LOGO_PMC_URL)
+        # Usa LOGO_PMC_URL_CABEÇALHO para o logo no cabeçalho
+        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
         if logo_bytes: st.image(logo_bytes, width=150)
-        else: st.image(LOGO_PMC_URL, width=150)
+        else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
         def clear_selection_on_search():
             st.session_state.selected_marker_info = None
             st.session_state.search_input_value = st.session_state.search_input_widget_key
-            # Opcional: Resetar zoom ao pesquisar?
-            # st.session_state.map_center = CENTRO_INICIAL_MAPA
-            # st.session_state.map_zoom = ZOOM_INICIAL_MAPA
         search_query = st.text_input("Pesquisar por Nome:", key="search_input_widget_key",
                                      on_change=clear_selection_on_search, value=st.session_state.search_input_value).strip().lower()
     with st.sidebar:
@@ -255,66 +261,89 @@ def main():
         else: df_filtrado = df_original
     
     if not df_filtrado.empty:
-        # Cria o objeto mapa. Ele é leve pois os dados pesados são cacheados.
         m = criar_mapa(df_filtrado, st.session_state.get('geojson_data'))
-        
-        # Renderiza o mapa com o centro e zoom controlados pelo session_state
         map_output = st_folium(
             m,
-            center=st.session_state.map_center, # Passa o centro do mapa dinamicamente
-            zoom=st.session_state.map_zoom,     # Passa o zoom do mapa dinamicamente
-            width='100%', height=600, key="folium_map_interactive", # Chave pode ser ajustada se necessário
+            center=st.session_state.map_center,
+            zoom=st.session_state.map_zoom,
+            width='100%', height=600, key="folium_map_interactive",
             returned_objects=['last_object_clicked']
         )
         
-        # Lógica de interação com o clique no mapa
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
-            # Se clicou em um marcador (tem lat/lng)
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
                 clicked_lat = clicked_obj['lat']; clicked_lon = clicked_obj['lng']
                 rounded_clicked_key = (round(clicked_lat, 6), round(clicked_lon, 6))
                 found_info = st.session_state.get('marker_lookup', {}).get(rounded_clicked_key)
 
                 if found_info is not None:
-                    # Se o marcador encontrado é diferente do já selecionado OU se nenhum estava selecionado
                     if found_info != st.session_state.selected_marker_info:
                         st.session_state.selected_marker_info = found_info
-                        st.session_state.map_center = [found_info['lat'], found_info['lon']] # Centraliza no marcador
-                        st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA                  # Aplica zoom
+                        st.session_state.map_center = [found_info['lat'], found_info['lon']]
+                        st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA
                         st.rerun()
-                # Se clicou em um marcador mas não achou info (improvável com lookup correto)
                 elif st.session_state.selected_marker_info is not None: 
                     st.session_state.selected_marker_info = None
-                    st.session_state.map_center = CENTRO_INICIAL_MAPA # Reseta centro
-                    st.session_state.map_zoom = ZOOM_INICIAL_MAPA     # Reseta zoom
+                    st.session_state.map_center = CENTRO_INICIAL_MAPA
+                    st.session_state.map_zoom = ZOOM_INICIAL_MAPA
                     st.rerun()
-            # Se clicou fora de um marcador (ou em um GeoJSON, etc.)
-            elif st.session_state.selected_marker_info is not None: # Apenas se algo estava selecionado
+            elif st.session_state.selected_marker_info is not None:
                 st.session_state.selected_marker_info = None
-                st.session_state.map_center = CENTRO_INICIAL_MAPA # Reseta centro
-                st.session_state.map_zoom = ZOOM_INICIAL_MAPA     # Reseta zoom
+                st.session_state.map_center = CENTRO_INICIAL_MAPA
+                st.session_state.map_zoom = ZOOM_INICIAL_MAPA
                 st.rerun()
                 
     elif st.session_state.load_error: st.error("Falha crítica ao carregar dados. Mapa não pode ser exibido.")
-    elif not st.session_state.df.empty and df_filtrado.empty and search_query: pass
+    elif not st.session_state.df.empty and df_filtrado.empty and search_query: pass # Não mostra mensagem se filtro não retornou nada
     elif not st.session_state.data_loaded: st.info("Carregando dados iniciais...")
     else:
         if st.session_state.df.empty and not st.session_state.load_error:
             st.info("Não há dados de unidades produtivas disponíveis para carregar ou exibir.")
 
     st.markdown("---"); st.caption(APP_DESC)
-    if len(BANNER_PMC_URLS) > 1:
-        cols_banner = st.columns(len(BANNER_PMC_URLS))
-        for i, url in enumerate(BANNER_PMC_URLS):
-            with cols_banner[i]:
-                banner_bytes = get_image_bytes(url)
-                if banner_bytes: st.image(banner_bytes, use_container_width=True)
-                else: st.image(url, use_container_width=True)
-    elif BANNER_PMC_URLS:
-        banner_bytes = get_image_bytes(BANNER_PMC_URLS[0])
-        if banner_bytes: st.image(banner_bytes, use_container_width=True)
-        else: st.image(BANNER_PMC_URLS[0], use_container_width=True)
+
+    # Defina a altura desejada para os banners do rodapé (em pixels)
+    BANNER_RODAPE_HEIGHT_PX = 80 # Exemplo: 80 pixels de altura
+
+    def display_banner_html(url: str, height_px: int) -> str:
+        """
+        Gera o HTML para exibir um banner com altura fixa,
+        alinhado e com aspect ratio preservado.
+        """
+        base64_image_data = get_image_as_base64(url)
+        image_source = base64_image_data if base64_image_data else url
+
+        return f"""
+        <div style="
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: {height_px}px; 
+            overflow: hidden;
+            width: 100%;
+        ">
+            <img src="{image_source}" alt="Banner" style="
+                max-height: 100%; 
+                max-width: 100%; 
+                object-fit: contain; 
+                display: block;
+            ">
+        </div>
+        """
+
+    # Usa BANNER_PMC_URLS_RODAPE para os banners no rodapé
+    if BANNER_PMC_URLS_RODAPE:
+        if len(BANNER_PMC_URLS_RODAPE) > 1:
+            cols_banner = st.columns(len(BANNER_PMC_URLS_RODAPE))
+            for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
+                with cols_banner[i]:
+                    banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
+                    st.markdown(banner_html, unsafe_allow_html=True)
+        elif BANNER_PMC_URLS_RODAPE: # Caso haja apenas uma URL na lista
+            url = BANNER_PMC_URLS_RODAPE[0]
+            banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
+            st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
