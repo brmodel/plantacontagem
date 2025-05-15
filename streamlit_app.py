@@ -13,7 +13,7 @@ import base64
 # --- Configurações ---
 APP_TITULO = "Planta Contagem"
 APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
-APP_DESC = "Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF), em parceria com a Prefeitura Municipal de Contagem - MG"
+APP_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF) "
 ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
 
 ICON_DEFINITIONS = {
@@ -28,8 +28,8 @@ MAPEAMENTO_CORES = {
     1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5", 4: "#decbe4",
     5: "#fed9a6", 6: "#ffffcc", 7: "#e5d8bd"
 }
-BANNER_PMC_BASE_FILENAMES = ["ilustracao_pmc.png", "banner_pmc.png"]
-LOGO_PMC_FILENAME = "contagem_sem_fome.png"
+BANNER_PMC_BASE_FILENAMES = ["governo_federal.png", "alimenta_cidades.png"]
+LOGO_PMC_FILENAME = "banner_pmc.png"
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 MAX_SIDEBAR_INFO_CHARS = 250
 
