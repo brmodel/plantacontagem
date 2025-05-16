@@ -20,7 +20,10 @@ ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
     2: {"file": "leaf_blue.png", "label": "Institucional"},
     3: {"file": "leaf_orange.png", "label": "Comunitária/Institucional"},
-    4: {"file": "leaf_purple.png", "label": "Feira da Cidade"}
+    4: {"file": "leaf_purple.png", "label": "Feira da Cidade"},
+    5: {"file": "banco_alimentos.png", "label": "Banco de Alimentos"},
+    6: {"file": "restaurante_pop.png", "label": "Restaurante Popular"},
+    9: {"file": "leaf_purple.png", "label": "Sede CMAUF"}
 }
 ICONE_PADRAO_FILENAME = "leaf_green.png"
 
@@ -30,7 +33,7 @@ MAPEAMENTO_CORES = {
 }
 
 # Nomes base dos arquivos para os banners do rodapé (excluindo o logo da PMC por enquanto)
-BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png"]
+BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
 LOGO_PMC_FILENAME = "banner_pmc.png" # Arquivo do logo da PMC, também usado como banner no rodapé
 
 # Lista combinada de nomes de arquivos para os banners do rodapé
