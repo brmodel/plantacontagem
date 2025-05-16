@@ -23,7 +23,7 @@ ICON_DEFINITIONS = {
     4: {"file": "leaf_purple.png", "label": "Feira da Cidade"},
     5: {"file": "banco_alimentos.png", "label": "Banco de Alimentos"},
     6: {"file": "restaurante_pop.png", "label": "Restaurante Popular"},
-    9: {"file": "leaf_purple.png", "label": "Sede CMAUF"}
+    9: {"file": "sede_cmauf.png", "label": "Sede CMAUF"}
 }
 ICONE_PADRAO_FILENAME = "leaf_green.png"
 
