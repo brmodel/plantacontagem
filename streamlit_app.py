@@ -20,7 +20,7 @@ ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
     2: {"file": "leaf_blue.png", "label": "Institucional"},
     3: {"file": "leaf_orange.png", "label": "Comunitária/Institucional"},
-    4: {"file": "leaf_purple.png", "label": "Feira da Cidade"},
+    4: {"file": "leaf_purple.png", "label": "Feira da Cidade"}
 }
 ICONE_PADRAO_FILENAME = "leaf_green.png"
 
