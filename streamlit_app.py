@@ -89,7 +89,7 @@ POPUP_TEMPLATE_BASE = """
     <p style="margin: 4px 0;"><b>Tipo:</b> {}</p>
     <p style="margin: 4px 0;"><b>Regional:</b> {}</p>
     {} </div>"""
-TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14px"><p><b>Unidade Produtiva:</b><br>{}</p></div>"""
+TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14px"><p><b>{}:</b><br>{}</p></div>"""
 
 # --- Funções de Carregamento de Dados ---
 @st.cache_data(ttl=600)
@@ -189,7 +189,7 @@ def criar_mapa(data, geojson_data):
                 popup_parts.append(f"<p style='margin:4px 0;'><b>Instagram:</b> <a href='{link_ig_safe}' target='_blank' rel='noopener noreferrer'>{instagram_link}</a></p>")
             popup_content = POPUP_TEMPLATE_BASE.format(row.get('Nome','N/I'), row.get('Tipo','N/I'), row.get('Regional','N/I'), "".join(popup_parts))
             popup = folium.Popup(popup_content, max_width=450)
-            marker = Marker(location=[lat,lon], popup=popup, icon=current_icon, tooltip=TOOLTIP_TEMPLATE.format(row.get('Nome','N/I')))
+            marker = Marker(location=[lat,lon], popup=popup, icon=current_icon, tooltip=TOOLTIP_TEMPLATE.format(row.get('Tipo','N/I'), row.get('Nome','N/I')))
             if icon_num in feature_groups: marker.add_to(feature_groups[icon_num])
             else: marker.add_to(default_feature_group); default_group_needed = True
         for group in feature_groups.values(): group.add_to(m)
