@@ -89,7 +89,7 @@ POPUP_TEMPLATE_BASE = """
     <p style="margin: 4px 0;"><b>Tipo:</b> {}</p>
     <p style="margin: 4px 0;"><b>Regional:</b> {}</p>
     {} </div>"""
-TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14px"><p><b>Unidade Produtiva:</b><br>{}</p></div>"""
+TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14px"><p><b>{Tipo}:</b><br>{}</p></div>"""
 
 # --- Funções de Carregamento de Dados ---
 @st.cache_data(ttl=600)
