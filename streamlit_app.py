@@ -219,19 +219,18 @@ def main():
             st.session_state.geojson_data = load_geojson()
         st.session_state.data_loaded = True
         
-    col1, col2 = st.columns([1, 3])
-
-    with col1:
-        # Usa LOGO_PMC_URL_CABEÇALHO para o logo no cabeçalho
-        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
-        if logo_bytes: st.image(logo_bytes, width=150)
-        else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
+    col1, col2 = st.columns([3, 1])
+    with col1: st.title(APP_TITULO); st.header(APP_SUBTITULO)
+    with col2:
         def clear_selection_on_search():
             st.session_state.selected_marker_info = None
             st.session_state.search_input_value = st.session_state.search_input_widget_key
         search_query = st.text_input("Pesquisar por Nome:", key="search_input_widget_key",
                                      on_change=clear_selection_on_search, value=st.session_state.search_input_value).strip().lower()
-    with col2: st.title(APP_TITULO); st.header(APP_SUBTITULO)
+        # Usa LOGO_PMC_URL_CABEÇALHO para o logo no cabeçalho
+        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
+        if logo_bytes: st.image(logo_bytes, width=150)
+        else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
     
     with st.sidebar:
         st.title("Detalhes da Unidade")
