@@ -18,9 +18,9 @@ ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main
 
 ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
-    2: {"file": "leaf_blue.png", "label": "Institucional"},
-    3: {"file": "leaf_orange.png", "label": "Comunitária/Institucional"},
-    4: {"file": "leaf_purple.png", "label": "Feira da Cidade"},
+    2: {"file": "leaf_orange.png", "label": "Institucional"},
+    3: {"file": "leaf_red.png", "label": "Comunitária/Institucional"},
+    4: {"file": "feira_cidade.png", "label": "Feira da Cidade"},
     5: {"file": "banco_alimentos.png", "label": "Banco de Alimentos"},
     6: {"file": "restaurante_pop.png", "label": "Restaurante Popular"},
     9: {"file": "sede_cmauf.png", "label": "Sede CMAUF"}
@@ -148,7 +148,7 @@ def criar_legenda(geojson_data):
         items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icon_src_for_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
     html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Tipos de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
     if html_regional or html_icones:
-        return folium.Element(f"""<div style="position: fixed; bottom: 50px; right: 20px; z-index: 1000; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 350px; overflow-y: auto;">{html_regional}{html_icones}</div>""")
+        return folium.Element(f"""<div style="position: fixed; bottom: 50px; right: 20px; z-index: 1000; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 450px; overflow-y: auto;">{html_regional}{html_icones}</div>""")
     return None
 
 def criar_mapa(data, geojson_data):
