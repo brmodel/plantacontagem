@@ -146,7 +146,7 @@ def criar_legenda(geojson_data):
         icon_src_for_html = get_image_as_base64(icon_full_url) or icon_full_url
         legenda_texto = props["label"]
         items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icon_src_for_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
-    html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">s de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
+    html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Tipos de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
     if html_regional or html_icones:
         return folium.Element(f"""<div style="position: fixed; bottom: 50px; right: 20px; z-index: 1000; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 450px; overflow-y: auto;">{html_regional}{html_icones}</div>""")
     return None
