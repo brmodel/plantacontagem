@@ -221,7 +221,7 @@ def main():
         
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.title(APP_TITULO);
+        st.title(APP_TITULO)
         logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
         if logo_bytes: st.image(logo_bytes, width=150)
         else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150);
