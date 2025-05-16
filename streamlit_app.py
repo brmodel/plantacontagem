@@ -222,6 +222,10 @@ def main():
     col1, col2 = st.columns([3, 1])
     with col1: st.title(APP_TITULO); st.header(APP_SUBTITULO)
     with col2:
+        # Usa LOGO_PMC_URL_CABEÇALHO para o logo no cabeçalho
+        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
+        if logo_bytes: st.image(logo_bytes, width=150)
+        else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
         def clear_selection_on_search():
             st.session_state.selected_marker_info = None
             st.session_state.search_input_value = st.session_state.search_input_widget_key
