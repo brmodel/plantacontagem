@@ -243,7 +243,7 @@ def main():
             align-items: flex-start; /* Alinha o item ao topo */
             justify-content: center; /* Centraliza horizontalmente */
             height: 100%; /* Ocupa a altura total do flex container */
-            margin-top: 40px; /* Desce o contêiner do logo em 40px */
+            margin-top: 42px; /* Desce o contêiner do logo em 40px */
         }
 
         /* Regra para a imagem do logo dentro do seu contêiner */
