@@ -203,7 +203,7 @@ def criar_mapa(data, geojson_data):
 def main():
     st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
-    # Injeção de CSS para alinhar verticalmente ao centro
+    # Injeção de CSS para alinhar verticalmente
     st.markdown(
         """
         <style>
@@ -212,45 +212,46 @@ def main():
             z-index: 1000;
         }
 
-        /* Alinha os itens verticalmente ao centro dentro das colunas do cabeçalho */
+        /* Os contêineres das colunas do Streamlit são div com data-testid="stVerticalBlock" dentro de div com data-testid="stColumns" */
+        /* Para alinhar o conteúdo interno das colunas ao topo */
         div[data-testid="stColumns"] > div > div {
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Alinha os itens ao centro */
+            justify-content: flex-start; /* Alinha os itens à parte de cima */
             height: 100%; /* Garante que a coluna ocupa a altura total */
         }
         
-        /* Ajuste para o título principal se necessário */
-        div[data-testid="stVerticalBlock"] h1 {
-            margin-bottom: 0px; 
-        }
-        
-        /* Ajuste para o subtítulo */
+        /* Ajuste específico para o subtítulo para remover margens padrão indesejadas */
         div[data-testid="stVerticalBlock"] h3 {
             margin-top: 0px; 
+            margin-bottom: 0px; 
+            padding-top: 0px;
+            padding-bottom: 0px;
         }
 
-        /* Centraliza o logo da PMC verticalmente na sua coluna */
+        /* Ajuste específico para o logo da PMC na col2 */
         div[data-testid="column-PMC-logo"] {
             display: flex;
-            align-items: center; /* Alinha o item ao centro */
+            align-items: flex-start; /* Alinha o item ao topo */
             justify-content: center; /* Centraliza horizontalmente */
-            height: 100%;
+            height: 100%; /* Ocupa a altura total do flex container */
+            margin-top: 10px; /* Desce o contêiner do logo em 10px */
         }
-
-        /* Centraliza a barra de busca verticalmente na sua coluna */
+        
+        /* Ajuste específico para a barra de busca na col3 */
         div[data-testid="column-search-bar"] {
             display: flex;
-            align-items: center; /* Alinha o item ao centro */
+            align-items: flex-start; /* Alinha o item ao topo */
             justify-content: center; /* Centraliza horizontalmente */
-            height: 100%;
+            height: 100%; /* Ocupa a altura total do flex container */
         }
 
-        /* Pequeno ajuste para a barra de busca para compensar o label */
+        /* Pequeno ajuste para o input da barra de busca para compensar o label */
         div[data-testid="column-search-bar"] .stTextInput {
             margin-top: 0px; /* Garante que não há margem superior extra */
             margin-bottom: 0px; /* Garante que não há margem inferior extra */
         }
+
         </style>
         """, unsafe_allow_html=True
     )
@@ -272,17 +273,19 @@ def main():
             st.session_state.geojson_data = load_geojson()
         st.session_state.data_loaded = True
         
-    # Usando st.container para melhor controle do layout do cabeçalho
+    # APP_TITULO agora fora do container de colunas
+    st.title(APP_TITULO)
+
     with st.container():
         # Definimos 3 colunas para o cabeçalho
-        col1, col2, col3 = st.columns([3, 1, 2]) # Ajuste os pesos conforme necessário
+        # Ajuste os pesos conforme necessário, mantendo 3, 0.5, 1
+        col1, col2, col3 = st.columns([3, 0.5, 1]) 
         
         with col1:
-            st.title(APP_TITULO)
-            st.header(APP_SUBTITULO) # Este é o elemento de referência para alinhamento
+            st.header(APP_SUBTITULO) # Apenas o subtítulo aqui
             
         with col2:
-            # Adiciona um data-testid para o CSS customizado
+            # Adiciona um data-testid para o CSS customizado e aplica o margin-top
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
             logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
             if logo_bytes:
