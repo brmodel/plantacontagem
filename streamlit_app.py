@@ -243,7 +243,14 @@ def main():
             align-items: flex-start; /* Alinha o item ao topo */
             justify-content: center; /* Centraliza horizontalmente */
             height: 100%; /* Ocupa a altura total do flex container */
-            margin-top: 35px; /* Desce o contêiner do logo em 35px */
+            margin-top: 10px; /* Desce o contêiner do logo em 10px */
+        }
+
+        /* Regra para a imagem do logo dentro do seu contêiner */
+        div[data-testid="column-PMC-logo"] img {
+            max-width: 100%; /* Garante que a imagem não exceda a largura da coluna */
+            height: auto;    /* Mantém a proporção */
+            object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
         }
 
         /* Pequeno ajuste para o input da barra de busca para compensar o label */
@@ -304,9 +311,11 @@ def main():
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
             logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
             if logo_bytes:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}" width="150"></a>', unsafe_allow_html=True)
+                # Removemos o width="150" daqui
+                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
             else:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}" width="150"></a>', unsafe_allow_html=True)
+                # Removemos o width="150" daqui
+                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
 
