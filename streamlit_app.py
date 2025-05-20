@@ -195,7 +195,7 @@ def criar_mapa(data, geojson_data):
         for group in feature_groups.values(): group.add_to(m)
         if default_group_needed: default_feature_group.add_to(m)
     LocateControl(strings={"title":"Mostrar minha localização", "popup":"Você está aqui"}).add_to(m)
-    folium.LayerControl(position='botleft').add_to(m)
+    folium.LayerControl(position='topright').add_to(m)
     return m
 
 # --- App Principal Streamlit ---
