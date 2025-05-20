@@ -200,7 +200,7 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
     if 'selected_marker_info' not in st.session_state: st.session_state.selected_marker_info = None
     # Inicializa 'search_input_value' ANTES de qualquer text_input que possa acessá-lo.
@@ -238,16 +238,11 @@ def main():
 
         # O 'value' do st.text_input é o que controla o valor exibido e no session_state
         search_query = st.text_input(
-            "Pesquisar por Nome, Tipo ou Regional:",
+            "Pesquisar por Nome, Tipo ou Regional da UP:",
             key="search_input_widget_key", # A key aqui é importante
             on_change=clear_selection_on_search,
             value=st.session_state.search_input_value # Controla o valor inicial e o mantém
         ).strip().lower()
-
-        # Após o text_input ser renderizado, o valor de st.session_state.search_input_widget_key
-        # estará disponível se o usuário digitou algo.
-        # No entanto, a forma mais robusta é usar o retorno do st.text_input (search_query)
-        # que já contém o valor atualizado.
         st.session_state.search_input_value = search_query # Atualiza o session state com o valor atual do campo
 
 
