@@ -220,7 +220,7 @@ def main():
             st.session_state.geojson_data = load_geojson()
         st.session_state.data_loaded = True
         
-    col1, col2 = st.columns([3, 1])
+    col1, col2, col3 = st.columns([3, 0.5, 1])
     with col1:
         st.title(APP_TITULO);
         st.header(APP_SUBTITULO)
@@ -230,9 +230,7 @@ def main():
         if logo_bytes: st.image(logo_bytes, width=150)
         else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
 
-        # A função de callback deve apenas limpar a seleção.
-        # O valor do search_input_value será atualizado automaticamente pelo Streamlit
-        # ao interagir com o widget.
+    with col3:
         def clear_selection_on_search():
             st.session_state.selected_marker_info = None
 
