@@ -15,7 +15,6 @@ APP_TITULO = "Planta Contagem"
 APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
 APP_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF) "
 ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
-PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br" # URL do portal da PMC
 
 ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
@@ -204,6 +203,7 @@ def main():
     st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded")
 
     if 'selected_marker_info' not in st.session_state: st.session_state.selected_marker_info = None
+    # Inicializa 'search_input_value' ANTES de qualquer text_input que possa acessá-lo.
     if 'search_input_value' not in st.session_state: st.session_state.search_input_value = ''
     if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {}
     if 'map_center' not in st.session_state: st.session_state.map_center = CENTRO_INICIAL_MAPA
@@ -222,30 +222,34 @@ def main():
         
     col1, col2 = st.columns([3, 1])
     with col1:
-        # Título do App e logo da PMC lado a lado
-        title_col, logo_col = st.columns([0.8, 0.2]) # Ajuste os pesos conforme necessário
-        with title_col:
-            st.title(APP_TITULO);
-            st.header(APP_SUBTITULO)
-        with logo_col:
-            logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
-            if logo_bytes:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}" width="100"></a>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}" width="100"></a>', unsafe_allow_html=True)
-
+        st.title(APP_TITULO);
+        st.header(APP_SUBTITULO)
     with col2:
+        # Usa LOGO_PMC_URL_CABEÇALHO para o logo no cabeçalho
+        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
+        if logo_bytes: st.image(logo_bytes, width=150)
+        else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
+
+        # A função de callback deve apenas limpar a seleção.
+        # O valor do search_input_value será atualizado automaticamente pelo Streamlit
+        # ao interagir com o widget.
         def clear_selection_on_search():
             st.session_state.selected_marker_info = None
 
-        # Barra de busca na coluna da direita
+        # O 'value' do st.text_input é o que controla o valor exibido e no session_state
         search_query = st.text_input(
             "Pesquisar por Nome, Tipo ou Regional:",
-            key="search_input_widget_key",
+            key="search_input_widget_key", # A key aqui é importante
             on_change=clear_selection_on_search,
-            value=st.session_state.search_input_value
+            value=st.session_state.search_input_value # Controla o valor inicial e o mantém
         ).strip().lower()
-        st.session_state.search_input_value = search_query
+
+        # Após o text_input ser renderizado, o valor de st.session_state.search_input_widget_key
+        # estará disponível se o usuário digitou algo.
+        # No entanto, a forma mais robusta é usar o retorno do st.text_input (search_query)
+        # que já contém o valor atualizado.
+        st.session_state.search_input_value = search_query # Atualiza o session state com o valor atual do campo
+
 
     with st.sidebar:
         st.title("Detalhes da Unidade")
@@ -273,10 +277,13 @@ def main():
         df_original = st.session_state.df
         if search_query:
             try:
+                # Inicializa os filtros como False para garantir que, se uma coluna não existir, ela não cause erro.
+                # O tamanho deve ser o do df_original para que as operações lógicas funcionem corretamente.
                 filtro_nome = pd.Series([False] * len(df_original), index=df_original.index)
                 filtro_tipo = pd.Series([False] * len(df_original), index=df_original.index)
                 filtro_regional = pd.Series([False] * len(df_original), index=df_original.index)
 
+                # Aplica o filtro se a coluna existir
                 if 'Nome' in df_original.columns:
                     filtro_nome = df_original["Nome"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
                 
@@ -286,13 +293,14 @@ def main():
                 if 'Regional' in df_original.columns:
                     filtro_regional = df_original["Regional"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
                 
+                # Combina os filtros usando OR lógico
                 df_filtrado = df_original[filtro_nome | filtro_tipo | filtro_regional]
 
                 if df_filtrado.empty and search_query:
                     st.warning(f"Nenhuma unidade encontrada com '{search_query}' no Nome, Tipo ou Regional.")
             except Exception as e:
                 st.error(f"Erro no filtro: {e}");
-                df_filtrado = df_original
+                df_filtrado = df_original # Em caso de erro, exibe o DataFrame original
         else:
             df_filtrado = df_original
     
@@ -331,7 +339,7 @@ def main():
                 st.rerun()
                 
     elif st.session_state.load_error: st.error("Falha crítica ao carregar dados. Mapa não pode ser exibido.")
-    elif not st.session_state.df.empty and df_filtrado.empty and search_query: pass
+    elif not st.session_state.df.empty and df_filtrado.empty and search_query: pass # Não mostra mensagem se filtro não retornou nada
     elif not st.session_state.data_loaded: st.info("Carregando dados iniciais...")
     else:
         if st.session_state.df.empty and not st.session_state.load_error:
@@ -339,9 +347,16 @@ def main():
 
     st.markdown("---"); st.caption(APP_DESC)
 
+    # Defina a altura desejada para os banners do rodapé (em pixels)
     BANNER_RODAPE_HEIGHT_PX = 80
 
     def display_banner_html(url: str, height_px: int) -> str:
+        """
+        Gera o HTML para exibir um banner com altura fixa,
+        alinhado e com aspect ratio preservado.
+        Ajustado para tentar preencher a largura da coluna de forma mais agressiva,
+        mantendo a proporção.
+        """
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
 
@@ -355,15 +370,16 @@ def main():
             width: 100%;
         ">
             <img src="{image_source}" alt="Banner" style="
-                height: 100%;
-                width: auto;
-                max-width: 100%;
-                object-fit: contain;
+                height: 100%; /* Prioriza a altura total do contêiner */
+                width: auto;   /* Permite que a largura se ajuste automaticamente */
+                max-width: 100%; /* Garante que a imagem não ultrapasse a largura da coluna */
+                object-fit: contain; /* Mantém a proporção e se ajusta ao contêiner */
                 display: block;
             ">
         </div>
         """
 
+    # Usa BANNER_PMC_URLS_RODAPE para os banners no rodapé
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
         num_cols = min(num_banners, 4)
