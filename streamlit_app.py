@@ -229,21 +229,21 @@ def main():
             padding-bottom: 0px;
         }
 
-        /* Ajuste específico para o logo da PMC na col2 */
-        div[data-testid="column-PMC-logo"] {
-            display: flex;
-            align-items: flex-start; /* Alinha o item ao topo */
-            justify-content: center; /* Centraliza horizontalmente */
-            height: 100%; /* Ocupa a altura total do flex container */
-            margin-top: 35px; /* Desce o contêiner do logo em 10px */
-        }
-        
-        /* Ajuste específico para a barra de busca na col3 */
+        /* Ajuste específico para a barra de busca na col2 (nova ordem) */
         div[data-testid="column-search-bar"] {
             display: flex;
             align-items: flex-start; /* Alinha o item ao topo */
             justify-content: center; /* Centraliza horizontalmente */
             height: 100%; /* Ocupa a altura total do flex container */
+        }
+        
+        /* Ajuste específico para o logo da PMC na col3 (nova ordem) */
+        div[data-testid="column-PMC-logo"] {
+            display: flex;
+            align-items: flex-start; /* Alinha o item ao topo */
+            justify-content: center; /* Centraliza horizontalmente */
+            height: 100%; /* Ocupa a altura total do flex container */
+            margin-top: 10px; /* Desce o contêiner do logo em 10px */
         }
 
         /* Pequeno ajuste para o input da barra de busca para compensar o label */
@@ -278,23 +278,13 @@ def main():
 
     with st.container():
         # Definimos 3 colunas para o cabeçalho
-        # Ajuste os pesos conforme necessário, mantendo 3, 0.5, 1
-        col1, col2, col3 = st.columns([3, 0.5, 1]) 
+        # Invertemos a ordem de col2 e col3 aqui para mudar a ordem visual
+        col1, col2, col3 = st.columns([3, 1, 0.5]) # col2 agora tem o peso da busca, col3 o do logo
         
         with col1:
             st.header(APP_SUBTITULO) # Apenas o subtítulo aqui
             
-        with col2:
-            # Adiciona um data-testid para o CSS customizado e aplica o margin-top
-            st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
-            logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
-            if logo_bytes:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}" width="150"></a>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}" width="150"></a>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with col3:
+        with col2: # Agora esta coluna é para a barra de busca
             # Adiciona um data-testid para o CSS customizado
             st.markdown('<div data-testid="column-search-bar">', unsafe_allow_html=True)
             def clear_selection_on_search():
@@ -307,6 +297,16 @@ def main():
                 value=st.session_state.search_input_value
             ).strip().lower()
             st.session_state.search_input_value = search_query
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with col3: # Agora esta coluna é para o logo da PMC
+            # Adiciona um data-testid para o CSS customizado e aplica o margin-top
+            st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
+            logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
+            if logo_bytes:
+                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}" width="150"></a>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}" width="150"></a>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
 
