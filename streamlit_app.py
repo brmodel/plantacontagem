@@ -235,7 +235,7 @@ def main():
             align-items: flex-start; /* Alinha o item ao topo */
             justify-content: center; /* Centraliza horizontalmente */
             height: 100%; /* Ocupa a altura total do flex container */
-            margin-top: 25px; /* Desce o contêiner do logo em 10px */
+            margin-top: 40px; /* Desce o contêiner do logo em 10px */
         }
         
         /* Ajuste específico para a barra de busca na col3 */
