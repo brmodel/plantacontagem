@@ -231,8 +231,8 @@ def main():
         def clear_selection_on_search():
             st.session_state.selected_marker_info = None
             st.session_state.search_input_value = st.session_state.search_input_widget_key
-        search_query = st.text_input("Pesquisar por Nome:", key="search_input_widget_key",
-                                     on_change=clear_selection_on_search, value=st.session_state.search_input_value).strip().lower()
+        search_query = st.text_input("Pesquisar por Nome, Tipo ou Regional:", key="search_input_widget_key",
+                                      on_change=clear_selection_on_search, value=st.session_state.search_input_value).strip().lower()
     
     with st.sidebar:
         st.title("Detalhes da Unidade")
@@ -258,13 +258,34 @@ def main():
     df_filtrado = pd.DataFrame()
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_original = st.session_state.df
-        if search_query and 'Nome' in df_original.columns:
+        if search_query:
             try:
-                df_filtrado = df_original[df_original["Nome"].str.contains(search_query,case=False,na=False,regex=False)]
-                if df_filtrado.empty and search_query: st.warning(f"Nenhuma unidade encontrada com '{search_query}'.")
-            except Exception as e: st.error(f"Erro no filtro: {e}"); df_filtrado = df_original
-        elif search_query: st.warning("Coluna 'Nome' não encontrada."); df_filtrado = pd.DataFrame()
-        else: df_filtrado = df_original
+                # Inicializa os filtros como False para garantir que, se uma coluna não existir, ela não cause erro.
+                # O tamanho deve ser o do df_original para que as operações lógicas funcionem corretamente.
+                filtro_nome = pd.Series([False] * len(df_original), index=df_original.index)
+                filtro_tipo = pd.Series([False] * len(df_original), index=df_original.index)
+                filtro_regional = pd.Series([False] * len(df_original), index=df_original.index)
+
+                # Aplica o filtro se a coluna existir
+                if 'Nome' in df_original.columns:
+                    filtro_nome = df_original["Nome"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
+                
+                if 'Tipo' in df_original.columns:
+                    filtro_tipo = df_original["Tipo"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
+                
+                if 'Regional' in df_original.columns:
+                    filtro_regional = df_original["Regional"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
+                
+                # Combina os filtros usando OR lógico
+                df_filtrado = df_original[filtro_nome | filtro_tipo | filtro_regional]
+
+                if df_filtrado.empty and search_query:
+                    st.warning(f"Nenhuma unidade encontrada com '{search_query}' no Nome, Tipo ou Regional.")
+            except Exception as e:
+                st.error(f"Erro no filtro: {e}");
+                df_filtrado = df_original # Em caso de erro, exibe o DataFrame original
+        else:
+            df_filtrado = df_original
     
     if not df_filtrado.empty:
         m = criar_mapa(df_filtrado, st.session_state.get('geojson_data'))
@@ -310,29 +331,32 @@ def main():
     st.markdown("---"); st.caption(APP_DESC)
 
     # Defina a altura desejada para os banners do rodapé (em pixels)
-    BANNER_RODAPE_HEIGHT_PX = 300 # Exemplo: 80 pixels de altura
+    BANNER_RODAPE_HEIGHT_PX = 80 # Ajustado para um valor mais comum para banners de rodapé
 
     def display_banner_html(url: str, height_px: int) -> str:
         """
         Gera o HTML para exibir um banner com altura fixa,
         alinhado e com aspect ratio preservado.
+        Ajustado para ocupar a largura total do contêiner da coluna.
         """
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
 
         return f"""
         <div style="
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: {height_px}px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: {height_px}px;
             overflow: hidden;
-            width: 100%;
+            width: 100%; /* Garante que o contêiner flex ocupe toda a largura da coluna */
         ">
             <img src="{image_source}" alt="Banner" style="
-                max-height: 100%; 
-                max-width: 100%; 
-                object-fit: contain; 
+                max-height: 100%;
+                max-width: 100%; /* Garante que a imagem não ultrapasse a largura do contêiner */
+                width: auto; /* Permite que a imagem ajuste sua largura mantendo a proporção */
+                height: auto; /* Permite que a imagem ajuste sua altura mantendo a proporção */
+                object-fit: contain;
                 display: block;
             ">
         </div>
@@ -340,16 +364,16 @@ def main():
 
     # Usa BANNER_PMC_URLS_RODAPE para os banners no rodapé
     if BANNER_PMC_URLS_RODAPE:
-        if len(BANNER_PMC_URLS_RODAPE) > 1:
-            cols_banner = st.columns(len(BANNER_PMC_URLS_RODAPE))
-            for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
-                with cols_banner[i]:
-                    banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
-                    st.markdown(banner_html, unsafe_allow_html=True)
-        elif BANNER_PMC_URLS_RODAPE: # Caso haja apenas uma URL na lista
-            url = BANNER_PMC_URLS_RODAPE[0]
-            banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
-            st.markdown(banner_html, unsafe_allow_html=True)
+        # Define o número de colunas. Podemos usar 3 ou 4 para uma boa distribuição,
+        # ou o número exato de banners se houver poucos, para evitar colunas vazias.
+        # Max de colunas para evitar banners muito pequenos se houver muitos.
+        num_banners = len(BANNER_PMC_URLS_RODAPE)
+        num_cols = min(num_banners, 4) # Limita a no máximo 4 colunas para não ficar muito apertado
 
-if __name__ == "__main__":
-    main()
+        # Cria as colunas com pesos iguais para distribuição uniforme
+        cols_banner = st.columns(num_cols)
+
+        for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
+            with cols_banner[i % num_cols]: # Usa o operador módulo para ciclar pelas colunas
+                banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
+                st.markdown(banner_html, unsafe_allow_html=True)
