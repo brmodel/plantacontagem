@@ -275,7 +275,7 @@ def main():
     # Usando st.container para melhor controle do layout do cabeçalho
     with st.container():
         # Definimos 3 colunas para o cabeçalho
-        col1, col2, col3 = st.columns([3, 0.5, 1]) # Ajuste os pesos conforme necessário
+        col1, col2, col3 = st.columns([3, 1, 2]) # Ajuste os pesos conforme necessário
         
         with col1:
             st.title(APP_TITULO)
