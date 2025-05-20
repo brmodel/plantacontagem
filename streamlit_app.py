@@ -348,13 +348,14 @@ def main():
     st.markdown("---"); st.caption(APP_DESC)
 
     # Defina a altura desejada para os banners do rodapé (em pixels)
-    BANNER_RODAPE_HEIGHT_PX = 80 # Ajustado para um valor mais comum para banners de rodapé
+    BANNER_RODAPE_HEIGHT_PX = 80
 
     def display_banner_html(url: str, height_px: int) -> str:
         """
         Gera o HTML para exibir um banner com altura fixa,
         alinhado e com aspect ratio preservado.
-        Ajustado para ocupar a largura total do contêiner da coluna.
+        Ajustado para tentar preencher a largura da coluna de forma mais agressiva,
+        mantendo a proporção.
         """
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
@@ -366,14 +367,13 @@ def main():
             align-items: center;
             height: {height_px}px;
             overflow: hidden;
-            width: 100%; /* Garante que o contêiner flex ocupe toda a largura da coluna */
+            width: 100%;
         ">
             <img src="{image_source}" alt="Banner" style="
-                max-height: 100%;
-                max-width: 100%; /* Garante que a imagem não ultrapasse a largura do contêiner */
-                width: auto; /* Permite que a imagem ajuste sua largura mantendo a proporção */
-                height: auto; /* Permite que a imagem ajuste sua altura mantendo a proporção */
-                object-fit: contain;
+                height: 100%; /* Prioriza a altura total do contêiner */
+                width: auto;   /* Permite que a largura se ajuste automaticamente */
+                max-width: 100%; /* Garante que a imagem não ultrapasse a largura da coluna */
+                object-fit: contain; /* Mantém a proporção e se ajusta ao contêiner */
                 display: block;
             ">
         </div>
@@ -381,17 +381,13 @@ def main():
 
     # Usa BANNER_PMC_URLS_RODAPE para os banners no rodapé
     if BANNER_PMC_URLS_RODAPE:
-        # Define o número de colunas. Podemos usar 3 ou 4 para uma boa distribuição,
-        # ou o número exato de banners se houver poucos, para evitar colunas vazias.
-        # Max de colunas para evitar banners muito pequenos se houver muitos.
         num_banners = len(BANNER_PMC_URLS_RODAPE)
-        num_cols = min(num_banners, 4) # Limita a no máximo 4 colunas para não ficar muito apertado
+        num_cols = min(num_banners, 4)
 
-        # Cria as colunas com pesos iguais para distribuição uniforme
         cols_banner = st.columns(num_cols)
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
-            with cols_banner[i % num_cols]: # Usa o operador módulo para ciclar pelas colunas
+            with cols_banner[i % num_cols]:
                 banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
