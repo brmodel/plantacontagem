@@ -203,7 +203,7 @@ def criar_mapa(data, geojson_data):
 def main():
     st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
-    # Injeção de CSS para alinhar verticalmente
+    # Injeção de CSS para alinhar verticalmente ao centro
     st.markdown(
         """
         <style>
@@ -212,29 +212,28 @@ def main():
             z-index: 1000;
         }
 
-        /* Alinha os itens dentro das colunas do cabeçalho */
+        /* Alinha os itens verticalmente ao centro dentro das colunas do cabeçalho */
         div[data-testid="stColumns"] > div > div {
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* Alinha os itens à parte de baixo */
+            justify-content: center; /* Alinha os itens ao centro */
             height: 100%; /* Garante que a coluna ocupa a altura total */
         }
         
-        /* Ajuste específico para o título principal se necessário */
+        /* Ajuste para o título principal se necessário */
         div[data-testid="stVerticalBlock"] h1 {
-            margin-bottom: 0px; /* Reduz espaço abaixo do título principal */
+            margin-bottom: 0px; 
         }
         
-        /* Ajusta o padding do subtítulo para dar mais espaço acima se precisar alinhar com outros itens */
+        /* Ajuste para o subtítulo */
         div[data-testid="stVerticalBlock"] h3 {
-            padding-top: 0px; /* Remove padding superior padrão */
-            margin-top: 0px; /* Remove margin superior padrão */
+            margin-top: 0px; 
         }
-        
+
         /* Centraliza o logo da PMC verticalmente na sua coluna */
         div[data-testid="column-PMC-logo"] {
             display: flex;
-            align-items: flex-end; /* Alinha o item à parte de baixo */
+            align-items: center; /* Alinha o item ao centro */
             justify-content: center; /* Centraliza horizontalmente */
             height: 100%;
         }
@@ -242,16 +241,16 @@ def main():
         /* Centraliza a barra de busca verticalmente na sua coluna */
         div[data-testid="column-search-bar"] {
             display: flex;
-            align-items: flex-end; /* Alinha o item à parte de baixo */
+            align-items: center; /* Alinha o item ao centro */
             justify-content: center; /* Centraliza horizontalmente */
             height: 100%;
         }
 
         /* Pequeno ajuste para a barra de busca para compensar o label */
         div[data-testid="column-search-bar"] .stTextInput {
-            margin-bottom: -15px; /* Ajuste negativo para subir um pouco o input */
+            margin-top: 0px; /* Garante que não há margem superior extra */
+            margin-bottom: 0px; /* Garante que não há margem inferior extra */
         }
-
         </style>
         """, unsafe_allow_html=True
     )
