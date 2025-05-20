@@ -200,7 +200,7 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
     if 'selected_marker_info' not in st.session_state: st.session_state.selected_marker_info = None
     # Inicializa 'search_input_value' ANTES de qualquer text_input que possa acessá-lo.
