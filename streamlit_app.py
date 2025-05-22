@@ -283,9 +283,8 @@ def main():
     # APP_TITULO agora fora do container de colunas
     st.title(APP_TITULO)
 
-    # --- Adição da navegação global ---
+    # --- Adição da navegação global (apenas 'Saiba Mais' visível, 'Mapa Principal' é o padrão) ---
     st.navigation([
-        st.Page("streamlit_app.py", label="Mapa Principal", icon="🗺️"),
         st.Page("pages/saiba_mais.py", label="Saiba Mais", icon="ℹ️")
     ])
     # --- Fim da adição da navegação global ---
@@ -296,14 +295,8 @@ def main():
         
         with col1:
             st.header(APP_SUBTITULO) # Apenas o subtítulo aqui
-            # O botão de redirecionamento para 'saiba_mais.py' NÃO VAI AQUI,
-            # pois a navegação global (st.navigation) já cuida disso.
-            # Se você *realmente* quiser um st.button para a página,
-            # precisaria usar st.switch_page. Mas st.page_link (que st.navigation usa)
-            # já é a forma de linkar entre páginas em um multi-page app.
-            # Se ainda quiser um botão que ative o page_link, podemos fazer isso com um truque:
             if st.button("Saiba Mais sobre o Projeto"):
-                st.switch_page("pages/saiba_mais.py") # Redireciona para a página "saiba_mais.py"
+                st.switch_page("pages/saiba_mais.py")
             
         with col2: # Agora esta coluna é para a barra de busca
             # Adiciona um data-testid para o CSS customizado
@@ -325,10 +318,8 @@ def main():
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
             logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
             if logo_bytes:
-                # Removemos o width="150" daqui
                 st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
             else:
-                # Removemos o width="150" daqui
                 st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
