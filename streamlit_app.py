@@ -202,10 +202,8 @@ def criar_mapa(data, geojson_data):
 # --- App Principal Streamlit ---
 def main():
     st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
-    # Esconde a navegação padrão do Streamlit
-    pg = st.navigation(["streamlit_app.py","saiba_mais.py"], position="hidden", expanded=False)
-    pg.run()
 
+    # Injeção de CSS para alinhar verticalmente
     st.markdown(
         """
         <style>
@@ -251,7 +249,7 @@ def main():
         /* Regra para a imagem do logo dentro do seu contêiner */
         div[data-testid="column-PMC-logo"] img {
             max-width: 100%; /* Garante que a imagem não exceda a largura da coluna */
-            height: auto;   /* Mantém a proporção */
+            height: auto;    /* Mantém a proporção */
             object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
         }
 
@@ -410,9 +408,6 @@ def main():
     else:
         if st.session_state.df.empty and not st.session_state.load_error:
             st.info("Não há dados de unidades produtivas disponíveis para carregar ou exibir.")
-
-    # Adiciona o botão "Saiba Mais" após o display do mapa
-    st.page_link("saiba_mais.py", label="Saiba Mais", icon="ℹ️")
 
     st.markdown("---"); st.caption(APP_DESC)
 
