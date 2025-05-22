@@ -251,7 +251,7 @@ def main():
             max-width: 100%; /* Garante que a imagem não exceda a largura da coluna */
             height: auto;    /* Mantém a proporção */
             object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
-        }
+            }
 
         /* Pequeno ajuste para o input da barra de busca para compensar o label */
         div[data-testid="column-search-bar"] .stTextInput {
@@ -283,15 +283,27 @@ def main():
     # APP_TITULO agora fora do container de colunas
     st.title(APP_TITULO)
 
+    # --- Adição da navegação global ---
+    st.navigation([
+        st.Page("streamlit_app.py", label="Mapa Principal", icon="🗺️"),
+        st.Page("pages/saiba_mais.py", label="Saiba Mais", icon="ℹ️")
+    ])
+    # --- Fim da adição da navegação global ---
+
     with st.container():
         # Definimos 3 colunas para o cabeçalho
-        # Invertemos a ordem de col2 e col3 aqui para mudar a ordem visual
         col1, col2, col3 = st.columns([3, 1, 0.5]) # col2 agora tem o peso da busca, col3 o do logo
         
         with col1:
             st.header(APP_SUBTITULO) # Apenas o subtítulo aqui
-            # Adiciona o botão de redirecionamento aqui, abaixo do APP_SUBTITULO
-            st.page_link("saiba_mais.py", label="Saiba Mais", icon="ℹ️")
+            # O botão de redirecionamento para 'saiba_mais.py' NÃO VAI AQUI,
+            # pois a navegação global (st.navigation) já cuida disso.
+            # Se você *realmente* quiser um st.button para a página,
+            # precisaria usar st.switch_page. Mas st.page_link (que st.navigation usa)
+            # já é a forma de linkar entre páginas em um multi-page app.
+            # Se ainda quiser um botão que ative o page_link, podemos fazer isso com um truque:
+            if st.button("Saiba Mais sobre o Projeto"):
+                st.switch_page("pages/saiba_mais.py") # Redireciona para a página "saiba_mais.py"
             
         with col2: # Agora esta coluna é para a barra de busca
             # Adiciona um data-testid para o CSS customizado
