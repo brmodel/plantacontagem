@@ -290,6 +290,8 @@ def main():
         
         with col1:
             st.header(APP_SUBTITULO) # Apenas o subtítulo aqui
+            # Adiciona o botão de redirecionamento aqui, abaixo do APP_SUBTITULO
+            st.page_link("saiba_mais.py", label="Saiba Mais", icon="ℹ️")
             
         with col2: # Agora esta coluna é para a barra de busca
             # Adiciona um data-testid para o CSS customizado
