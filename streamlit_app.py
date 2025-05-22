@@ -286,8 +286,9 @@ def main():
     # --- Adição da navegação global (APENAS 'Saiba Mais' listado explicitamente) ---
     # Streamlit automaticamente adicionará a página principal (`streamlit_app.py`)
     # na barra lateral se ela for o arquivo de entrada da sua aplicação multi-page.
+    # Removidos 'label' e 'icon' da chamada st.Page
     st.navigation([
-        st.Page("pages/saiba_mais.py", label="Saiba Mais", icon="ℹ️")
+        st.Page("pages/saiba_mais.py") # <<< ALTERAÇÃO AQUI
     ])
     # --- Fim da adição da navegação global ---
 
