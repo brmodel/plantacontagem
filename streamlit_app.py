@@ -283,7 +283,9 @@ def main():
     # APP_TITULO agora fora do container de colunas
     st.title(APP_TITULO)
 
-    # --- Adição da navegação global (apenas 'Saiba Mais' visível, 'Mapa Principal' é o padrão) ---
+    # --- Adição da navegação global (APENAS 'Saiba Mais' listado explicitamente) ---
+    # Streamlit automaticamente adicionará a página principal (`streamlit_app.py`)
+    # na barra lateral se ela for o arquivo de entrada da sua aplicação multi-page.
     st.navigation([
         st.Page("pages/saiba_mais.py", label="Saiba Mais", icon="ℹ️")
     ])
