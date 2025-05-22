@@ -79,16 +79,15 @@ def main():
         logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
         if logo_bytes: st.image(logo_bytes, width=150)
         else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
-
-    st.markdown("---"); st.caption(SAIBA_DESC)
+		
+    st.markdown(TEXTAO)	
+	
+    if st.button("Voltar ao Mapa"):
+        st.switch_page("streamlit_app.py")
+        st.markdown("---"); st.caption(SAIBA_DESC)
 
     # Defina a altura desejada para os banners do rodapé (em pixels)
     BANNER_RODAPE_HEIGHT_PX = 80 # Ajustado para um valor mais comum para banners de rodapé
-
-    st.header(
-    st.markdown(TEXTAO)
-
-	
 
     def display_banner_html(url: str, height_px: int) -> str:
         """
