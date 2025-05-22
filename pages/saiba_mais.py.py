@@ -1,44 +1,59 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
-import pandas as pd
-import folium
-from streamlit_folium import st_folium
-from folium import Marker
 import requests
-from folium.plugins import LocateControl
-import numpy as np
-import json
 import base64
 
-# Textos
+# --- Constantes (algumas vêm do streamlit_app.py, mas são definidas aqui para auto-suficiência) ---
+# Se estas constantes mudarem no streamlit_app.py, você precisará atualizá-las aqui também.
+# Uma alternativa mais avançada seria importar de um arquivo de configuração comum,
+# mas para simplicidade, vamos duplicá-las aqui.
+APP_TITULO = "Planta Contagem"
+APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem" # Mantido para consistência de estilo de cabeçalho
+PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br" # URL do portal da PMC
+ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
+LOGO_PMC_FILENAME = "banner_pmc.png" # Arquivo do logo da PMC, também usado como banner no rodapé
+
+# Textos específicos da página "Saiba Mais"
 SAIBA_TITULO = "Conheça o CMAUF"
 SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
 SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
 
-TEXTAO = """<div style="font-family: Arial, sans-serif; font-size: 12px; width: auto; word-break: break-word; padding: 8px;">
-Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável, alinhado ao programa municipal <b>Contagem Sem Fome</b> e a políticas nacionais como o <b>Alimenta Cidades</b>. Sua atuação inclui:
+TEXTAO_CMAUF = """
+<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; padding: 15px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p style="margin-bottom: 1em;">Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável, alinhado ao programa municipal <b>Contagem Sem Fome</b> e a políticas nacionais como o <b>Alimenta Cidades</b>. Sua atuação inclui:</p>
 
-<b>Capacitação e apoio técnico:</b> implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo formação, troca de mudas e compostos para subsidiar a produção.<br>
-<b>Sistemas agroecológicos:</b> promove a comercialização direta de alimentos e tecnologias sociais, em sintonia com as Políticas Nacional e Estadual de Agricultura Urbana.<br>
-<b>Mapeamento estratégico:</b> identifica demandas e oportunidades para ações concretas, desde produção de alimentos até criação de pequenos animais.<br>
-O equipamento trabalha com quatro tipos de UPs:<br>
-<b>Comunitárias</b>: gestão compartilhada em áreas públicas ou privadas;<br>
-<b>Institucionais Públicas</b>: vinculadas a equipamentos como CRAS e centros de saúde;<br>
-<b>Pedagógicas Escolares</b>: foco em educação ambiental e consumo saudável;<br>
-<b>Territórios de Tradição</b>: quilombos, terreiros e comunidades tradicionais.<br>
+    <ul style="list-style-type: disc; margin-left: 20px; padding-left: 0;">
+        <li style="margin-bottom: 0.5em;"><b>Capacitação e apoio técnico:</b> implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo formação, troca de mudas e compostos para subsidiar a produção.</li>
+        <li style="margin-bottom: 0.5em;"><b>Sistemas agroecológicos:</b> promove a comercialização direta de alimentos e tecnologias sociais, em sintonia com as Políticas Nacional e Estadual de Agricultura Urbana.</li>
+        <li style="margin-bottom: 0.5em;"><b>Mapeamento estratégico:</b> identifica demandas e oportunidades para ações concretas, desde produção de alimentos até criação de pequenos animais.</li>
+    </ul>
 
-Além disso, o CMAUF conta com uma parceria estratégica com a EMATER-MG, garantindo assistência a agricultores familiares do município, reforçando o compromisso com desenvolvimento sustentável e qualidade de vida.
+    <p style="margin-top: 1em; margin-bottom: 0.5em;">O equipamento trabalha com quatro tipos de UPs:</p>
+    <ul style="list-style-type: circle; margin-left: 30px; padding-left: 0;">
+        <li style="margin-bottom: 0.3em;"><b>Comunitárias</b>: gestão compartilhada em áreas públicas ou privadas;</li>
+        <li style="margin-bottom: 0.3em;"><b>Institucionais Públicas</b>: vinculadas a equipamentos como CRAS e centros de saúde;</li>
+        <li style="margin-bottom: 0.3em;"><b>Pedagógicas Escolares</b>: foco em educação ambiental e consumo saudável;</li>
+        <li style="margin-bottom: 0.3em;"><b>Territórios de Tradição</b>: quilombos, terreiros e comunidades tradicionais.</li>
+    </ul>
 
-Vinculado à Diretoria de Agricultura Urbana e Familiar (Subsecretaria SUSANA), o CMAUF transforma realidades locais, conectando campo e cidade através de práticas inovadoras.</div>""""
+    <p style="margin-top: 1em;">Além disso, o CMAUF conta com uma parceria estratégica com a EMATER-MG, garantindo assistência a agricultores familiares do município, reforçando o compromisso com desenvolvimento sustentável e qualidade de vida.</p>
 
-# Nomes base dos arquivos para os banners do rodapé (excluindo o logo da PMC por enquanto)
+    <p style="margin-top: 1em;">Vinculado à Diretoria de Agricultura Urbana e Familiar (Subsecretaria SUSANA), o CMAUF transforma realidades locais, conectando campo e cidade através de práticas inovadoras.</p>
+</div>
+"""
+
+
+# Nomes base dos arquivos para os banners do rodapé
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
-LOGO_PMC_FILENAME = "banner_pmc.png" # Arquivo do logo da PMC, também usado como banner no rodapé
-
-# Lista combinada de nomes de arquivos para os banners do rodapé
+# LOGO_PMC_FILENAME já definido acima.
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 
-# --- Funções de Cache de Imagem ---
+# URLs para os banners do rodapé (agora incluindo o banner_pmc.png)
+BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
+LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
+
+
+# --- Funções de Cache de Imagem (replicadas para auto-suficiência da página) ---
 @st.cache_data(show_spinner=False)
 def get_image_as_base64(image_url: str) -> str | None:
     try:
@@ -61,40 +76,93 @@ def get_image_bytes(image_url: str) -> bytes | None:
         print(f"Erro ao carregar bytes da imagem {image_url}: {e}")
         return None
 
-# URL para o logo da PMC no cabeçalho
-LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
-
-# URLs para os banners do rodapé (agora incluindo o banner_pmc.png)
-BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
-
 # --- App Principal Streamlit ---
 def main():
     st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="collapsed")
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.title(APP_TITULO);
-        st.header(APP_SUBTITULO)
-    with col2:
-        # Usa LOGO_PMC_URL_CABEÇALHO para o logo no cabeçalho
-        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
-        if logo_bytes: st.image(logo_bytes, width=150)
-        else: st.image(LOGO_PMC_URL_CABEÇALHO, width=150)
-		
-    st.markdown(TEXTAO)	
-	
-    if st.button("Voltar ao Mapa"):
-        st.switch_page("streamlit_app.py")
-        st.markdown("---"); st.caption(SAIBA_DESC)
+
+    # Injeção de CSS para alinhar verticalmente e outros estilos
+    st.markdown(
+        """
+        <style>
+        .stApp > header {
+            position: relative;
+            z-index: 1000;
+        }
+
+        /* Os contêineres das colunas do Streamlit são div com data-testid="stVerticalBlock" dentro de div com data-testid="stColumns" */
+        /* Para alinhar o conteúdo interno das colunas ao topo */
+        div[data-testid="stColumns"] > div > div {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Alinha os itens à parte de cima */
+            height: 100%; /* Garante que a coluna ocupa a altura total */
+        }
+
+        /* Ajuste específico para o subtítulo para remover margens padrão indesejadas */
+        div[data-testid="stVerticalBlock"] h3 {
+            margin-top: 0px;
+            margin-bottom: 0px;
+            padding-top: 0px;
+            padding-bottom: 0px;
+        }
+
+        /* Ajuste para o logo da PMC na col2 */
+        div[data-testid="column-PMC-logo"] {
+            display: flex;
+            align-items: flex-start; /* Alinha o item ao topo */
+            justify-content: center; /* Centraliza horizontalmente */
+            height: 100%; /* Ocupa a altura total do flex container */
+            margin-top: 44px; /* Desce o contêiner do logo para alinhar com o título */
+        }
+
+        /* Regra para a imagem do logo dentro do seu contêiner */
+        div[data-testid="column-PMC-logo"] img {
+            max-width: 100%; /* Garante que a imagem não exceda a largura da coluna */
+            height: auto;    /* Mantém a proporção */
+            object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
+        }
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+    # st.navigation para navegar entre as páginas
+    st.navigation([
+        st.Page("streamlit_app.py", label="Mapa Principal", icon="🗺️"),
+        st.Page("pages/saiba_mais.py", label="Saiba Mais", icon="ℹ️")
+    ])
+
+    with st.container():
+        col1, col2 = st.columns([3, 0.5]) # Ajustado o peso da col2 para o logo
+        
+        with col1:
+            st.title(SAIBA_TITULO)
+            st.header(SAIBA_SUBTITULO)
+            # Botão para voltar ao mapa
+            if st.button("Voltar ao Mapa"):
+                st.switch_page("streamlit_app.py")
+
+        with col2:
+            # Adiciona um data-testid para o CSS customizado e aplica o margin-top
+            st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
+            logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
+            if logo_bytes:
+                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.caption(SAIBA_DESC)
+
+    # Conteúdo principal da página "Saiba Mais"
+    st.markdown(TEXTAO_CMAUF, unsafe_allow_html=True) # Usamos TEXTAO_CMAUF agora.
+
+    st.markdown("---") # Separador antes dos banners do rodapé
 
     # Defina a altura desejada para os banners do rodapé (em pixels)
-    BANNER_RODAPE_HEIGHT_PX = 80 # Ajustado para um valor mais comum para banners de rodapé
+    BANNER_RODAPE_HEIGHT_PX = 80
 
     def display_banner_html(url: str, height_px: int) -> str:
-        """
-        Gera o HTML para exibir um banner com altura fixa,
-        alinhado e com aspect ratio preservado.
-        Ajustado para ocupar a largura total do contêiner da coluna.
-        """
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
 
@@ -105,31 +173,28 @@ def main():
             align-items: center;
             height: {height_px}px;
             overflow: hidden;
-            width: 100%; /* Garante que o contêiner flex ocupe toda a largura da coluna */
+            width: 100%;
         ">
             <img src="{image_source}" alt="Banner" style="
-                max-height: 100%;
-                max-width: 100%; /* Garante que a imagem não ultrapasse a largura do contêiner */
-                width: auto; /* Permite que a imagem ajuste sua largura mantendo a proporção */
-                height: auto; /* Permite que a imagem ajuste sua altura mantendo a proporção */
-                object-fit: contain;
+                height: 100%; /* Prioriza a altura total do contêiner */
+                width: auto;  /* Permite que a largura se ajuste automaticamente */
+                max-width: 100%; /* Garante que a imagem não ultrapasse a largura da coluna */
+                object-fit: contain; /* Mantém a proporção e se ajusta ao contêiner */
                 display: block;
             ">
         </div>
         """
 
-    # Usa BANNER_PMC_URLS_RODAPE para os banners no rodapé
     if BANNER_PMC_URLS_RODAPE:
-        # Define o número de colunas. Podemos usar 3 ou 4 para uma boa distribuição,
-        # ou o número exato de banners se houver poucos, para evitar colunas vazias.
-        # Max de colunas para evitar banners muito pequenos se houver muitos.
         num_banners = len(BANNER_PMC_URLS_RODAPE)
-        num_cols = min(num_banners, 4) # Limita a no máximo 4 colunas para não ficar muito apertado
+        num_cols = min(num_banners, 4)
 
-        # Cria as colunas com pesos iguais para distribuição uniforme
         cols_banner = st.columns(num_cols)
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
-            with cols_banner[i % num_cols]: # Usa o operador módulo para ciclar pelas colunas
+            with cols_banner[i % num_cols]:
                 banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
                 st.markdown(banner_html, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
