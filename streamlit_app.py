@@ -19,8 +19,8 @@ PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br" # URL do portal da PMC
 
 ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
-    2: {"file": "leaf_blue.png", "label": "Institucional"},
-    3: {"file": "leaf_orange.png", "label": "Comunitária/Institucional"},
+    2: {"file": "leaf_blue.png", "": "Institucional"},
+    3: {"file": "leaf_orange.png", "": "Comunitária/Institucional"},
     4: {"file": "feira_cidade.png", "label": "Feira da Cidade"},
     5: {"file": "banco_alimentos.png", "label": "Banco de Alimentos"},
     6: {"file": "restaurante_pop.png", "label": "Restaurante Popular"},
