@@ -201,8 +201,8 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    # Definir o layout como "wide" e o estado inicial da sidebar como "collapsed"
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
+    # Definir o layout como "wide" e o estado inicial da sidebar como "expanded" (ALTERADO)
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded") #
 
     # Injeção de CSS para alinhar verticalmente e ESCONDER APENAS A NAVEGAÇÃO DE PÁGINAS na sidebar
     st.markdown(
@@ -250,7 +250,7 @@ def main():
             align-items: flex-start; /* Alinha o item ao topo */
             justify-content: center; /* Centraliza horizontalmente */
             height: 100%; /* Ocupa a altura total do flex container */
-            margin-top: 35px;
+            margin-top: 77px;
         }
 
         /* Regra para a imagem do logo dentro do seu contêiner */
@@ -398,7 +398,7 @@ def main():
                         st.session_state.selected_marker_info = found_info
                         st.session_state.map_center = [found_info['lat'], found_info['lon']]
                         st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA
-                        st.rerun()
+                        st.rerun() #
                 elif st.session_state.selected_marker_info is not None: 
                     st.session_state.selected_marker_info = None
                     st.session_state.map_center = CENTRO_INICIAL_MAPA
