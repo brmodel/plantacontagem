@@ -127,8 +127,7 @@ def main():
 
     # st.navigation para navegar entre as páginas
     st.navigation([
-        st.Page("streamlit_app.py", label="Mapa Principal", icon="🗺️"),
-        st.Page("pages/saiba_mais.py", label="Saiba Mais", icon="ℹ️")
+        st.Page("pages/saiba_mais.py") # <<< ALTERAÇÃO AQUI
     ])
 
     with st.container():
