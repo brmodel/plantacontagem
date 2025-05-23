@@ -20,8 +20,8 @@ SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centr
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
-
 # *** CORREÇÃO AQUI: Formatação do TEXTAO_CMAUF usando textwrap.dedent e HTML limpo ***
+# Garantir que não haja espaços não-quebráveis (nbsp) e que a indentação seja com espaços normais.
 TEXTAO_CMAUF = textwrap.dedent(f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
     <p style="margin-bottom: 1.5em; text-align: justify;">
@@ -72,7 +72,7 @@ TEXTAO_CMAUF = textwrap.dedent(f"""
         por meio de práticas inovadoras e inclusivas.
     </p>
 </div>
-""")
+""").replace('\xa0', ' ') # Explicitly replace non-breaking spaces with regular spaces
 
 
 # Nomes base dos arquivos para os banners do rodapé
