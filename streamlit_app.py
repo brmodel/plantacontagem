@@ -57,7 +57,7 @@ def get_image_as_base64(image_url: str) -> str | None:
         response.raise_for_status()
         img_bytes = response.content
         content_type = response.headers.get('Content-Type', 'image/png')
-        return f"data:{content_type};base64,{base64.b64encode(img_bytes).decode()}"
+        return f"data:image/png;base64,{base64.b64encode(img_bytes).decode()}" # Força para PNG para consistência
     except requests.exceptions.RequestException as e:
         print(f"Erro ao carregar imagem {image_url} como Base64: {e}")
         return None
@@ -201,8 +201,8 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    # Definir o layout como "wide" e o estado inicial da sidebar como "expanded"
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded")
+    # Definir o layout como "wide" e o estado inicial da sidebar como "collapsed"
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
     # Injeção de CSS para alinhar verticalmente e ESCONDER APENAS A NAVEGAÇÃO DE PÁGINAS na sidebar
     st.markdown(
@@ -214,8 +214,8 @@ def main():
         }
 
         /* Esconde APENAS a lista de navegação de páginas na sidebar */
-        /* Usando uma especificidade maior e !important para garantir */
-        nav[data-testid="stSidebarNav"] ul {
+        /* Aponta para o elemento pai 'div' que contém o 'ul' da navegação */
+        div[data-testid="stSidebarNav"] {
             display: none !important;
         }
 
