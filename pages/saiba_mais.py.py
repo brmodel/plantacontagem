@@ -125,9 +125,10 @@ def main():
         """, unsafe_allow_html=True
     )
 
-    # st.navigation para navegar entre as páginas
+    # st.navigation para navegar entre as páginas com hidden=True
     st.navigation([
-        st.Page("pages/saiba_mais.py") # <<< ALTERAÇÃO AQUI
+        st.Page("streamlit_app.py", title="Mapa", url_path="/mapa", hidden=True),
+        st.Page("pages/saiba_mais.py", title="Saiba Mais", url_path="/saiba_mais", hidden=True)
     ])
 
     with st.container():
