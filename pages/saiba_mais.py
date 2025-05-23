@@ -18,12 +18,17 @@ SAIBA_TITULO = "Conheça o CMAUF"
 SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
 SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
 
+# Links para os programas
+LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
+LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
+
+
 # *** ALTERAÇÃO AQUI: Formatação do TEXTAO_CMAUF usando Markdown e HTML para um estilo institucional ***
-TEXTAO_CMAUF = """
+TEXTAO_CMAUF = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; margin-bottom: 25px;">
     <p style="margin-bottom: 1.5em; text-align: justify;">
         Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
-        alinhado ao programa municipal <b style="color: #0066cc;">Contagem Sem Fome</b> e a políticas nacionais como o <b style="color: #0066cc;">Alimenta Cidades</b>.
+        alinhado ao programa municipal <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a> e a políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>.
         Sua atuação abrange diversas frentes estratégicas:
     </p>
 
@@ -184,7 +189,7 @@ def main():
     st.caption(SAIBA_DESC)
 
     # Conteúdo principal da página "Saiba Mais"
-    # *** EXIBIÇÃO DA ALTERAÇÃO AQUI ***
+    # *** MUDEI AQUI: Adicionei unsafe_allow_html=True ao st.markdown para renderizar o HTML ***
     st.markdown(TEXTAO_CMAUF, unsafe_allow_html=True)
 
     st.markdown("---") # Separador antes dos banners do rodapé
