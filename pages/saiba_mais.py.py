@@ -78,15 +78,21 @@ def get_image_bytes(image_url: str) -> bytes | None:
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="collapsed")
+    # Definir o layout como "wide" e o estado inicial da sidebar como "expanded"
+    st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="expanded")
 
-    # Injeção de CSS para alinhar verticalmente e outros estilos
+    # Injeção de CSS para alinhar verticalmente e ESCONDER APENAS A NAVEGAÇÃO DE PÁGINAS na sidebar
     st.markdown(
         """
         <style>
         .stApp > header {
             position: relative;
             z-index: 1000;
+        }
+
+        /* Esconde APENAS a lista de navegação de páginas na sidebar */
+        nav ul[data-testid="stSidebarNav"] {
+            display: none !important;
         }
 
         /* Os contêineres das colunas do Streamlit são div com data-testid="stVerticalBlock" dentro de div com data-testid="stColumns" */
@@ -125,12 +131,6 @@ def main():
         """, unsafe_allow_html=True
     )
 
-    # st.navigation para navegar entre as páginas com hidden=True
-    st.navigation([
-        st.Page("streamlit_app.py", title="Mapa", url_path="/mapa", hidden=True),
-        st.Page("pages/saiba_mais.py", title="Saiba Mais", url_path="/saiba_mais", hidden=True)
-    ])
-
     with st.container():
         col1, col2 = st.columns([3, 0.5]) # Ajustado o peso da col2 para o logo
         
@@ -139,8 +139,8 @@ def main():
             st.header(SAIBA_SUBTITULO)
             # Botão para voltar ao mapa
             if st.button("Voltar ao Mapa"):
-                st.switch_page("streamlit_app.py")
-
+                st.switch_page("streamlit_app.py") # Redireciona para a página principal
+            
         with col2:
             # Adiciona um data-testid para o CSS customizado e aplica o margin-top
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
