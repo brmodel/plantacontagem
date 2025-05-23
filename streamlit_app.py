@@ -201,9 +201,11 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
+    # Definir o layout como "wide" e o estado inicial da sidebar como "expanded"
+    # para garantir que ela esteja visível para suas informações.
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded")
 
-    # Injeção de CSS para alinhar verticalmente
+    # Injeção de CSS para alinhar verticalmente e ESCONDER APENAS A NAVEGAÇÃO DE PÁGINAS na sidebar
     st.markdown(
         """
         <style>
@@ -211,6 +213,18 @@ def main():
             position: relative;
             z-index: 1000;
         }
+
+        /* Esconde APENAS a lista de navegação de páginas na sidebar */
+        /* Isso mira o elemento ul (lista não ordenada) dentro da nav (navegação) */
+        /* que o Streamlit usa para listar as páginas. */
+        nav ul[data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+
+        /* Opcional: Ajusta o preenchimento da sidebar se necessário */
+        /* section.main[data-testid="stSidebar"] {
+            padding-top: 1rem;
+        } */
 
         /* Os contêineres das colunas do Streamlit são div com data-testid="stVerticalBlock" dentro de div com data-testid="stColumns" */
         /* Para alinhar o conteúdo interno das colunas ao topo */
@@ -283,13 +297,6 @@ def main():
     # APP_TITULO agora fora do container de colunas
     st.title(APP_TITULO)
 
-    # --- Adição da navegação global com hidden=True ---
-    st.navigation([
-        st.Page("streamlit_app.py", title="Mapa", url_path="/mapa", hidden=True),
-        st.Page("pages/saiba_mais.py", title="Saiba Mais", url_path="/saiba_mais", hidden=True)
-    ])
-    # --- Fim da adição da navegação global ---
-
     with st.container():
         # Definimos 3 colunas para o cabeçalho
         col1, col2, col3 = st.columns([3, 1, 0.5]) # col2 agora tem o peso da busca, col3 o do logo
@@ -298,7 +305,7 @@ def main():
             st.header(APP_SUBTITULO) # Apenas o subtítulo aqui
             # Botão para Saiba Mais
             if st.button("Saiba Mais sobre o Projeto"):
-                st.switch_page("pages/saiba_mais.py")
+                st.switch_page("pages/saiba_mais.py") # Redireciona para a página "saiba_mais.py"
             
         with col2: # Agora esta coluna é para a barra de busca
             # Adiciona um data-testid para o CSS customizado
@@ -326,6 +333,7 @@ def main():
             st.markdown('</div>', unsafe_allow_html=True)
 
 
+    # Conteúdo da sidebar que você deseja manter visível
     with st.sidebar:
         st.title("Detalhes da Unidade")
         selected_info = st.session_state.selected_marker_info
