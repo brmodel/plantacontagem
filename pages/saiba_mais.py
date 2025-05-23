@@ -18,27 +18,56 @@ SAIBA_TITULO = "Conheça o CMAUF"
 SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
 SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
 
+# *** ALTERAÇÃO AQUI: Formatação do TEXTAO_CMAUF usando Markdown e HTML para um estilo institucional ***
 TEXTAO_CMAUF = """
-<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; padding: 15px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-    <p style="margin-bottom: 1em;">Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável, alinhado ao programa municipal <b>Contagem Sem Fome</b> e a políticas nacionais como o <b>Alimenta Cidades</b>. Sua atuação inclui:</p>
+<div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; margin-bottom: 25px;">
+    <p style="margin-bottom: 1.5em; text-align: justify;">
+        Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
+        alinhado ao programa municipal <b style="color: #0066cc;">Contagem Sem Fome</b> e a políticas nacionais como o <b style="color: #0066cc;">Alimenta Cidades</b>.
+        Sua atuação abrange diversas frentes estratégicas:
+    </p>
 
-    <ul style="list-style-type: disc; margin-left: 20px; padding-left: 0;">
-        <li style="margin-bottom: 0.5em;"><b>Capacitação e apoio técnico:</b> implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo formação, troca de mudas e compostos para subsidiar a produção.</li>
-        <li style="margin-bottom: 0.5em;"><b>Sistemas agroecológicos:</b> promove a comercialização direta de alimentos e tecnologias sociais, em sintonia com as Políticas Nacional e Estadual de Agricultura Urbana.</li>
-        <li style="margin-bottom: 0.5em;"><b>Mapeamento estratégico:</b> identifica demandas e oportunidades para ações concretas, desde produção de alimentos até criação de pequenos animais.</li>
+    <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600;">Pilares de Atuação:</h4>
+    <ul style="list-style-type: none; padding-left: 0;">
+        <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
+            <b style="color: #555;">Capacitação e Apoio Técnico:</b>
+            Implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo formação,
+            troca de mudas e compostos para subsidiar e qualificar a produção local.
+        </li>
+        <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
+            <b style="color: #555;">Sistemas Agroecológicos:</b>
+            Promove ativamente a comercialização direta de alimentos e a implementação de tecnologias sociais,
+            em sintonia com as Políticas Nacional e Estadual de Agricultura Urbana, visando sustentabilidade e equidade.
+        </li>
+        <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
+            <b style="color: #555;">Mapeamento Estratégico:</b>
+            Realiza a identificação contínua de demandas e oportunidades para o desenvolvimento de ações concretas,
+            desde a otimização da produção de alimentos até o incentivo à criação de pequenos animais.
+        </li>
     </ul>
 
-    <p style="margin-top: 1em; margin-bottom: 0.5em;">O equipamento trabalha com quatro tipos de UPs:</p>
-    <ul style="list-style-type: circle; margin-left: 30px; padding-left: 0;">
-        <li style="margin-bottom: 0.3em;"><b>Comunitárias</b>: gestão compartilhada em áreas públicas ou privadas;</li>
-        <li style="margin-bottom: 0.3em;"><b>Institucionais Públicas</b>: vinculadas a equipamentos como CRAS e centros de saúde;</li>
-        <li style="margin-bottom: 0.3em;"><b>Pedagógicas Escolares</b>: foco em educação ambiental e consumo saudável;</li>
-        <li style="margin-bottom: 0.3em;"><b>Territórios de Tradição</b>: quilombos, terreiros e comunidades tradicionais.</li>
+    <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600;">Tipos de Unidades Produtivas (UPs):</h4>
+    <ul style="list-style-type: disc; margin-left: 25px; color: #444;">
+        <li style="margin-bottom: 0.7em;"><b>Comunitárias:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
+        <li style="margin-bottom: 0.7em;"><b>Institucionais Públicas:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS) e centros de saúde.</li>
+        <li style="margin-bottom: 0.7em;"><b>Pedagógicas Escolares:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
+        <li style="margin-bottom: 0.7em;"><b>Territórios de Tradição:</b> Englobam comunidades quilombolas, terreiros e outras comunidades tradicionais, valorizando seus saberes e práticas.</li>
     </ul>
 
-    <p style="margin-top: 1em;">Além disso, o CMAUF conta com uma parceria estratégica com a EMATER-MG, garantindo assistência a agricultores familiares do município, reforçando o compromisso com desenvolvimento sustentável e qualidade de vida.</p>
+    <p style="margin-top: 2em; text-align: justify;">
+        Adicionalmente, o CMAUF mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
+        e extensão rural a agricultores familiares do município. Essa colaboração reforça o compromisso do Centro com o
+        desenvolvimento sustentável local e a melhoria contínua da qualidade de vida dos cidadãos de Contagem.
+    </p>
 
-    <p style="margin-top: 1em;">Vinculado à Diretoria de Agricultura Urbana e Familiar (Subsecretaria SUSANA), o CMAUF transforma realidades locais, conectando campo e cidade através de práticas inovadoras.</p>
+    <p style="margin-top: 1.5em; font-style: italic; color: #666; text-align: justify;">
+        Vinculado à Diretoria de Agricultura Urbana e Familiar (Subsecretaria de Segurança Alimentar e Nutricional - SUSANA),
+        o CMAUF se posiciona como um agente transformador das realidades locais, conectando o campo e a cidade
+        por meio de práticas inovadoras e inclusivas.
+    </p>
 </div>
 """
 
@@ -155,7 +184,8 @@ def main():
     st.caption(SAIBA_DESC)
 
     # Conteúdo principal da página "Saiba Mais"
-    st.markdown(TEXTAO_CMAUF, unsafe_allow_html=True) # Usamos TEXTAO_CMAUF agora.
+    # *** EXIBIÇÃO DA ALTERAÇÃO AQUI ***
+    st.markdown(TEXTAO_CMAUF, unsafe_allow_html=True)
 
     st.markdown("---") # Separador antes dos banners do rodapé
 
