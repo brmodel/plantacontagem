@@ -201,9 +201,7 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    # Definir o layout como "wide" e o estado inicial da sidebar como "expanded"
-    # para garantir que ela esteja visível para suas informações.
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="expanded") # Mantenha expanded
 
     # Injeção de CSS para alinhar verticalmente e ESCONDER APENAS A NAVEGAÇÃO DE PÁGINAS na sidebar
     st.markdown(
@@ -215,8 +213,6 @@ def main():
         }
 
         /* Esconde APENAS a lista de navegação de páginas na sidebar */
-        /* Isso mira o elemento ul (lista não ordenada) dentro da nav (navegação) */
-        /* que o Streamlit usa para listar as páginas. */
         nav ul[data-testid="stSidebarNav"] {
             display: none !important;
         }
