@@ -19,8 +19,8 @@ PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br" # URL do portal da PMC
 
 ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
-    2: {"file": "leaf_blue.png", "": "Institucional"},
-    3: {"file": "leaf_orange.png", "": "Comunitária/Institucional"},
+    2: {"file": "leaf_blue.png", "label": "Institucional"},
+    3: {"file": "leaf_orange.png", "label": "Comunitária/Institucional"},
     4: {"file": "feira_cidade.png", "label": "Feira da Cidade"},
     5: {"file": "banco_alimentos.png", "label": "Banco de Alimentos"},
     6: {"file": "restaurante_pop.png", "label": "Restaurante Popular"},
@@ -283,12 +283,10 @@ def main():
     # APP_TITULO agora fora do container de colunas
     st.title(APP_TITULO)
 
-    # --- Adição da navegação global (APENAS 'Saiba Mais' listado explicitamente) ---
-    # Streamlit automaticamente adicionará a página principal (`streamlit_app.py`)
-    # na barra lateral se ela for o arquivo de entrada da sua aplicação multi-page.
-    # Removidos 'label' e 'icon' da chamada st.Page
+    # --- Adição da navegação global com hidden=True ---
     st.navigation([
-        st.Page("pages/saiba_mais.py") # <<< ALTERAÇÃO AQUI
+        st.Page("streamlit_app.py", title="Mapa", url_path="/mapa", hidden=True),
+        st.Page("pages/saiba_mais.py", title="Saiba Mais", url_path="/saiba_mais", hidden=True)
     ])
     # --- Fim da adição da navegação global ---
 
@@ -298,6 +296,7 @@ def main():
         
         with col1:
             st.header(APP_SUBTITULO) # Apenas o subtítulo aqui
+            # Botão para Saiba Mais
             if st.button("Saiba Mais sobre o Projeto"):
                 st.switch_page("pages/saiba_mais.py")
             
