@@ -2,13 +2,14 @@
 import streamlit as st
 import requests
 import base64
+import textwrap # Importe textwrap para ajudar com a indentação do HTML
 
 # --- Constantes (algumas vêm do streamlit_app.py, mas são definidas aqui para auto-suficiência) ---
 APP_TITULO = "Planta Contagem"
-APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
-PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
+APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem" # Mantido para consistência de estilo de cabeçalho
+PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br" # URL do portal da PMC
 ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
-LOGO_PMC_FILENAME = "banner_pmc.png"
+LOGO_PMC_FILENAME = "banner_pmc.png" # Arquivo do logo da PMC, também usado como banner no rodapé
 
 # Textos específicos da página "Saiba Mais"
 SAIBA_TITULO = "Conheça o CMAUF"
@@ -20,8 +21,8 @@ LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
 
-# *** CORREÇÃO AQUI: TEXTAO_CMAUF com HTML limpo de espaços iniciais e formatação aprimorada ***
-TEXTAO_CMAUF = f"""
+# *** CORREÇÃO AQUI: Formatação do TEXTAO_CMAUF usando textwrap.dedent e HTML limpo ***
+TEXTAO_CMAUF = textwrap.dedent(f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
     <p style="margin-bottom: 1.5em; text-align: justify;">
         Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
@@ -71,19 +72,20 @@ TEXTAO_CMAUF = f"""
         por meio de práticas inovadoras e inclusivas.
     </p>
 </div>
-"""
+""")
 
 
 # Nomes base dos arquivos para os banners do rodapé
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
+# LOGO_PMC_FILENAME já definido acima.
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 
-# URLs para os banners do rodapé
+# URLs para os banners do rodapé (agora incluindo o banner_pmc.png)
 BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
 
 
-# --- Funções de Cache de Imagem ---
+# --- Funções de Cache de Imagem (replicadas para auto-suficiência da página) ---
 @st.cache_data(show_spinner=False)
 def get_image_as_base64(image_url: str) -> str | None:
     try:
@@ -108,10 +110,10 @@ def get_image_bytes(image_url: str) -> bytes | None:
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="expanded")
+    # Definir o layout como "wide" e o estado inicial da sidebar como "collapsed"
+    st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
-    # Injeção de CSS para ocultar APENAS a lista de navegação de páginas na sidebar
-    # E para o alinhamento de colunas
+    # Injeção de CSS para alinhar verticalmente e ESCONDER APENAS A NAVEGAÇÃO DE PÁGINAS na sidebar
     st.markdown(
         """
         <style>
@@ -122,7 +124,8 @@ def main():
 
         /* Esconde APENAS a lista de navegação de páginas na sidebar */
         /* Usando uma especificidade maior e !important para garantir */
-        nav[data-testid="stSidebarNav"] ul {
+        /* Aponta para o elemento pai 'div' que contém o 'ul' da navegação */
+        div[data-testid="stSidebarNav"] {
             display: none !important;
         }
 
@@ -163,15 +166,17 @@ def main():
     )
 
     with st.container():
-        col1, col2 = st.columns([3, 0.5])
+        col1, col2 = st.columns([3, 0.5]) # Ajustado o peso da col2 para o logo
         
         with col1:
             st.title(SAIBA_TITULO)
             st.header(SAIBA_SUBTITULO)
+            # Botão para voltar ao mapa
             if st.button("Voltar ao Mapa"):
-                st.switch_page("streamlit_app.py")
+                st.switch_page("streamlit_app.py") # Redireciona para a página principal
             
         with col2:
+            # Adiciona um data-testid para o CSS customizado e aplica o margin-top
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
             logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
             if logo_bytes:
@@ -184,10 +189,12 @@ def main():
     st.caption(SAIBA_DESC)
 
     # Conteúdo principal da página "Saiba Mais"
+    # *** EXIBIÇÃO DA ALTERAÇÃO AQUI ***
     st.markdown(TEXTAO_CMAUF, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("---") # Separador antes dos banners do rodapé
 
+    # Defina a altura desejada para os banners do rodapé (em pixels)
     BANNER_RODAPE_HEIGHT_PX = 80
 
     def display_banner_html(url: str, height_px: int) -> str:
@@ -204,10 +211,10 @@ def main():
             width: 100%;
         ">
             <img src="{image_source}" alt="Banner" style="
-                height: 100%;
-                width: auto;
-                max-width: 100%;
-                object-fit: contain;
+                height: 100%; /* Prioriza a altura total do contêiner */
+                width: auto;  /* Permite que a largura se ajuste automaticamente */
+                max-width: 100%; /* Garante que a imagem não ultrapasse a largura da coluna */
+                object-fit: contain; /* Mantém a proporção e se ajusta ao contêiner */
                 display: block;
             ">
         </div>
