@@ -2,7 +2,6 @@
 import streamlit as st
 import requests
 import base64
-# textwrap não é mais necessário
 
 # --- Constantes ---
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
@@ -19,8 +18,8 @@ LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
 # --- Conteúdo HTML ---
-# Revisado para garantir formatação limpa, removendo toda a indentação externa da string.
-html_content = f"""
+# A string HTML é definida primeiro.
+html_content_raw = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
     <p style="margin-bottom: 1.5em; text-align: justify;">
         Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
@@ -71,6 +70,8 @@ html_content = f"""
     </p>
 </div>
 """
+# Limpeza explícita para remover espaços não-separáveis (non-breaking spaces)
+html_content_cleaned = html_content_raw.replace('\xa0', ' ')
 
 # --- Rodapé ---
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
@@ -120,8 +121,8 @@ def main():
         div[data-testid="stColumns"] > div > div {
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; 
-            height: 100%; 
+            justify-content: flex-start;
+            height: 100%;
         }
         div[data-testid="stVerticalBlock"] h3 {
             margin-top: 0px; margin-bottom: 0px;
@@ -129,13 +130,13 @@ def main():
         }
         div[data-testid="column-PMC-logo"] {
             display: flex;
-            align-items: flex-start; 
+            align-items: flex-start;
             justify-content: center;
-            height: 100%; 
+            height: 100%;
             margin-top: 44px;
         }
         div[data-testid="column-PMC-logo"] img {
-            max-width: 100%; 
+            max-width: 100%;
             height: auto;
             object-fit: contain;
         }
@@ -151,7 +152,7 @@ def main():
             st.header(SAIBA_SUBTITULO)
             if st.button("⬅️ Voltar ao Mapa"):
                 st.switch_page("streamlit_app.py")
-            
+
         with col2:
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
             logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
@@ -165,9 +166,10 @@ def main():
     st.caption(SAIBA_DESC)
 
     # --- Conteúdo Principal ---
-    st.markdown(html_content, unsafe_allow_html=True)
+    # Usando a string limpa
+    st.markdown(html_content_cleaned, unsafe_allow_html=True)
 
-    st.markdown("---") 
+    st.markdown("---")
 
     # --- Layout do Rodapé ---
     BANNER_RODAPE_HEIGHT_PX = 80
