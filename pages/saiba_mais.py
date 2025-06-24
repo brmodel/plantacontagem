@@ -18,8 +18,6 @@ LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
 # --- Conteúdo HTML ---
-# Abordagem robusta para evitar erros de renderização com espaços/indentação.
-# O HTML é definido sem nenhuma indentação na string para garantir que seja processado corretamente.
 html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
 <p style="margin-bottom: 1.5em; text-align: justify;">
@@ -70,14 +68,20 @@ por meio de práticas inovadoras e inclusivas.
 
 # --- Rodapé ---
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
+LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
-LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
+LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME # Deve ser `BANNER_URL_BASE` se a intenção é a mesma do `streamlit_app.py`
+                                                            # Mantenho como ICONES_URL_BASE para não introduzir nova variável aqui se não for necessário
 
 # --- NOVAS CONSTANTES DE ESCALA ---
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
+# Adicionamos as duas últimas logos para aplicar o offset
+LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
+# Offset para as logos 3 e 4 (VALOR ALTERADO PARA -30)
+OFFSET_LOGO_PX = -30 # Valor sugerido para o deslocamento vertical negativo
 
 
 # --- Funções de Cache de Imagem ---
@@ -171,14 +175,17 @@ def main():
     st.markdown("---")
 
     # --- Layout do Rodapé ---
-    # Função display_banner_html atualizada para usar 'scale'
-    def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
+    # Função display_banner_html atualizada para usar 'scale' e 'offset_top'
+    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
         base_max_height_px = 70 # Altura base para cálculo
         scaled_max_height = int(base_max_height_px * scale)
         scaled_width_percent = 90 if scale > 1.0 else 100 # Ajusta largura para banners maiores
+
+        # Adiciona o margin-top para o offset
+        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto;
@@ -189,6 +196,7 @@ def main():
             display: block;
             margin-left: auto;
             margin-right: auto;
+            {margin_top_style} /* Aplica o margin-top aqui */
         """
 
         return f"""
@@ -212,8 +220,12 @@ def main():
             filename = FOOTER_BANNER_FILENAMES[i]
             # Determina a escala com base no nome do arquivo
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
+            
+            # Adiciona a lógica para aplicar o offset apenas nas logos 3 e 4
+            offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
+
             with cols_banner[i % len(cols_banner)]:
-                banner_html = display_banner_html(url, filename, current_scale)
+                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
