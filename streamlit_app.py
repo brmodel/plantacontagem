@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import folium
@@ -47,6 +46,10 @@ CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
 ZOOM_SELECIONADO_MAPA = 16
 
+# --- NOVAS CONSTANTES DE ESCALA ---
+NORMAL_BANNER_SCALE = 1.0
+LARGE_BANNER_SCALE = 1.8
+
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -74,7 +77,7 @@ def get_image_bytes(image_url: str) -> bytes | None:
 # --- URLs e Rótulos Pré-calculados ---
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
-LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
+LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
 BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 # --- Templates HTML ---
@@ -443,52 +446,55 @@ def main():
     # --- Footer ---
     st.markdown("---"); st.caption(APP_DESC)
 
-    NORMAL_BANNER_SCALE = 1.0
-    LARGE_BANNER_SCALE = 1.8
+    # REMOVA ESTAS DUAS LINHAS
+    # BASE_BANNER_RODAPE_HEIGHT_PX = 70 # Base height for most banners
+    # LARGER_BANNER_HEIGHT_PX = int(BASE_BANNER_RODAPE_HEIGHT_PX * 1.5) # Increased height for first two
 
+    # Função display_banner_html atualizada para usar 'scale'
     def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
-       base64_image_data = get_image_as_base64(url)
-       image_source = base64_image_data if base64_image_data else url
+        base64_image_data = get_image_as_base64(url)
+        image_source = base64_image_data if base64_image_data else url
+        
+        base_max_height_px = 70 # Altura base para cálculo
+        scaled_max_height = int(base_max_height_px * scale)
+        # Manter a largura proporcionalmente, mas com limite de 100%
+        # Aumentar a porcentagem da largura para os banners maiores para que tentem preencher mais
+        scaled_width_percent = 90 if scale > 1.0 else 100 
 
-       base_max_height_px = 70
-       scaled_max_height = int(base_max_height_px * scale)
-       scaled_width = int(100 * scale)
+        img_style = f"""
+            height: auto; 
+            width: {scaled_width_percent}%;  
+            max-width: 100%; 
+            max-height: {scaled_max_height}px; 
+            object-fit: contain; 
+            display: block;
+            margin-left: auto; 
+            margin-right: auto;
+        """
 
-       img_style = f"""
-           height: auto;
-           width: {scaled_width}%;
-           max-width: 100%;
-           max-height: {scaled_max_height}px;
-           object-fit: contain;
-           display: block;
-           margin-left: auto;
-           margin-right: auto;
-       """
-
-       return f"""
-       <div style="
-           display: flex;
-           justify-content: center;
-           align-items: center;
-           min-height: {scaled_max_height}px;
-           overflow: hidden;
-           width: 100%;
-           padding: 5px;
-       ">
-           <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
-       </div>
-       """
+        return f"""
+        <div style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: {scaled_max_height}px; /* Usar min-height para garantir espaço */
+            overflow: hidden;
+            width: 100%;
+            padding: 5px; /* Add some padding around banners */
+        ">
+            <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
+        </div>
+        """
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
-        # Use 4 columns for 4 banners, or fewer if less than 4.
-        # Consider a more flexible column setup if number of banners can vary significantly.
         cols_banner = st.columns(num_banners if num_banners <= 4 else 4) 
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
+            # Determina a escala com base no nome do arquivo
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
-
+            
             with cols_banner[i % len(cols_banner)]: 
                 banner_html = display_banner_html(url, filename, current_scale)
                 st.markdown(banner_html, unsafe_allow_html=True)
