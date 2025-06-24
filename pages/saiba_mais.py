@@ -171,37 +171,37 @@ def main():
     # BANNER_RODAPE_HEIGHT_PX = 80 # Esta linha não é mais necessária com a nova lógica de escala
 
     def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
-        base64_image_data = get_image_as_base64(url)
-        image_source = base64_image_data if base64_image_data else url
+       base64_image_data = get_image_as_base64(url)
+       image_source = base64_image_data if base64_image_data else url
 
-        base_max_height_px = 70
-        scaled_max_height = int(base_max_height_px * scale)
-        scaled_width = int(100 * scale)
+       base_max_height_px = 70
+       scaled_max_height = int(base_max_height_px * scale)
+       scaled_width = int(100 * scale)
 
-        img_style = f"""
-            height: auto;
-            width: {scaled_width}%;
-            max-width: 100%;
-            max-height: {scaled_max_height}px;
-            object-fit: contain;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        """
+       img_style = f"""
+           height: auto;
+           width: {scaled_width}%;
+           max-width: 100%;
+           max-height: {scaled_max_height}px;
+           object-fit: contain;
+           display: block;
+           margin-left: auto;
+           margin-right: auto;
+       """
 
-        return f"""
-        <div style="
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: {scaled_max_height}px;
-            overflow: hidden;
-            width: 100%;
-            padding: 5px;
-        ">
-            <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
-        </div>
-        """
+       return f"""
+       <div style="
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           min-height: {scaled_max_height}px;
+           overflow: hidden;
+           width: 100%;
+           padding: 5px;
+       ">
+           <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
+       </div>
+       """
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
