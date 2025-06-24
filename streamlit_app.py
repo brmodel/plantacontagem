@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import folium
@@ -6,7 +7,7 @@ from folium import Marker
 import requests
 from folium.plugins import LocateControl
 import numpy as np
-import json # Not strictly used in this version, but often useful
+import json
 import base64
 
 # --- Configurações ---
@@ -37,6 +38,8 @@ BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png
 LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
+# Adicionamos as duas últimas logos para aplicar o offset
+LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 
 
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
@@ -49,6 +52,8 @@ ZOOM_SELECIONADO_MAPA = 16
 # --- NOVAS CONSTANTES DE ESCALA ---
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
+# Offset para as logos 3 e 4 (VALOR ALTERADO PARA -30)
+OFFSET_LOGO_PX = -30 # Valor sugerido para o deslocamento vertical negativo
 
 
 # --- Funções de Cache de Imagem ---
@@ -94,16 +99,15 @@ TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14p
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
     try:
-        data = pd.read_csv(url, usecols=range(8)) # Assuming first 8 columns are relevant
+        data = pd.read_csv(url, usecols=range(8))
         data['Numeral'] = pd.to_numeric(data['Numeral'], errors='coerce')
         data['lat'] = pd.to_numeric(data['lat'], errors='coerce')
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
-        data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True) # Ensure essential fields are present
-        data['Numeral'] = data['Numeral'].astype('Int64') # Use Int64 to handle potential NaNs if any slip through
+        data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
+        data['Numeral'] = data['Numeral'].astype('Int64')
         for col in ['Nome', 'Tipo', 'Regional', 'Info', 'Instagram']:
             if col in data.columns:
                 data[col] = data[col].astype(str).replace('nan', '', regex=False).replace('<NA>', '', regex=False)
-        # Validate 'Numeral' values (optional, for debugging)
         expected_numerals = set(ICON_DEFINITIONS.keys())
         for num_val in data['Numeral'].unique():
             if num_val not in expected_numerals:
@@ -115,17 +119,16 @@ def load_data():
 
 @st.cache_data(ttl=3600)
 def load_geojson():
-    default_geojson = {"type": "FeatureCollection", "features": []} # Default empty GeoJSON
+    default_geojson = {"type": "FeatureCollection", "features": []}
     try:
         response = requests.get(GEOJSON_URL, timeout=20)
         response.raise_for_status(); geojson_data = response.json()
-        # Basic validation of GeoJSON structure
         if not isinstance(geojson_data, dict) or "features" not in geojson_data:
             st.warning("Estrutura do GeoJSON inválida."); return default_geojson
         return geojson_data
     except requests.exceptions.Timeout: st.error(f"Timeout ao carregar GeoJSON: {GEOJSON_URL}"); return default_geojson
     except requests.exceptions.RequestException as e: st.error(f"Erro de rede ao carregar GeoJSON: {e}"); return default_geojson
-    except ValueError as e: # Handles JSON decoding errors
+    except ValueError as e:
         st.error(f"Erro ao decodificar GeoJSON: {e}"); return default_geojson
     except Exception as e: st.error(f"Erro inesperado ao carregar GeoJSON: {e}"); return default_geojson
 
@@ -137,15 +140,15 @@ def criar_legenda(geojson_data):
         for feature in geojson_data.get('features', []):
             props = feature.get('properties', {}); regions.append({'id': props.get('id'), 'name': props.get('Name')})
     items_legenda_regional = []
-    for region in sorted(regions, key=lambda x: x.get('id', float('inf'))): # Sort by ID
+    for region in sorted(regions, key=lambda x: x.get('id', float('inf'))):
         color = MAPEAMENTO_CORES.get(region.get('id'), "#CCCCCC"); region_name = region.get('name', 'N/A')
-        if region_name and region_name != 'N/A' and color: # Ensure valid data
+        if region_name and region_name != 'N/A' and color:
             items_legenda_regional.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><div style="background: {color}; width: 20px; height: 20px; margin-right: 5px; border: 1px solid #ccc;"></div><span>{region_name}</span></div>""")
     html_regional = f"""<div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>{"".join(items_legenda_regional)}""" if items_legenda_regional else ""
     items_legenda_icones = []
-    for key, props in sorted(ICON_DEFINITIONS.items()): # Sort by key for consistent order
+    for key, props in sorted(ICON_DEFINITIONS.items()):
         icon_full_url = ICONES_URL_BASE + props["file"]
-        icon_src_for_html = get_image_as_base64(icon_full_url) or icon_full_url # Fallback to URL if base64 fails
+        icon_src_for_html = get_image_as_base64(icon_full_url) or icon_full_url
         legenda_texto = props["label"]
         items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icon_src_for_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
     html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Tipos de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
@@ -159,24 +162,21 @@ def criar_mapa(data, geojson_data):
         folium.GeoJson( geojson_data, name='Regionais',
             style_function=lambda x: {"fillColor": MAPEAMENTO_CORES.get(x['properties'].get('id'), "#CCCCCC"), "color": "#555555", "weight": 1, "fillOpacity": 0.35},
             tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
-            highlight_function=lambda x: {"weight": 2.5, "fillOpacity": 0.6, "color": "black"}, # Highlight style
+            highlight_function=lambda x: {"weight": 2.5, "fillOpacity": 0.6, "color": "black"},
             interactive=True, control=True, show=True).add_to(m)
     legenda_element = criar_legenda(geojson_data)
     if legenda_element: m.get_root().html.add_child(legenda_element)
 
     if isinstance(data, pd.DataFrame) and not data.empty:
-        coord_precision = 6 # Precision for lat/lon key in marker_lookup
+        coord_precision = 6
         try:
-            # Ensure lat/lon are numeric before rounding, drop if not
             valid_coords = data[['lat', 'lon']].apply(pd.to_numeric, errors='coerce').dropna()
-            # Create rounded coordinate tuples for lookup
             rounded_coords = list(zip(np.round(valid_coords['lat'], coord_precision), np.round(valid_coords['lon'], coord_precision)))
-            # Create dictionary of marker data, indexed by original DataFrame index of valid_coords
             valid_data_dict = data.loc[valid_coords.index].to_dict('records')
             st.session_state.marker_lookup = dict(zip(rounded_coords, valid_data_dict))
         except Exception as e:
             st.warning(f"Erro ao criar lookup de marcadores: {e}.");
-            if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {} # Ensure it exists
+            if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {}
 
         feature_groups = {num: folium.FeatureGroup(name=props["label"], show=True) for num, props in ICON_DEFINITIONS.items()}
         default_feature_group = folium.FeatureGroup(name='Outras Categorias', show=True); default_group_needed = False
@@ -184,7 +184,7 @@ def criar_mapa(data, geojson_data):
         default_icon_base64 = get_image_as_base64(ICONE_PADRAO_URL)
 
         for index, row in data.iterrows():
-            if pd.isna(row["lat"]) or pd.isna(row["lon"]): continue # Skip if no coordinates
+            if pd.isna(row["lat"]) or pd.isna(row["lon"]): continue
             lat, lon = row["lat"], row["lon"]
             icon_num = int(row["Numeral"]) if pd.notna(row["Numeral"]) else None
             icon_b64_data = icon_base64_cache.get(icon_num, default_icon_base64)
@@ -212,7 +212,7 @@ def criar_mapa(data, geojson_data):
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed") # Sidebar collapsed by default
+    st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
     # Injeção de CSS
     st.markdown(
@@ -220,8 +220,8 @@ def main():
         <style>
         /* General App Header Style */
         .stApp > header {
-            position: relative; /* Ensure header stays in flow, helps with z-index if needed */
-            z-index: 1000; /* Keep header above other elements if overlap occurs */
+            position: relative;
+            z-index: 1000;
         }
 
         /* Hide default Streamlit page navigation in sidebar (if pages/ dir exists) */
@@ -230,14 +230,14 @@ def main():
         }
 
         /* Align content within Streamlit columns to the top by default */
-        div[data-testid="stColumns"] > div[data-testid^="stVerticalBlock"] { /* More specific selector for column children */
+        div[data-testid="stColumns"] > div[data-testid^="stVerticalBlock"] {
             display: flex;
             flex-direction: column;
             justify-content: flex-start; 
         }
         
         /* Remove default margins from h3 elements within columns for tighter layout */
-        div[data-testid^="stVerticalBlock"] h3 { /* Target h3 within column blocks */
+        div[data-testid^="stVerticalBlock"] h3 {
             margin-top: 0px !important; 
             margin-bottom: 0px !important; 
             padding-top: 0px !important;
@@ -247,25 +247,25 @@ def main():
         /* Style for the search bar column container */
         div[data-testid="column-search-bar"] {
             display: flex;
-            align-items: center; /* Vertically center content */
-            justify-content: center; /* Horizontally center content */
+            align-items: center;
+            justify-content: center;
             height: 100%; 
         }
         
         /* Style for the PMC logo column container */
         div[data-testid="column-PMC-logo"] {
             display: flex;
-            align-items: center; /* Vertically center content */
-            justify-content: center; /* Horizontally center content */
+            align-items: center;
+            justify-content: center;
             height: 100%;
-            padding-top: 5px; /* Small padding to visually align with search bar if needed */
+            padding-top: 5px;
         }
 
         /* Style for the PMC logo image itself */
         div[data-testid="column-PMC-logo"] img {
             max-width: 100%; 
             height: auto;    
-            max-height: 60px; /* Constrain logo height to help with alignment */
+            max-height: 60px;
             object-fit: contain; 
         }
         
@@ -277,7 +277,7 @@ def main():
 
         /* Popover styling */
         div[data-testid="stPopover"] div[data-testid="stVerticalBlock"] {
-             padding: 10px; /* Add some padding inside the popover */
+             padding: 10px;
         }
         </style>
         """, unsafe_allow_html=True
@@ -306,7 +306,7 @@ def main():
     st.title(APP_TITULO)
     
     # Main header columns
-    header_col1, header_col2, header_col3 = st.columns([0.6, 0.25, 0.15]) # Adjusted ratios for better balance
+    header_col1, header_col2, header_col3 = st.columns([0.6, 0.25, 0.15])
 
     with header_col1:
         st.header(APP_SUBTITULO)
@@ -315,17 +315,16 @@ def main():
             
     with header_col2:
         st.markdown('<div data-testid="column-search-bar">', unsafe_allow_html=True)
-        def clear_selection_on_search(): # Callback to clear selection if search changes
+        def clear_selection_on_search():
             st.session_state.selected_marker_info = None
             st.session_state.show_popover = False
 
-
         search_query = st.text_input(
             "Pesquisar por Nome, Tipo ou Regional:",
-            key="search_input_widget_key", # Unique key for the widget
+            key="search_input_widget_key",
             on_change=clear_selection_on_search,
             value=st.session_state.search_input_value,
-            label_visibility="collapsed" # Hide label, use placeholder
+            label_visibility="collapsed"
         ).strip().lower()
         st.session_state.search_input_value = search_query
         st.markdown('</div>', unsafe_allow_html=True)
@@ -335,13 +334,11 @@ def main():
         logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
         if logo_bytes:
             st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
-        else: # Fallback if image bytes fail to load
+        else:
             st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Popover for Marker Details ---
-    # The popover will be rendered here if selected_marker_info is set
-    # We use a placeholder to anchor the popover
     popover_anchor = st.empty() 
 
     if st.session_state.get("selected_marker_info"):
@@ -368,14 +365,12 @@ def main():
                 st.session_state.selected_marker_info = None
                 st.rerun()
 
-
     # --- Data Filtering ---
     df_filtrado = pd.DataFrame()
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_original = st.session_state.df
-        if search_query: # Apply filter only if search_query is not empty
+        if search_query:
             try:
-                # Initialize boolean Series for filtering
                 filtro_nome = pd.Series([False] * len(df_original), index=df_original.index)
                 filtro_tipo = pd.Series([False] * len(df_original), index=df_original.index)
                 filtro_regional = pd.Series([False] * len(df_original), index=df_original.index)
@@ -389,12 +384,12 @@ def main():
                 
                 df_filtrado = df_original[filtro_nome | filtro_tipo | filtro_regional]
 
-                if df_filtrado.empty and search_query: # Only show warning if search was active
+                if df_filtrado.empty and search_query:
                     st.warning(f"Nenhuma unidade encontrada com '{search_query}' no Nome, Tipo ou Regional.")
             except Exception as e:
-                st.error(f"Erro no filtro: {e}"); df_filtrado = df_original # Fallback to original on error
+                st.error(f"Erro no filtro: {e}"); df_filtrado = df_original
         else:
-            df_filtrado = df_original # No search query, show all data
+            df_filtrado = df_original
     
     # --- Map Display ---
     if not df_filtrado.empty:
@@ -403,63 +398,51 @@ def main():
             m,
             center=st.session_state.map_center,
             zoom=st.session_state.map_zoom,
-            width='100%', height=600, key="folium_map_interactive", # Unique key for the map
-            returned_objects=['last_object_clicked'] # We only need the last clicked object
+            width='100%', height=600, key="folium_map_interactive",
+            returned_objects=['last_object_clicked']
         )
         
-        # Handle map click events
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
-            # Check if the click was on a marker (will have lat/lng)
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
                 clicked_lat = clicked_obj['lat']; clicked_lon = clicked_obj['lng']
-                # Use a consistent precision for lookup key
                 rounded_clicked_key = (round(clicked_lat, 6), round(clicked_lon, 6))
                 found_info = st.session_state.get('marker_lookup', {}).get(rounded_clicked_key)
 
                 if found_info is not None:
-                    # If a different marker is clicked, update info and map center/zoom
                     if found_info != st.session_state.selected_marker_info:
                         st.session_state.selected_marker_info = found_info
                         st.session_state.map_center = [found_info['lat'], found_info['lon']]
                         st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA
                         st.rerun() 
-                # If click was not on a known marker (e.g., on the map base) and a popover was open, clear it.
                 elif st.session_state.selected_marker_info is not None: 
                     st.session_state.selected_marker_info = None
-                    # Optionally reset map view or keep it as is
-                    # st.session_state.map_center = CENTRO_INICIAL_MAPA 
-                    # st.session_state.map_zoom = ZOOM_INICIAL_MAPA
                     st.rerun()
-            # If click was on something else (e.g. GeoJSON region) and a popover was open, clear it.
             elif st.session_state.selected_marker_info is not None:
                 st.session_state.selected_marker_info = None
                 st.rerun()
                 
     elif st.session_state.load_error: st.error("Falha crítica ao carregar dados. Mapa não pode ser exibido.")
-    elif not st.session_state.df.empty and df_filtrado.empty and search_query: pass # Warning already shown
-    elif not st.session_state.data_loaded: st.info("Carregando dados iniciais...") # Should be handled by spinner
-    else: # df is empty and no load error
+    elif not st.session_state.df.empty and df_filtrado.empty and search_query: pass
+    elif not st.session_state.data_loaded: st.info("Carregando dados iniciais...")
+    else:
         if st.session_state.df.empty and not st.session_state.load_error:
             st.info("Não há dados de unidades produtivas disponíveis para carregar ou exibir.")
 
     # --- Footer ---
     st.markdown("---"); st.caption(APP_DESC)
 
-    # REMOVA ESTAS DUAS LINHAS
-    # BASE_BANNER_RODAPE_HEIGHT_PX = 70 # Base height for most banners
-    # LARGER_BANNER_HEIGHT_PX = int(BASE_BANNER_RODAPE_HEIGHT_PX * 1.5) # Increased height for first two
-
-    # Função display_banner_html atualizada para usar 'scale'
-    def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
+    # Função display_banner_html atualizada para usar 'scale' e 'offset_top'
+    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
-        base_max_height_px = 70 # Altura base para cálculo
+        base_max_height_px = 70
         scaled_max_height = int(base_max_height_px * scale)
-        # Manter a largura proporcionalmente, mas com limite de 100%
-        # Aumentar a porcentagem da largura para os banners maiores para que tentem preencher mais
-        scaled_width_percent = 90 if scale > 1.0 else 100 
+        scaled_width_percent = 90 if scale > 1.0 else 100
+
+        # Adiciona o margin-top para o offset
+        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
@@ -470,6 +453,7 @@ def main():
             display: block;
             margin-left: auto; 
             margin-right: auto;
+            {margin_top_style} /* Aplica o margin-top aqui */
         """
 
         return f"""
@@ -477,10 +461,10 @@ def main():
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: {scaled_max_height}px; /* Usar min-height para garantir espaço */
+            min-height: {scaled_max_height}px;
             overflow: hidden;
             width: 100%;
-            padding: 5px; /* Add some padding around banners */
+            padding: 5px;
         ">
             <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
         </div>
@@ -492,11 +476,13 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            # Determina a escala com base no nome do arquivo
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             
+            # Adiciona a lógica para aplicar o offset apenas nas logos 3 e 4
+            offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
+            
             with cols_banner[i % len(cols_banner)]: 
-                banner_html = display_banner_html(url, filename, current_scale)
+                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
