@@ -24,7 +24,7 @@ html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
 <p style="margin-bottom: 1.5em; text-align: justify;">
 Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
-alinhado ao programa municipal <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a> e a políticas nacionais como o <a href="{LINK_ALIMENTA_Cidades}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>.
+alinhado ao programa municipal <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a> e a políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>.
 Sua atuação abrange diversas frentes estratégicas:
 </p>
 <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Pilares de Atuação:</h4>
@@ -73,9 +73,12 @@ BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
+
+# --- NOVAS CONSTANTES DE ESCALA (ADICIONE AQUI) ---
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"] # Esta linha foi desindentada
+FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"] # Certifique-se de que está no escopo global
+
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -168,49 +171,52 @@ def main():
     st.markdown("---")
 
     # --- Layout do Rodapé ---
-    # BANNER_RODAPE_HEIGHT_PX = 80 # Esta linha não é mais necessária com a nova lógica de escala
+    # REMOVA ESTA LINHA:
+    # BANNER_RODAPE_HEIGHT_PX = 80
 
+    # FUNÇÃO display_banner_html ATUALIZADA
     def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
-       base64_image_data = get_image_as_base64(url)
-       image_source = base64_image_data if base64_image_data else url
+        base64_image_data = get_image_as_base64(url)
+        image_source = base64_image_data if base64_image_data else url
+        
+        base_max_height_px = 70 # Altura base para cálculo
+        scaled_max_height = int(base_max_height_px * scale)
+        scaled_width_percent = 90 if scale > 1.0 else 100 # Ajusta largura para banners maiores
 
-       base_max_height_px = 70
-       scaled_max_height = int(base_max_height_px * scale)
-       scaled_width = int(100 * scale)
+        img_style = f"""
+            height: auto;
+            width: {scaled_width_percent}%;
+            max-width: 100%;
+            max-height: {scaled_max_height}px;
+            object-fit: contain;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        """
 
-       img_style = f"""
-           height: auto;
-           width: {scaled_width}%;
-           max-width: 100%;
-           max-height: {scaled_max_height}px;
-           object-fit: contain;
-           display: block;
-           margin-left: auto;
-           margin-right: auto;
-       """
-
-       return f"""
-       <div style="
-           display: flex;
-           justify-content: center;
-           align-items: center;
-           min-height: {scaled_max_height}px;
-           overflow: hidden;
-           width: 100%;
-           padding: 5px;
-       ">
-           <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
-       </div>
-       """
+        return f"""
+        <div style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: {scaled_max_height}px; /* Garante que o container tenha altura suficiente */
+            overflow: hidden;
+            width: 100%;
+            padding: 5px;
+        ">
+            <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
+        </div>
+        """
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
         cols_banner = st.columns(min(num_banners, 4))
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
-            filename = FOOTER_BANNER_FILENAMES[i] # Get filename for scaling check
+            filename = FOOTER_BANNER_FILENAMES[i]
+            # Determina a escala com base no nome do arquivo
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             with cols_banner[i % len(cols_banner)]:
-                banner_html = display_banner_html(url, filename, current_scale) # Pass filename and scale
+                banner_html = display_banner_html(url, filename, current_scale)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
