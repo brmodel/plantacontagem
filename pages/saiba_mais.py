@@ -81,7 +81,7 @@ FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
 # Adicionamos as duas últimas logos para aplicar o offset
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 # Offset para as logos 3 e 4 (VALOR ALTERADO PARA -30)
-OFFSET_LOGO_PX = -30 # Valor sugerido para o deslocamento vertical negativo
+OFFSET_LOGO_PX = 30 # Valor sugerido para o deslocamento vertical negativo
 
 
 # --- Funções de Cache de Imagem ---
