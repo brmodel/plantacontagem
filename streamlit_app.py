@@ -14,7 +14,8 @@ import base64
 APP_TITULO = "Planta Contagem"
 APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
 APP_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF) "
-ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
+ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/icones/"
+BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
 
 ICON_DEFINITIONS = {
@@ -74,7 +75,7 @@ def get_image_bytes(image_url: str) -> bytes | None:
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
 LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
-BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
+BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 # --- Templates HTML ---
 POPUP_TEMPLATE_BASE = """
