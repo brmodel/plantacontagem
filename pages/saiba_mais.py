@@ -2,27 +2,26 @@
 import streamlit as st
 import requests
 import base64
-import textwrap # Importe textwrap para ajudar com a indentação do HTML
+import textwrap
 
-# --- Constantes (algumas vêm do streamlit_app.py, mas são definidas aqui para auto-suficiência) ---
-APP_TITULO = "Planta Contagem"
-APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem" # Mantido para consistência de estilo de cabeçalho
-PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br" # URL do portal da PMC
+# --- Constantes ---
+PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
 ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/"
-LOGO_PMC_FILENAME = "banner_pmc.png" # Arquivo do logo da PMC, também usado como banner no rodapé
+LOGO_PMC_FILENAME = "banner_pmc.png"
 
-# Textos específicos da página "Saiba Mais"
+# --- Textos da Página ---
 SAIBA_TITULO = "Conheça o CMAUF"
 SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
 SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
 
-# Links para os programas
+# --- Links ---
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
-# *** CORREÇÃO AQUI: Formatação do TEXTAO_CMAUF usando textwrap.dedent e HTML limpo ***
-# Garantir que não haja espaços não-quebráveis (nbsp) e que a indentação seja com espaços normais.
-TEXTAO_CMAUF = textwrap.dedent(f"""
+# --- Conteúdo HTML ---
+# Revisado para garantir formatação limpa e evitar problemas de renderização.
+# textwrap.dedent remove a indentação comum do bloco de código, limpando espaços indesejados.
+html_content = textwrap.dedent(f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
     <p style="margin-bottom: 1.5em; text-align: justify;">
         Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
@@ -72,20 +71,16 @@ TEXTAO_CMAUF = textwrap.dedent(f"""
         por meio de práticas inovadoras e inclusivas.
     </p>
 </div>
-""").replace('\xa0', ' ') # Explicitly replace non-breaking spaces with regular spaces
+""")
 
-
-# Nomes base dos arquivos para os banners do rodapé
+# --- Rodapé ---
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
-# LOGO_PMC_FILENAME já definido acima.
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
-
-# URLs para os banners do rodapé (agora incluindo o banner_pmc.png)
 BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
 
 
-# --- Funções de Cache de Imagem (replicadas para auto-suficiência da página) ---
+# --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
 def get_image_as_base64(image_url: str) -> str | None:
     try:
@@ -110,10 +105,9 @@ def get_image_bytes(image_url: str) -> bytes | None:
 
 # --- App Principal Streamlit ---
 def main():
-    # Definir o layout como "wide" e o estado inicial da sidebar como "collapsed"
     st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
-    # Injeção de CSS para alinhar verticalmente e ESCONDER APENAS A NAVEGAÇÃO DE PÁGINAS na sidebar
+    # Injeção de CSS customizado
     st.markdown(
         """
         <style>
@@ -121,62 +115,45 @@ def main():
             position: relative;
             z-index: 1000;
         }
-
-        /* Esconde APENAS a lista de navegação de páginas na sidebar */
-        /* Usando uma especificidade maior e !important para garantir */
-        /* Aponta para o elemento pai 'div' que contém o 'ul' da navegação */
         div[data-testid="stSidebarNav"] {
             display: none !important;
         }
-
-        /* Os contêineres das colunas do Streamlit são div com data-testid="stVerticalBlock" dentro de div com data-testid="stColumns" */
-        /* Para alinhar o conteúdo interno das colunas ao topo */
         div[data-testid="stColumns"] > div > div {
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* Alinha os itens à parte de cima */
-            height: 100%; /* Garante que a coluna ocupa a altura total */
+            justify-content: flex-start; 
+            height: 100%; 
         }
-
-        /* Ajuste específico para o subtítulo para remover margens padrão indesejadas */
         div[data-testid="stVerticalBlock"] h3 {
-            margin-top: 0px;
-            margin-bottom: 0px;
-            padding-top: 0px;
-            padding-bottom: 0px;
+            margin-top: 0px; margin-bottom: 0px;
+            padding-top: 0px; padding-bottom: 0px;
         }
-
-        /* Ajuste para o logo da PMC na col2 */
         div[data-testid="column-PMC-logo"] {
             display: flex;
-            align-items: flex-start; /* Alinha o item ao topo */
-            justify-content: center; /* Centraliza horizontalmente */
-            height: 100%; /* Ocupa a altura total do flex container */
-            margin-top: 44px; /* Desce o contêiner do logo para alinhar com o título */
+            align-items: flex-start; 
+            justify-content: center;
+            height: 100%; 
+            margin-top: 44px;
         }
-
-        /* Regra para a imagem do logo dentro do seu contêiner */
         div[data-testid="column-PMC-logo"] img {
-            max-width: 100%; /* Garante que a imagem não exceda a largura da coluna */
-            height: auto;    /* Mantém a proporção */
-            object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
+            max-width: 100%; 
+            height: auto;
+            object-fit: contain;
         }
         </style>
         """, unsafe_allow_html=True
     )
 
+    # --- Layout do Cabeçalho ---
     with st.container():
-        col1, col2 = st.columns([3, 0.5]) # Ajustado o peso da col2 para o logo
-        
+        col1, col2 = st.columns([3, 0.5])
         with col1:
             st.title(SAIBA_TITULO)
             st.header(SAIBA_SUBTITULO)
-            # Botão para voltar ao mapa
-            if st.button("Voltar ao Mapa"):
-                st.switch_page("streamlit_app.py") # Redireciona para a página principal
+            if st.button("⬅️ Voltar ao Mapa"):
+                st.switch_page("streamlit_app.py")
             
         with col2:
-            # Adiciona um data-testid para o CSS customizado e aplica o margin-top
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
             logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
             if logo_bytes:
@@ -188,46 +165,28 @@ def main():
     st.markdown("---")
     st.caption(SAIBA_DESC)
 
-    # Conteúdo principal da página "Saiba Mais"
-    # *** EXIBIÇÃO DA ALTERAÇÃO AQUI ***
-    st.markdown(TEXTAO_CMAUF, unsafe_allow_html=True)
+    # --- Conteúdo Principal ---
+    st.markdown(html_content, unsafe_allow_html=True)
 
-    st.markdown("---") # Separador antes dos banners do rodapé
+    st.markdown("---") 
 
-    # Defina a altura desejada para os banners do rodapé (em pixels)
+    # --- Layout do Rodapé ---
     BANNER_RODAPE_HEIGHT_PX = 80
 
     def display_banner_html(url: str, height_px: int) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
-
         return f"""
-        <div style="
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: {height_px}px;
-            overflow: hidden;
-            width: 100%;
-        ">
-            <img src="{image_source}" alt="Banner" style="
-                height: 100%; /* Prioriza a altura total do contêiner */
-                width: auto;  /* Permite que a largura se ajuste automaticamente */
-                max-width: 100%; /* Garante que a imagem não ultrapasse a largura da coluna */
-                object-fit: contain; /* Mantém a proporção e se ajusta ao contêiner */
-                display: block;
-            ">
+        <div style="display: flex; justify-content: center; align-items: center; height: {height_px}px; overflow: hidden; width: 100%;">
+            <img src="{image_source}" alt="Banner" style="height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block;">
         </div>
         """
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
-        num_cols = min(num_banners, 4)
-
-        cols_banner = st.columns(num_cols)
-
+        cols_banner = st.columns(min(num_banners, 4))
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
-            with cols_banner[i % num_cols]:
+            with cols_banner[i % len(cols_banner)]:
                 banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
