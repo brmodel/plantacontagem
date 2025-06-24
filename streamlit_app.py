@@ -355,12 +355,7 @@ def main():
             info_text_popover = selected_info.get('Info', '').strip()
             if info_text_popover:
                 st.write(f"**Informações:**")
-                if len(info_text_popover) > MAX_POPOVER_INFO_CHARS:
-                    truncated_info = info_text_popover[:MAX_POPOVER_INFO_CHARS]+"..."
-                    st.markdown(truncated_info)
-                    with st.expander("Ler mais"): st.markdown(info_text_popover)
-                else:
-                    st.markdown(info_text_popover)
+                st.expander("Ler mais"): st.markdown(info_text_popover)
             if st.button("Fechar Detalhes", key="close_popover_btn"):
                 st.session_state.selected_marker_info = None
                 st.rerun()
