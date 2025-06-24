@@ -2,7 +2,7 @@
 import streamlit as st
 import requests
 import base64
-import textwrap
+# textwrap não é mais necessário
 
 # --- Constantes ---
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
@@ -19,9 +19,8 @@ LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
 # --- Conteúdo HTML ---
-# Revisado para garantir formatação limpa e evitar problemas de renderização.
-# textwrap.dedent remove a indentação comum do bloco de código, limpando espaços indesejados.
-html_content = textwrap.dedent(f"""
+# Revisado para garantir formatação limpa, removendo toda a indentação externa da string.
+html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
     <p style="margin-bottom: 1.5em; text-align: justify;">
         Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
@@ -29,7 +28,7 @@ html_content = textwrap.dedent(f"""
         Sua atuação abrange diversas frentes estratégicas:
     </p>
 
-    <h3 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Pilares de Atuação:</h3>
+    <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Pilares de Atuação:</h4>
     <ul style="list-style-type: none; padding-left: 0;">
         <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
             <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
@@ -51,7 +50,7 @@ html_content = textwrap.dedent(f"""
         </li>
     </ul>
 
-    <h3 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Tipos de Unidades Produtivas (UPs):</h3>
+    <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Tipos de Unidades Produtivas (UPs):</h4>
     <ul style="list-style-type: disc; margin-left: 25px; color: #444;">
         <li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitárias:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
         <li style="margin-bottom: 0.7em; text-align: justify;"><b>Institucionais Públicas:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS) e centros de saúde.</li>
@@ -71,7 +70,7 @@ html_content = textwrap.dedent(f"""
         por meio de práticas inovadoras e inclusivas.
     </p>
 </div>
-""")
+"""
 
 # --- Rodapé ---
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
