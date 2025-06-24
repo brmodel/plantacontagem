@@ -73,6 +73,8 @@ BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
+NORMAL_BANNER_SCALE = 1.0
+LARGE_BANNER_SCALE = 1.8
 
 
 # --- Funções de Cache de Imagem ---
@@ -168,21 +170,50 @@ def main():
     # --- Layout do Rodapé ---
     BANNER_RODAPE_HEIGHT_PX = 80
 
-    def display_banner_html(url: str, height_px: int) -> str:
+    def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
+
+        base_max_height_px = 70 
+        scaled_max_height = int(base_max_height_px * scale)
+        scaled_width = int(100 * scale)
+
+        img_style = f"""
+            height: auto;
+            width: {scaled_width}%;
+            max-width: 100%;
+            max-height: {scaled_max_height}px;
+            object-fit: contain; 
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        """
+
         return f"""
-        <div style="display: flex; justify-content: center; align-items: center; height: {height_px}px; overflow: hidden; width: 100%;">
-            <img src="{image_source}" alt="Banner" style="height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block;">
+        <div style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: {scaled_max_height}px;
+            overflow: hidden;
+            width: 100%;
+            padding: 5px;
+        ">
+            <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
         </div>
         """
+
+    # Definir FIRST_TWO_FOOTER_BANNERS também em saiba_mais.py
+FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
         cols_banner = st.columns(min(num_banners, 4))
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
+            filename = FOOTER_BANNER_FILENAMES[i] # Get filename for scaling check
+            current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             with cols_banner[i % len(cols_banner)]:
-                banner_html = display_banner_html(url, BANNER_RODAPE_HEIGHT_PX)
+                banner_html = display_banner_html(url, filename, current_scale) # Pass filename and scale
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
