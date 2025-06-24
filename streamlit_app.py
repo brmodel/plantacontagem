@@ -77,7 +77,7 @@ def get_image_bytes(image_url: str) -> bytes | None:
 # --- URLs e Rótulos Pré-calculados ---
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
-LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
+LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
 BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 # --- Templates HTML ---
