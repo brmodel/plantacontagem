@@ -13,9 +13,9 @@ SAIBA_TITULO = "Conheça o CMAUF"
 SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
 SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
 
-# --- Links ---
+# --- Links (MOVIDOS PARA CIMA) ---
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
-LINK_ALIMENTA_Cidades = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
+LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
 # --- Conteúdo HTML ---
 # Abordagem robusta para evitar erros de renderização com espaços/indentação.
@@ -74,10 +74,10 @@ FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 BANNER_PMC_URLS_RODAPE = [ICONES_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 LOGO_PMC_URL_CABEÇALHO = ICONES_URL_BASE + LOGO_PMC_FILENAME
 
-# --- NOVAS CONSTANTES DE ESCALA (ADICIONE AQUI) ---
+# --- NOVAS CONSTANTES DE ESCALA ---
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"] # Certifique-se de que está no escopo global
+FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
 
 
 # --- Funções de Cache de Imagem ---
@@ -171,10 +171,7 @@ def main():
     st.markdown("---")
 
     # --- Layout do Rodapé ---
-    # REMOVA ESTA LINHA:
-    # BANNER_RODAPE_HEIGHT_PX = 80
-
-    # FUNÇÃO display_banner_html ATUALIZADA
+    # Função display_banner_html atualizada para usar 'scale'
     def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
