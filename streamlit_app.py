@@ -53,7 +53,7 @@ ZOOM_SELECIONADO_MAPA = 16
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
 # Offset para as logos 3 e 4 (VALOR ALTERADO PARA -30)
-OFFSET_LOGO_PX = 30 # Valor sugerido para o deslocamento vertical negativo
+OFFSET_LOGO_PX = -30 # Valor sugerido para o deslocamento vertical negativo
 
 
 # --- Funções de Cache de Imagem ---
@@ -355,7 +355,8 @@ def main():
             info_text_popover = selected_info.get('Info', '').strip()
             if info_text_popover:
                 st.write(f"**Informações:**")
-                st.expander("Ler mais"): st.markdown(info_text_popover)
+                with st.expander("Ver mais detalhes"):
+                    st.markdown(info_text_popover)
             if st.button("Fechar Detalhes", key="close_popover_btn"):
                 st.session_state.selected_marker_info = None
                 st.rerun()
