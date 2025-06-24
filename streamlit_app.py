@@ -443,39 +443,38 @@ def main():
     # --- Footer ---
     st.markdown("---"); st.caption(APP_DESC)
 
-    BASE_BANNER_RODAPE_HEIGHT_PX = 70 # Base height for most banners
-    LARGER_BANNER_HEIGHT_PX = int(BASE_BANNER_RODAPE_HEIGHT_PX * 1.5) # Increased height for first two
+    NORMAL_BANNER_SCALE = 1.0
+    LARGE_BANNER_SCALE = 1.8
 
-    def display_banner_html(url: str, height_px: int, filename: str) -> str:
+    def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
-        
-        # Custom style for larger banners to ensure they fill width more
+
+        # Base dimensions, will be scaled
+        base_max_height_px = 70 
+        # Calculate scaled dimensions
+        scaled_max_height = int(base_max_height_px * scale)
+        scaled_width = int(100 * scale) # Scale width proportionally as well, but limit max-width to 100%
+
+        # img_style adjusts based on scale, targeting the image itself
         img_style = f"""
-            height: 100%; 
-            width: auto;  
-            max-width: 100%; 
+            height: auto; /* Allow height to adjust based on width and aspect ratio */
+            width: {scaled_width}%;  /* Scale width based on the provided scale */
+            max-width: 100%; /* Ensure it doesn't overflow its container */
+            max-height: {scaled_max_height}px; /* Constrain max height */
             object-fit: contain; 
             display: block;
+            margin-left: auto; /* Center the image */
+            margin-right: auto;
         """
-        if filename in FIRST_TWO_FOOTER_BANNERS:
-             img_style = f"""
-                height: auto; /* Allow height to adjust */
-                width: 90%;  /* Try to fill more width */
-                max-height: {height_px}px; /* But don't exceed the container height */
-                object-fit: contain; 
-                display: block;
-                margin-left: auto; /* Center if it doesn't fill width */
-                margin-right: auto;
-            """
 
-
+        # The container div ensures centering and a minimum height for alignment
         return f"""
         <div style="
             display: flex;
             justify-content: center;
             align-items: center;
-            height: {height_px}px;
+            min-height: {scaled_max_height}px; /* Ensure container is tall enough for scaled image */
             overflow: hidden;
             width: 100%;
             padding: 5px; /* Add some padding around banners */
@@ -492,13 +491,10 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            current_banner_height = LARGER_BANNER_HEIGHT_PX if filename in FIRST_TWO_FOOTER_BANNERS else BASE_BANNER_RODAPE_HEIGHT_PX
-            
-            # Distribute banners into columns
-            # If more banners than columns, they will wrap if columns are full.
-            # Here, we assume num_cols will accommodate all banners in one row.
+            current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
+
             with cols_banner[i % len(cols_banner)]: 
-                banner_html = display_banner_html(url, current_banner_height, filename)
+                banner_html = display_banner_html(url, filename, current_scale)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
