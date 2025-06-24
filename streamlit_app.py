@@ -447,41 +447,37 @@ def main():
     LARGE_BANNER_SCALE = 1.8
 
     def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
-        base64_image_data = get_image_as_base64(url)
-        image_source = base64_image_data if base64_image_data else url
+       base64_image_data = get_image_as_base64(url)
+       image_source = base64_image_data if base64_image_data else url
 
-        # Base dimensions, will be scaled
-        base_max_height_px = 70 
-        # Calculate scaled dimensions
-        scaled_max_height = int(base_max_height_px * scale)
-        scaled_width = int(100 * scale) # Scale width proportionally as well, but limit max-width to 100%
+       base_max_height_px = 70
+       scaled_max_height = int(base_max_height_px * scale)
+       scaled_width = int(100 * scale)
 
-        # img_style adjusts based on scale, targeting the image itself
-        img_style = f"""
-            height: auto; /* Allow height to adjust based on width and aspect ratio */
-            width: {scaled_width}%;  /* Scale width based on the provided scale */
-            max-width: 100%; /* Ensure it doesn't overflow its container */
-            max-height: {scaled_max_height}px; /* Constrain max height */
-            object-fit: contain; 
-            display: block;
-            margin-left: auto; /* Center the image */
-            margin-right: auto;
-        """
+       img_style = f"""
+           height: auto;
+           width: {scaled_width}%;
+           max-width: 100%;
+           max-height: {scaled_max_height}px;
+           object-fit: contain;
+           display: block;
+           margin-left: auto;
+           margin-right: auto;
+       """
 
-        # The container div ensures centering and a minimum height for alignment
-        return f"""
-        <div style="
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: {scaled_max_height}px; /* Ensure container is tall enough for scaled image */
-            overflow: hidden;
-            width: 100%;
-            padding: 5px; /* Add some padding around banners */
-        ">
-            <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
-        </div>
-        """
+       return f"""
+       <div style="
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           min-height: {scaled_max_height}px;
+           overflow: hidden;
+           width: 100%;
+           padding: 5px;
+       ">
+           <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
+       </div>
+       """
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
