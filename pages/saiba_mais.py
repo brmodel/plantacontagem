@@ -5,8 +5,8 @@ import base64
 
 # --- Constantes ---
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
-# Caminhos base para as imagens
-ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/icones/" # Mantido para consistência, mas não usado diretamente para banners aqui
+# URLs base para as imagens no GitHub
+ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/icones/"
 BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 LOGO_PMC_FILENAME = "banner_pmc.png"
 
@@ -15,7 +15,7 @@ SAIBA_TITULO = "Conheça o CMAUF"
 SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
 SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
 
-# --- Links (MOVIDOS PARA CIMA) ---
+# --- Links ---
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
@@ -53,6 +53,7 @@ desde a otimização da produção de alimentos até o incentivo à criação de
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitárias:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Institucionais Públicas:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS) e centros de saúde.</li>
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Pedagógicas Escolares:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Territórios de Tradição:</b> Englobam comunidades quilombolas, terreiros e outras comunidades tradicionais, valorizando seus saberes e práticas.</li>
 </ul>
 <p style="margin-top: 2em; text-align: justify;">
 Adicionalmente, o CMAUF mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
@@ -71,14 +72,14 @@ por meio de práticas inovadoras e inclusivas.
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
 LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
-BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES] # Atualizado para usar BANNER_URL_BASE
-LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME # Atualizado para usar BANNER_URL_BASE
+BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES] # Usando BANNER_URL_BASE
+LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME # Usando BANNER_URL_BASE
 
 # --- NOVAS CONSTANTES DE ESCALA ---
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
+LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"] # Adicionado para OFFSET_LOGO_PX
 OFFSET_LOGO_PX = 30 
 
 
@@ -173,7 +174,6 @@ def main():
     st.markdown("---")
 
     # --- Layout do Rodapé ---
-    # Função display_banner_html atualizada para usar 'scale', 'offset_top' e 'link_url'
     def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0, link_url: str = None) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
@@ -182,7 +182,6 @@ def main():
         scaled_max_height = int(base_max_height_px * scale)
         scaled_width_percent = 90 if scale > 1.0 else 100 
 
-        # Adiciona o margin-top para o offset
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
@@ -232,8 +231,8 @@ def main():
         num_banners = len(BANNER_PMC_URLS_RODAPE)
         cols_banner = st.columns(min(num_banners, 4))
 
-        # Dicionário para mapear filenames a links
         banner_links = {
+            "governo_federal.png": "https://www.gov.br/pt-br", # Exemplo, ajuste se houver um link específico
             "alimenta_cidades.png": LINK_ALIMENTA_CIDADES,
             "contagem_sem_fome.png": LINK_CONTAGEM_SEM_FOME,
             "banner_pmc.png": PMC_PORTAL_URL
@@ -241,13 +240,10 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            # Determina a escala com base no nome do arquivo
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             
-            # Adiciona a lógica para aplicar o offset apenas nas logos 3 e 4
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
             
-            # Obter o link para o banner atual, se existir
             link_for_banner = banner_links.get(filename, None)
 
             with cols_banner[i % len(cols_banner)]:
