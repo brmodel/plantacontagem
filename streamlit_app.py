@@ -18,6 +18,10 @@ ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main
 BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
 
+# --- Links para o rodapé ---
+LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
+LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
+
 ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
     2: {"file": "leaf_blue.png", "label": "Institucional"},
@@ -40,6 +44,9 @@ FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 
+# Offset para as logos 3 e 4 (CORRIGIDO PARA 30)
+OFFSET_LOGO_PX = 30 
+
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 MAX_POPOVER_INFO_CHARS = 250 # Max characters for info in popover before expander
 
@@ -49,7 +56,7 @@ ZOOM_SELECIONADO_MAPA = 16
 
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-OFFSET_LOGO_PX = -30
+
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -77,7 +84,7 @@ def get_image_bytes(image_url: str) -> bytes | None:
 # --- URLs e Rótulos Pré-calculados ---
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
-LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
+LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME # Corrigido para usar BANNER_URL_BASE
 BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 # --- Templates HTML ---
@@ -447,8 +454,8 @@ def main():
     # --- Footer ---
     st.markdown("---"); st.caption(APP_DESC)
 
-    # Função display_banner_html atualizada para usar 'scale' e 'offset_top'
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
+    # Função display_banner_html atualizada para usar 'scale', 'offset_top' e 'link_url'
+    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0, link_url: str = None) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
@@ -469,24 +476,48 @@ def main():
             margin-right: auto;
             {margin_top_style}
         """
+        
+        image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}">'
 
-        return f"""
-        <div style="
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: {scaled_max_height}px;
-            overflow: hidden;
-            width: 100%;
-            padding: 5px;
-        ">
-            <img src="{image_source}" alt="Banner {filename}" style="{img_style}">
-        </div>
-        """
+        if link_url:
+            return f"""
+            <div style="
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: {scaled_max_height}px;
+                overflow: hidden;
+                width: 100%;
+                padding: 5px;
+            ">
+                <a href="{link_url}" target="_blank" rel="noopener noreferrer">{image_tag}</a>
+            </div>
+            """
+        else:
+            return f"""
+            <div style="
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: {scaled_max_height}px;
+                overflow: hidden;
+                width: 100%;
+                padding: 5px;
+            ">
+                {image_tag}
+            </div>
+            """
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
         cols_banner = st.columns(num_banners if num_banners <= 4 else 4) 
+
+        # Dicionário para mapear filenames a links
+        banner_links = {
+            "alimenta_cidades.png": LINK_ALIMENTA_CIDADES,
+            "contagem_sem_fome.png": LINK_CONTAGEM_SEM_FOME,
+            "banner_pmc.png": PMC_PORTAL_URL
+        }
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
@@ -494,8 +525,11 @@ def main():
             
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
             
+            # Obter o link para o banner atual, se existir
+            link_for_banner = banner_links.get(filename, None)
+
             with cols_banner[i % len(cols_banner)]: 
-                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo)
+                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo, link_for_banner)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
