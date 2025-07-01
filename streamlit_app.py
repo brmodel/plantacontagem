@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import folium
@@ -14,13 +13,10 @@ import base64
 APP_TITULO = "Planta Contagem"
 APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
 APP_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF) "
+# URLs base para as imagens no GitHub
 ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/icones/"
 BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
-
-# --- Links para o rodapé ---
-LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
-LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
 ICON_DEFINITIONS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
@@ -42,13 +38,10 @@ BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png
 LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 
-# Offset para as logos 3 e 4 (CORRIGIDO PARA 30)
-OFFSET_LOGO_PX = 30 
 
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
-MAX_POPOVER_INFO_CHARS = 250 # Max characters for info in popover before expander
+MAX_POPOVER_INFO_CHARS = 250
 
 CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
@@ -56,7 +49,7 @@ ZOOM_SELECIONADO_MAPA = 16
 
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-
+OFFSET_LOGO_PX = 30 # Valor para o deslocamento vertical negativo
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -84,7 +77,7 @@ def get_image_bytes(image_url: str) -> bytes | None:
 # --- URLs e Rótulos Pré-calculados ---
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
-LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME # Corrigido para usar BANNER_URL_BASE
+LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
 BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 # --- Templates HTML ---
@@ -110,10 +103,6 @@ def load_data():
         for col in ['Nome', 'Tipo', 'Regional', 'Info', 'Instagram']:
             if col in data.columns:
                 data[col] = data[col].astype(str).replace('nan', '', regex=False).replace('<NA>', '', regex=False)
-        expected_numerals = set(ICON_DEFINITIONS.keys())
-        for num_val in data['Numeral'].unique():
-            if num_val not in expected_numerals:
-                st.warning(f"Valor de 'Numeral' ({num_val}) não mapeado. Será usado o ícone padrão.")
         return data
     except pd.errors.EmptyDataError: st.error("Erro: A planilha parece estar vazia ou sem cabeçalhos."); return pd.DataFrame()
     except ValueError as e: st.error(f"Erro ao processar colunas: {e}."); return pd.DataFrame()
@@ -145,7 +134,7 @@ def criar_legenda(geojson_data):
     for region in sorted(regions, key=lambda x: x.get('id', float('inf'))):
         color = MAPEAMENTO_CORES.get(region.get('id'), "#CCCCCC"); region_name = region.get('name', 'N/A')
         if region_name and region_name != 'N/A' and color:
-            items_legenda_regional.append(f"""<div style="display: flex; align-items: flex; margin: 2px 0;"><div style="background: {color}; width: 20px; height: 20px; margin-right: 5px; border: 1px solid #ccc;"></div><span>{region_name}</span></div>""")
+            items_legenda_regional.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><div style="background: {color}; width: 20px; height: 20px; margin-right: 5px; border: 1px solid #ccc;"></div><span>{region_name}</span></div>""")
     html_regional = f"""<div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>{"".join(items_legenda_regional)}""" if items_legenda_regional else ""
     items_legenda_icones = []
     for key, props in sorted(ICON_DEFINITIONS.items()):
@@ -154,29 +143,8 @@ def criar_legenda(geojson_data):
         legenda_texto = props["label"]
         items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icon_src_for_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
     html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Tipos de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
-    
     if html_regional or html_icones:
-        # Wrap the legend HTML in a div with absolute positioning
-        return f"""
-        <div style="
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            background: rgba(255, 255, 255, 0.9); 
-            padding: 10px; 
-            border-radius: 5px; 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3); 
-            font-family: Arial, sans-serif; 
-            font-size: 12px; 
-            max-width: 180px; 
-            max-height: 450px; 
-            overflow-y: auto;
-        ">
-            {html_regional}
-            {html_icones}
-        </div>
-        """
+        return folium.Element(f"""<div style="position: fixed; bottom: 50px; right: 20px; z-index: 1000; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 450px; overflow-y: auto;">{html_regional}{html_icones}</div>""")
     return None
 
 def criar_mapa(data, geojson_data):
@@ -187,11 +155,8 @@ def criar_mapa(data, geojson_data):
             tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
             highlight_function=lambda x: {"weight": 2.5, "fillOpacity": 0.6, "color": "black"},
             interactive=True, control=True, show=True).add_to(m)
-    
-    legenda_html = criar_legenda(geojson_data)
-    if legenda_html:
-        # Adiciona o HTML da legenda diretamente ao mapa
-        m.get_root().html.add_child(folium.Element(legenda_html))
+    legenda_element = criar_legenda(geojson_data)
+    if legenda_element: m.get_root().html.add_child(legenda_element)
 
     if isinstance(data, pd.DataFrame) and not data.empty:
         coord_precision = 6
@@ -244,41 +209,30 @@ def main():
     st.markdown(
         """
         <style>
-        /* General App Header Style */
         .stApp > header {
             position: relative;
             z-index: 1000;
         }
-
-        /* Hide default Streamlit page navigation in sidebar (if pages/ dir exists) */
         div[data-testid="stSidebarNav"] {
             display: none !important;
         }
-
-        /* Align content within Streamlit columns to the top by default */
         div[data-testid="stColumns"] > div[data-testid^="stVerticalBlock"] {
             display: flex;
             flex-direction: column;
             justify-content: flex-start; 
         }
-        
-        /* Remove default margins from h3 elements within columns for tighter layout */
         div[data-testid^="stVerticalBlock"] h3 {
             margin-top: 0px !important; 
             margin-bottom: 0px !important; 
             padding-top: 0px !important;
             padding-bottom: 0px !important;
         }
-
-        /* Style for the search bar column container */
         div[data-testid="column-search-bar"] {
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%; 
         }
-        
-        /* Style for the PMC logo column container */
         div[data-testid="column-PMC-logo"] {
             display: flex;
             align-items: center;
@@ -286,22 +240,16 @@ def main():
             height: 100%;
             padding-top: 5px;
         }
-
-        /* Style for the PMC logo image itself */
         div[data-testid="column-PMC-logo"] img {
             max-width: 100%; 
-            height: auto;   
+            height: auto;    
             max-height: 60px;
             object-fit: contain; 
         }
-        
-        /* Ensure search input doesn't have extra top/bottom margins */
         div[data-testid="column-search-bar"] .stTextInput {
             margin-top: 0px; 
             margin-bottom: 0px; 
         }
-
-        /* Popover styling */
         div[data-testid="stPopover"] div[data-testid="stVerticalBlock"] {
              padding: 10px;
         }
@@ -309,29 +257,29 @@ def main():
         """, unsafe_allow_html=True
     )
 
-    # Initialize session state variables
+    # Inicializa ou carrega variáveis de estado da sessão
     if 'selected_marker_info' not in st.session_state: st.session_state.selected_marker_info = None
     if 'search_input_value' not in st.session_state: st.session_state.search_input_value = ''
     if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {}
     if 'map_center' not in st.session_state: st.session_state.map_center = CENTRO_INICIAL_MAPA
     if 'map_zoom' not in st.session_state: st.session_state.map_zoom = ZOOM_INICIAL_MAPA
     
-    # Load data if not already loaded
-    if 'data_loaded' not in st.session_state:
-        st.session_state.data_loaded = False; st.session_state.load_error = False
-    st.session_state.df = pd.DataFrame(); st.session_state.geojson_data = None
-    if not st.session_state.data_loaded:
+    # Carregamento de dados: Só carrega se o DataFrame não existir ou estiver vazio
+    if 'df' not in st.session_state or st.session_state.df.empty:
+        st.session_state.df = pd.DataFrame() # Garante que df seja um DataFrame vazio inicialmente
+        st.session_state.load_error = False # Reseta o erro ao tentar carregar novamente
         with st.spinner("Carregando dados..."):
-            loaded_df = load_data()
-            if not loaded_df.empty: st.session_state.df = loaded_df
-            else: st.session_state.load_error = True
-            st.session_state.geojson_data = load_geojson()
-        st.session_state.data_loaded = True
-        
-    # --- Header Layout ---
+            loaded_df = load_data() # Esta chamada usa @st.cache_data
+            if not loaded_df.empty:
+                st.session_state.df = loaded_df
+                st.session_state.load_error = False
+            else:
+                st.session_state.load_error = True
+            st.session_state.geojson_data = load_geojson() # Esta chamada usa @st.cache_data
+    
+    # --- Layout do Cabeçalho ---
     st.title(APP_TITULO)
     
-    # Main header columns
     header_col1, header_col2, header_col3 = st.columns([0.6, 0.25, 0.15])
 
     with header_col1:
@@ -343,7 +291,6 @@ def main():
         st.markdown('<div data-testid="column-search-bar">', unsafe_allow_html=True)
         def clear_selection_on_search():
             st.session_state.selected_marker_info = None
-            st.session_state.show_popover = False
 
         search_query = st.text_input(
             "Pesquisar por Nome, Tipo ou Regional:",
@@ -364,7 +311,7 @@ def main():
             st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- Popover for Marker Details ---
+    # --- Popover para Detalhes do Marcador ---
     popover_anchor = st.empty() 
 
     if st.session_state.get("selected_marker_info"):
@@ -381,39 +328,36 @@ def main():
             info_text_popover = selected_info.get('Info', '').strip()
             if info_text_popover:
                 st.write(f"**Informações:**")
-                with st.expander("Ver mais detalhes"):
+                if len(info_text_popover) > MAX_POPOVER_INFO_CHARS:
+                    truncated_info = info_text_popover[:MAX_POPOVER_INFO_CHARS]+"..."
+                    st.markdown(truncated_info)
+                    with st.expander("Ler mais"): st.markdown(info_text_popover)
+                else:
                     st.markdown(info_text_popover)
             if st.button("Fechar Detalhes", key="close_popover_btn"):
                 st.session_state.selected_marker_info = None
                 st.rerun()
 
-    # --- Data Filtering ---
+    # --- Filtragem de Dados ---
     df_filtrado = pd.DataFrame()
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_original = st.session_state.df
         if search_query:
             try:
-                filtro_nome = pd.Series([False] * len(df_original), index=df_original.index)
-                filtro_tipo = pd.Series([False] * len(df_original), index=df_original.index)
-                filtro_regional = pd.Series([False] * len(df_original), index=df_original.index)
-
-                if 'Nome' in df_original.columns:
-                    filtro_nome = df_original["Nome"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
-                if 'Tipo' in df_original.columns:
-                    filtro_tipo = df_original["Tipo"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
-                if 'Regional' in df_original.columns:
-                    filtro_regional = df_original["Regional"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
+                filtro_nome = df_original["Nome"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
+                filtro_tipo = df_original["Tipo"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
+                filtro_regional = df_original["Regional"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
                 
                 df_filtrado = df_original[filtro_nome | filtro_tipo | filtro_regional]
 
-                if df_filtrado.empty and search_query:
+                if df_filtrado.empty:
                     st.warning(f"Nenhuma unidade encontrada com '{search_query}' no Nome, Tipo ou Regional.")
             except Exception as e:
                 st.error(f"Erro no filtro: {e}"); df_filtrado = df_original
         else:
             df_filtrado = df_original
     
-    # --- Map Display ---
+    # --- Exibição do Mapa ---
     if not df_filtrado.empty:
         m = criar_mapa(df_filtrado, st.session_state.get('geojson_data'))
         map_output = st_folium(
@@ -424,6 +368,7 @@ def main():
             returned_objects=['last_object_clicked']
         )
         
+        # Lida com eventos de clique no mapa
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
@@ -436,7 +381,7 @@ def main():
                         st.session_state.selected_marker_info = found_info
                         st.session_state.map_center = [found_info['lat'], found_info['lon']]
                         st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA
-                        st.rerun() 
+                        st.rerun()
                 elif st.session_state.selected_marker_info is not None: 
                     st.session_state.selected_marker_info = None
                     st.rerun()
@@ -445,25 +390,17 @@ def main():
                 st.rerun()
                 
     elif st.session_state.load_error: st.error("Falha crítica ao carregar dados. Mapa não pode ser exibido.")
-    elif not st.session_state.df.empty and df_filtrado.empty and search_query: pass
-    elif not st.session_state.data_loaded: st.info("Carregando dados iniciais...")
-    else:
-        if st.session_state.df.empty and not st.session_state.load_error:
-            st.info("Não há dados de unidades produtivas disponíveis para carregar ou exibir.")
-
-    # --- Footer ---
+    
+    # --- Rodapé ---
     st.markdown("---"); st.caption(APP_DESC)
 
-    # Função display_banner_html atualizada para usar 'scale', 'offset_top' e 'link_url'
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0, link_url: str = None) -> str:
+    def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
-        base_max_height_px = 70
+        base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
-        scaled_width_percent = 90 if scale > 1.0 else 100
-
-        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
+        scaled_width_percent = 90 if scale > 1.0 else 100 
 
         img_style = f"""
             height: auto; 
@@ -474,9 +411,19 @@ def main():
             display: block;
             margin-left: auto; 
             margin-right: auto;
-            {margin_top_style}
         """
         
+        # Adiciona o link para as imagens do rodapé
+        link_url = None
+        if filename == "governo_federal.png":
+            link_url = "https://www.gov.br/pt-br" # Exemplo, ajuste se houver um link específico
+        elif filename == "alimenta_cidades.png":
+            link_url = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
+        elif filename == "contagem_sem_fome.png":
+            link_url = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
+        elif filename == "banner_pmc.png":
+            link_url = PMC_PORTAL_URL
+
         image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}">'
 
         if link_url:
@@ -484,7 +431,7 @@ def main():
             <div style="
                 display: flex;
                 justify-content: center;
-                align-items: flex-start;
+                align-items: center;
                 min-height: {scaled_max_height}px;
                 overflow: hidden;
                 width: 100%;
@@ -498,7 +445,7 @@ def main():
             <div style="
                 display: flex;
                 justify-content: center;
-                align-items: flex-start;
+                align-items: center;
                 min-height: {scaled_max_height}px;
                 overflow: hidden;
                 width: 100%;
@@ -512,24 +459,12 @@ def main():
         num_banners = len(BANNER_PMC_URLS_RODAPE)
         cols_banner = st.columns(num_banners if num_banners <= 4 else 4) 
 
-        # Dicionário para mapear filenames a links
-        banner_links = {
-            "alimenta_cidades.png": LINK_ALIMENTA_CIDADES,
-            "contagem_sem_fome.png": LINK_CONTAGEM_SEM_FOME,
-            "banner_pmc.png": PMC_PORTAL_URL
-        }
-
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             
-            offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
-            
-            # Obter o link para o banner atual, se existir
-            link_for_banner = banner_links.get(filename, None)
-
             with cols_banner[i % len(cols_banner)]: 
-                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo, link_for_banner)
+                banner_html = display_banner_html(url, filename, current_scale)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
