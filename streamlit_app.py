@@ -5,7 +5,7 @@ import folium
 from streamlit_folium import st_folium
 from folium import Marker
 import requests
-from folium.plugins import LocateControl, CustomControl # Adicionado CustomControl
+from folium.plugins import LocateControl # Removido CustomControl daqui
 import numpy as np
 import json
 import base64
@@ -38,8 +38,7 @@ BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png
 LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
-# Adicionamos as duas últimas logos para aplicar o offset
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"] #
+LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 MAX_POPOVER_INFO_CHARS = 250 # Max characters for info in popover before expander
@@ -48,12 +47,9 @@ CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
 ZOOM_SELECIONADO_MAPA = 16
 
-# --- NOVAS CONSTANTES DE ESCALA ---
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-# Offset para as logos 3 e 4 (VALOR ALTERADO PARA -30)
-OFFSET_LOGO_PX = -30 # Valor sugerido para o deslocamento vertical negativo
-
+OFFSET_LOGO_PX = -30
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -152,7 +148,6 @@ def criar_legenda(geojson_data):
         items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icon_src_for_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
     html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Tipos de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
     if html_regional or html_icones:
-        # Retorna apenas o conteúdo HTML para ser usado com CustomControl
         return f"""<div style="background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 450px; overflow-y: auto;">{html_regional}{html_icones}</div>"""
     return None
 
@@ -165,10 +160,9 @@ def criar_mapa(data, geojson_data):
             highlight_function=lambda x: {"weight": 2.5, "fillOpacity": 0.6, "color": "black"},
             interactive=True, control=True, show=True).add_to(m)
     
-    legenda_html = criar_legenda(geojson_data) # Renomeado para html_legenda
+    legenda_html = criar_legenda(geojson_data)
     if legenda_html:
-        # Adiciona a legenda como um CustomControl no mapa
-        m.add_child(CustomControl(html=legenda_html, position='bottomright'))
+        folium.CustomControl(html=legenda_html, position='bottomright').add_to(m) # Corrigido aqui
 
     if isinstance(data, pd.DataFrame) and not data.empty:
         coord_precision = 6
@@ -432,7 +426,7 @@ def main():
     st.markdown("---"); st.caption(APP_DESC)
 
     # Função display_banner_html atualizada para usar 'scale' e 'offset_top'
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str: # Alterado default offset_top_px para 0
+    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
@@ -440,7 +434,6 @@ def main():
         scaled_max_height = int(base_max_height_px * scale)
         scaled_width_percent = 90 if scale > 1.0 else 100
 
-        # Adiciona o margin-top para o offset
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
@@ -452,14 +445,14 @@ def main():
             display: block;
             margin-left: auto; 
             margin-right: auto;
-            {margin_top_style} /* Aplica o margin-top aqui */
+            {margin_top_style}
         """
 
         return f"""
         <div style="
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Alterado de center para flex-start para permitir offset vertical */
+            align-items: flex-start;
             min-height: {scaled_max_height}px;
             overflow: hidden;
             width: 100%;
@@ -477,7 +470,6 @@ def main():
             filename = FOOTER_BANNER_FILENAMES[i]
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             
-            # Adiciona a lógica para aplicar o offset apenas nas logos 3 e 4
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
             
             with cols_banner[i % len(cols_banner)]: 
