@@ -47,7 +47,7 @@ MAX_POPOVER_INFO_CHARS = 250 # Max characters for info in popover before expande
 
 CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
-ZOOM_SELECIONADO_MAPA = 16
+ZOOM_SELECIONADO_MAPA = 15
 
 # --- NOVAS CONSTANTES DE ESCALA ---
 NORMAL_BANNER_SCALE = 1.0
@@ -143,7 +143,7 @@ def criar_legenda(geojson_data):
     for region in sorted(regions, key=lambda x: x.get('id', float('inf'))):
         color = MAPEAMENTO_CORES.get(region.get('id'), "#CCCCCC"); region_name = region.get('name', 'N/A')
         if region_name and region_name != 'N/A' and color:
-            items_legenda_regional.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><div style="background: {color}; width: 20px; height: 20px; margin-right: 5px; border: 1px solid #ccc;"></div><span>{region_name}</span></div>""")
+            items_legenda_regional.append(f"""<div style="display: flex; align-items: flex; margin: 2px 0;"><div style="background: {color}; width: 20px; height: 20px; margin-right: 5px; border: 1px solid #ccc;"></div><span>{region_name}</span></div>""")
     html_regional = f"""<div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>{"".join(items_legenda_regional)}""" if items_legenda_regional else ""
     items_legenda_icones = []
     for key, props in sorted(ICON_DEFINITIONS.items()):
@@ -429,7 +429,7 @@ def main():
     st.markdown("---"); st.caption(APP_DESC)
 
     # Função display_banner_html atualizada para usar 'scale' e 'offset_top'
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
+    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 30) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
