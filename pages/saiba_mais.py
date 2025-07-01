@@ -80,7 +80,7 @@ NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"] # Adicionado para OFFSET_LOGO_PX
-OFFSET_LOGO_PX = 30 
+OFFSET_LOGO_PX = 50
 
 
 # --- Funções de Cache de Imagem ---
