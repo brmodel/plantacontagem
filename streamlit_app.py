@@ -5,7 +5,7 @@ import folium
 from streamlit_folium import st_folium
 from folium import Marker
 import requests
-from folium.plugins import LocateControl
+from folium.plugins import LocateControl, CustomControl # Adicionado CustomControl
 import numpy as np
 import json
 import base64
@@ -39,15 +39,14 @@ LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
 # Adicionamos as duas últimas logos para aplicar o offset
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
-
+LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"] #
 
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 MAX_POPOVER_INFO_CHARS = 250 # Max characters for info in popover before expander
 
 CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
-ZOOM_SELECIONADO_MAPA = 15
+ZOOM_SELECIONADO_MAPA = 16
 
 # --- NOVAS CONSTANTES DE ESCALA ---
 NORMAL_BANNER_SCALE = 1.0
@@ -153,7 +152,8 @@ def criar_legenda(geojson_data):
         items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icon_src_for_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
     html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Tipos de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
     if html_regional or html_icones:
-        return folium.Element(f"""<div style="position: fixed; bottom: 50px; right: 20px; z-index: 1000; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 450px; overflow-y: auto;">{html_regional}{html_icones}</div>""")
+        # Retorna apenas o conteúdo HTML para ser usado com CustomControl
+        return f"""<div style="background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 450px; overflow-y: auto;">{html_regional}{html_icones}</div>"""
     return None
 
 def criar_mapa(data, geojson_data):
@@ -164,8 +164,11 @@ def criar_mapa(data, geojson_data):
             tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
             highlight_function=lambda x: {"weight": 2.5, "fillOpacity": 0.6, "color": "black"},
             interactive=True, control=True, show=True).add_to(m)
-    legenda_element = criar_legenda(geojson_data)
-    if legenda_element: m.get_root().html.add_child(legenda_element)
+    
+    legenda_html = criar_legenda(geojson_data) # Renomeado para html_legenda
+    if legenda_html:
+        # Adiciona a legenda como um CustomControl no mapa
+        m.add_child(CustomControl(html=legenda_html, position='bottomright'))
 
     if isinstance(data, pd.DataFrame) and not data.empty:
         coord_precision = 6
@@ -264,7 +267,7 @@ def main():
         /* Style for the PMC logo image itself */
         div[data-testid="column-PMC-logo"] img {
             max-width: 100%; 
-            height: auto;    
+            height: auto;   
             max-height: 60px;
             object-fit: contain; 
         }
@@ -293,7 +296,7 @@ def main():
     # Load data if not already loaded
     if 'data_loaded' not in st.session_state:
         st.session_state.data_loaded = False; st.session_state.load_error = False
-        st.session_state.df = pd.DataFrame(); st.session_state.geojson_data = None
+    st.session_state.df = pd.DataFrame(); st.session_state.geojson_data = None
     if not st.session_state.data_loaded:
         with st.spinner("Carregando dados..."):
             loaded_df = load_data()
@@ -429,7 +432,7 @@ def main():
     st.markdown("---"); st.caption(APP_DESC)
 
     # Função display_banner_html atualizada para usar 'scale' e 'offset_top'
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 30) -> str:
+    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str: # Alterado default offset_top_px para 0
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
@@ -456,7 +459,7 @@ def main():
         <div style="
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Alterado de center para flex-start para permitir offset vertical */
             min-height: {scaled_max_height}px;
             overflow: hidden;
             width: 100%;
