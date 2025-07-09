@@ -37,9 +37,9 @@ MAPEAMENTO_CORES = {
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
 LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
-FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
+# Removido FIRST_TWO_FOOTER_BANNERS, pois todas as imagens usarão NORMAL_BANNER_SCALE
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
-OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo (ajustado para 40px)
+OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
 
 
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
@@ -50,7 +50,7 @@ ZOOM_INICIAL_MAPA = 12
 ZOOM_SELECIONADO_MAPA = 16
 
 NORMAL_BANNER_SCALE = 1.0
-LARGE_BANNER_SCALE = 1.8
+# Removido LARGE_BANNER_SCALE, pois todas as imagens usarão NORMAL_BANNER_SCALE
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -93,6 +93,7 @@ TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14p
 # --- Funções de Carregamento de Dados ---
 @st.cache_data(ttl=600)
 def load_data():
+    # O URL da planilha foi atualizado para o que você forneceu como o "novo" URL
     url = "https://docs.google.com/spreadsheets/d/1qNmwcOhFnWrFHDYwkq36gHmk4Rx97b6RM0VqU94vOro/edit?gid=1832051074#gid=1832051074"
     try:
         data = pd.read_csv(url, usecols=range(8))
@@ -111,12 +112,13 @@ def load_data():
         st.subheader("Valores únicos e contagem na coluna 'Numeral' (antes de dropar):")
         st.dataframe(data['Numeral'].value_counts(dropna=False))
 
-        # Remove linhas onde 'Numeral', 'lat' OU 'lon' são NaN
-        # Isso garante que apenas marcadores com informações essenciais completas sejam exibidos
-        data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
+        # SOLUÇÃO PROPOSTA: Remove linhas onde 'lat' OU 'lon' são NaN.
+        # Linhas com 'Numeral' nulo serão mantidas e usarão o ícone padrão.
+        data.dropna(subset=['lat', 'lon'], inplace=True)
         
         # Converte 'Numeral' para tipo inteiro, se houver valores válidos
-        data['Numeral'] = data['Numeral'].astype('Int64') # 'Int64' permite NaNs em colunas inteiras
+        # O tipo 'Int64' permite valores NaN em colunas de inteiros.
+        data['Numeral'] = data['Numeral'].astype('Int64')
         
         # Garante que colunas de texto sejam strings e substitui NaNs por string vazia
         for col in ['Nome', 'Tipo', 'Regional', 'Info', 'Instagram']:
@@ -434,13 +436,12 @@ def main():
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
-        scaled_width_percent = 90 if scale > 1.0 else 100 
 
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
-            width: {scaled_width_percent}%;  
+            width: auto; /* Alterado para auto */
             max-width: 100%; 
             max-height: {scaled_max_height}px; 
             object-fit: contain; 
@@ -481,7 +482,7 @@ def main():
             return f"""
             <div style="
                 display: flex;
-                justify-ocntent: center;
+                justify-content: center;
                 align-items: center;
                 min-height: {scaled_max_height}px;
                 overflow: hidden;
@@ -498,7 +499,8 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
+            # Todas as imagens do rodapé usarão a escala normal
+            current_scale = NORMAL_BANNER_SCALE 
             
             # Aplica o offset apenas para as duas últimas imagens
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
