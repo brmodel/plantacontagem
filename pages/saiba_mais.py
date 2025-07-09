@@ -25,7 +25,6 @@ FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 NORMAL_BANNER_SCALE = 1.0
-# Removido LARGE_BANNER_SCALE e FIRST_TWO_FOOTER_BANNERS, pois todas as imagens usarão NORMAL_BANNER_SCALE
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
 
@@ -86,6 +85,9 @@ def get_image_as_base64(image_url: str) -> str | None:
         response = requests.get(image_url, timeout=10)
         response.raise_for_status()
         img_bytes = response.content
+        if not img_bytes: # Adicionado para verificar se o conteúdo da imagem é vazio
+            print(f"Erro: Conteúdo da imagem vazio para {image_url}")
+            return None
         content_type = response.headers.get('Content-Type', 'image/png')
         return f"data:{content_type};base64,{base64.b64encode(img_bytes).decode()}"
     except requests.exceptions.RequestException as e:
@@ -178,12 +180,13 @@ def main():
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
+        scaled_width_percent = 90 # Mantido para consistência, embora scale seja 1.0
 
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
-            width: auto; /* Alterado para auto */
+            width: {scaled_width_percent}%; /* Revertido para largura percentual */
             max-width: 100%; 
             max-height: {scaled_max_height}px; 
             object-fit: contain; 
@@ -241,10 +244,8 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            # Todas as imagens do rodapé usarão a escala normal
             current_scale = NORMAL_BANNER_SCALE 
             
-            # Aplica o offset apenas para as duas últimas imagens
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
             
             with cols_banner[i % len(cols_banner)]: 
