@@ -38,7 +38,7 @@ BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png
 LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"] # Adicionado para OFFSET_LOGO_PX
+LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo (ajustado para 40px)
 
 
@@ -103,6 +103,14 @@ def load_data():
         data['lat'] = pd.to_numeric(data['lat'], errors='coerce')
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
         
+        # --- DEBUG: Verifique os dados antes de dropar NaNs ---
+        st.subheader("Dados brutos após conversão numérica (primeiras 5 linhas):")
+        st.dataframe(data.head())
+        st.subheader("Contagem de valores nulos por coluna (antes de dropar):")
+        st.dataframe(data.isnull().sum())
+        st.subheader("Valores únicos e contagem na coluna 'Numeral' (antes de dropar):")
+        st.dataframe(data['Numeral'].value_counts(dropna=False))
+
         # Remove linhas onde 'Numeral', 'lat' OU 'lon' são NaN
         # Isso garante que apenas marcadores com informações essenciais completas sejam exibidos
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
@@ -115,11 +123,13 @@ def load_data():
             if col in data.columns:
                 data[col] = data[col].astype(str).replace('nan', '', regex=False).replace('<NA>', '', regex=False)
         
-        # Opcional: Adicione logs para depuração
-        # st.write("Dados após limpeza e conversão:")
-        # st.write(data.head())
-        # st.write("Contagem de valores nulos após dropna:")
-        # st.write(data.isnull().sum())
+        # --- DEBUG: Verifique os dados após a limpeza e conversão ---
+        st.subheader("Dados após limpeza e conversão (primeiras 5 linhas):")
+        st.dataframe(data.head())
+        st.subheader("Contagem de valores nulos por coluna (após dropna):")
+        st.dataframe(data.isnull().sum())
+        st.subheader("Valores únicos e contagem na coluna 'Numeral' (após dropna):")
+        st.dataframe(data['Numeral'].value_counts(dropna=False))
 
         return data
     except pd.errors.EmptyDataError: 
@@ -426,7 +436,7 @@ def main():
         scaled_max_height = int(base_max_height_px * scale)
         scaled_width_percent = 90 if scale > 1.0 else 100 
 
-        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else "" # Aplica o offset
+        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
@@ -471,7 +481,7 @@ def main():
             return f"""
             <div style="
                 display: flex;
-                justify-content: center;
+                justify-ocntent: center;
                 align-items: center;
                 min-height: {scaled_max_height}px;
                 overflow: hidden;
