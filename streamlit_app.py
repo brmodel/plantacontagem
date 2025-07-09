@@ -49,7 +49,7 @@ ZOOM_SELECIONADO_MAPA = 16
 
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-OFFSET_LOGO_PX = 30 # Valor para o deslocamento vertical negativo
+OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
