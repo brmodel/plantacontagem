@@ -19,6 +19,16 @@ SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centr
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
+# --- Constantes para o rodapé (copiadas de streamlit_app.py para consistência) ---
+BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
+FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
+BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
+
+NORMAL_BANNER_SCALE = 1.0
+LARGE_BANNER_SCALE = 1.8
+FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
+# Removido OFFSET_LOGO_PX e LAST_TWO_FOOTER_BANNERS para alinhar com streamlit_app.py
+
 # --- Conteúdo HTML ---
 html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
@@ -67,21 +77,6 @@ por meio de práticas inovadoras e inclusivas.
 </p>
 </div>
 """
-
-# --- Rodapé ---
-BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
-LOGO_PMC_FILENAME = "banner_pmc.png"
-FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
-BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES] # Usando BANNER_URL_BASE
-LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME # Usando BANNER_URL_BASE
-
-# --- NOVAS CONSTANTES DE ESCALA ---
-NORMAL_BANNER_SCALE = 1.0
-LARGE_BANNER_SCALE = 1.8
-FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"] # Adicionado para OFFSET_LOGO_PX
-OFFSET_LOGO_PX = 50
-
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -133,14 +128,16 @@ def main():
         }
         div[data-testid="column-PMC-logo"] {
             display: flex;
-            align-items: flex-start;
+            align-items: center; /* Alterado para center para alinhar com streamlit_app.py */
             justify-content: center;
             height: 100%;
-            margin-top: 44px;
+            padding-top: 5px; /* Alterado para 5px para alinhar com streamlit_app.py */
+            margin-top: 0px; /* Removido margin-top para alinhar com streamlit_app.py */
         }
         div[data-testid="column-PMC-logo"] img {
             max-width: 100%;
             height: auto;
+            max-height: 60px; /* Adicionado max-height para alinhar com streamlit_app.py */
             object-fit: contain;
         }
         </style>
@@ -158,11 +155,11 @@ def main():
 
         with col2:
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
-            logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
+            logo_bytes = get_image_bytes(BANNER_URL_BASE + LOGO_PMC_FILENAME) # Usar BANNER_URL_BASE + LOGO_PMC_FILENAME
             if logo_bytes:
                 st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
             else:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
+                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{BANNER_URL_BASE + LOGO_PMC_FILENAME}"></a>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
@@ -173,8 +170,8 @@ def main():
 
     st.markdown("---")
 
-    # --- Layout do Rodapé ---
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0, link_url: str = None) -> str:
+    # --- Layout do Rodapé (copiado de streamlit_app.py) ---
+    def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
@@ -182,20 +179,28 @@ def main():
         scaled_max_height = int(base_max_height_px * scale)
         scaled_width_percent = 90 if scale > 1.0 else 100 
 
-        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
-
         img_style = f"""
-            height: auto;
-            width: {scaled_width_percent}%;
-            max-width: 100%;
-            max-height: {scaled_max_height}px;
-            object-fit: contain;
+            height: auto; 
+            width: {scaled_width_percent}%;  
+            max-width: 100%; 
+            max-height: {scaled_max_height}px; 
+            object-fit: contain; 
             display: block;
-            margin-left: auto;
+            margin-left: auto; 
             margin-right: auto;
-            {margin_top_style} 
         """
         
+        # Adiciona o link para as imagens do rodapé
+        link_url = None
+        if filename == "governo_federal.png":
+            link_url = "https://www.gov.br/pt-br"
+        elif filename == "alimenta_cidades.png":
+            link_url = LINK_ALIMENTA_CIDADES
+        elif filename == "contagem_sem_fome.png":
+            link_url = LINK_CONTAGEM_SEM_FOME
+        elif filename == "banner_pmc.png":
+            link_url = PMC_PORTAL_URL
+
         image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}">'
 
         if link_url:
@@ -203,8 +208,8 @@ def main():
             <div style="
                 display: flex;
                 justify-content: center;
-                align-items: flex-start;
-                min-height: {scaled_max_height}px; 
+                align-items: center;
+                min-height: {scaled_max_height}px;
                 overflow: hidden;
                 width: 100%;
                 padding: 5px;
@@ -217,8 +222,8 @@ def main():
             <div style="
                 display: flex;
                 justify-content: center;
-                align-items: flex-start;
-                min-height: {scaled_max_height}px; 
+                align-items: center;
+                min-height: {scaled_max_height}px;
                 overflow: hidden;
                 width: 100%;
                 padding: 5px;
@@ -229,25 +234,14 @@ def main():
 
     if BANNER_PMC_URLS_RODAPE:
         num_banners = len(BANNER_PMC_URLS_RODAPE)
-        cols_banner = st.columns(min(num_banners, 4))
-
-        banner_links = {
-            "governo_federal.png": "https://www.gov.br/pt-br", # Exemplo, ajuste se houver um link específico
-            "alimenta_cidades.png": LINK_ALIMENTA_CIDADES,
-            "contagem_sem_fome.png": LINK_CONTAGEM_SEM_FOME,
-            "banner_pmc.png": PMC_PORTAL_URL
-        }
+        cols_banner = st.columns(num_banners if num_banners <= 4 else 4) 
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             
-            offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
-            
-            link_for_banner = banner_links.get(filename, None)
-
-            with cols_banner[i % len(cols_banner)]:
-                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo, link_for_banner)
+            with cols_banner[i % len(cols_banner)]: 
+                banner_html = display_banner_html(url, filename, current_scale)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
