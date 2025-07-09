@@ -27,7 +27,9 @@ BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FIL
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
 FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
-# Removido OFFSET_LOGO_PX e LAST_TWO_FOOTER_BANNERS para alinhar com streamlit_app.py
+LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
+OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo (ajustado para 40px)
+
 
 # --- Conteúdo HTML ---
 html_content = f"""
@@ -128,16 +130,16 @@ def main():
         }
         div[data-testid="column-PMC-logo"] {
             display: flex;
-            align-items: center; /* Alterado para center para alinhar com streamlit_app.py */
+            align-items: center;
             justify-content: center;
             height: 100%;
-            padding-top: 5px; /* Alterado para 5px para alinhar com streamlit_app.py */
-            margin-top: 0px; /* Removido margin-top para alinhar com streamlit_app.py */
+            padding-top: 5px;
+            margin-top: 0px;
         }
         div[data-testid="column-PMC-logo"] img {
             max-width: 100%;
             height: auto;
-            max-height: 60px; /* Adicionado max-height para alinhar com streamlit_app.py */
+            max-height: 60px;
             object-fit: contain;
         }
         </style>
@@ -155,7 +157,7 @@ def main():
 
         with col2:
             st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
-            logo_bytes = get_image_bytes(BANNER_URL_BASE + LOGO_PMC_FILENAME) # Usar BANNER_URL_BASE + LOGO_PMC_FILENAME
+            logo_bytes = get_image_bytes(BANNER_URL_BASE + LOGO_PMC_FILENAME)
             if logo_bytes:
                 st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
             else:
@@ -170,14 +172,16 @@ def main():
 
     st.markdown("---")
 
-    # --- Layout do Rodapé (copiado de streamlit_app.py) ---
-    def display_banner_html(url: str, filename: str, scale: float = 1.0) -> str:
+    # --- Layout do Rodapé (copiado de streamlit_app.py e ajustado para offset) ---
+    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
         scaled_width_percent = 90 if scale > 1.0 else 100 
+
+        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
@@ -188,6 +192,7 @@ def main():
             display: block;
             margin-left: auto; 
             margin-right: auto;
+            {margin_top_style} 
         """
         
         # Adiciona o link para as imagens do rodapé
@@ -240,8 +245,11 @@ def main():
             filename = FOOTER_BANNER_FILENAMES[i]
             current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
             
+            # Aplica o offset apenas para as duas últimas imagens
+            offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
+            
             with cols_banner[i % len(cols_banner)]: 
-                banner_html = display_banner_html(url, filename, current_scale)
+                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo)
                 st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
