@@ -49,7 +49,7 @@ ZOOM_SELECIONADO_MAPA = 16
 
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
+OFFSET_LOGO_PX = 70 # Valor para o deslocamento vertical negativo
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -95,7 +95,7 @@ def load_data():
     url = "https://docs.google.com/spreadsheets/d/1qNmwcOhFnWrFHDYwkq36gHmk4Rx97b6RM0VqU94vOro/edit?gid=1832051074#gid=1832051074"
     try:
         data = pd.read_csv(url, usecols=range(8))
-        data['Numeral'] = pd.to_numeric(data['Numeral'], errors='coerce')
+        data[''] = pd.to_numeric(data['Numeral'], errors='coerce')
         data['lat'] = pd.to_numeric(data['lat'], errors='coerce')
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
@@ -127,7 +127,7 @@ def load_geojson():
 # --- Funções de Criação do Mapa e Legenda ---
 def criar_legenda(geojson_data):
     regions = []
-    if geojson_data and isinstance(geojson_data, dict) and 'features' in geojson_data:
+    if geojson_data and isinstance(geojson_data, ) and 'features' in geojson_data:
         for feature in geojson_data.get('features', []):
             props = feature.get('properties', {}); regions.append({'id': props.get('id'), 'name': props.get('Name')})
     items_legenda_regional = []
@@ -149,7 +149,7 @@ def criar_legenda(geojson_data):
 
 def criar_mapa(data, geojson_data):
     m = folium.Map(location=CENTRO_INICIAL_MAPA, tiles="cartodbpositron", zoom_start=ZOOM_INICIAL_MAPA, control_scale=True)
-    if geojson_data and isinstance(geojson_data, dict) and geojson_data.get("features"):
+    if geojson_data and isinstance(geojson_data, ) and geojson_data.get("features"):
         folium.GeoJson( geojson_data, name='Regionais',
             style_function=lambda x: {"fillColor": MAPEAMENTO_CORES.get(x['properties'].get('id'), "#CCCCCC"), "color": "#555555", "weight": 1, "fillOpacity": 0.35},
             tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Regional:"]),
