@@ -19,16 +19,15 @@ SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centr
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 
-# --- Constantes para o rodapé (copiadas de streamlit_app.py para consistência) ---
+# --- Constantes para o rodapé ---
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 NORMAL_BANNER_SCALE = 1.0
-LARGE_BANNER_SCALE = 1.8
-FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
+# Removido LARGE_BANNER_SCALE e FIRST_TWO_FOOTER_BANNERS, pois todas as imagens usarão NORMAL_BANNER_SCALE
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
-OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo (ajustado para 40px)
+OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
 
 
 # --- Conteúdo HTML ---
@@ -172,20 +171,19 @@ def main():
 
     st.markdown("---")
 
-    # --- Layout do Rodapé (copiado de streamlit_app.py e ajustado para offset) ---
+    # --- Layout do Rodapé ---
     def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
         base64_image_data = get_image_as_base64(url)
         image_source = base64_image_data if base64_image_data else url
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
-        scaled_width_percent = 90 if scale > 1.0 else 100 
 
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
-            width: {scaled_width_percent}%;  
+            width: auto; /* Alterado para auto */
             max-width: 100%; 
             max-height: {scaled_max_height}px; 
             object-fit: contain; 
@@ -243,7 +241,8 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            current_scale = LARGE_BANNER_SCALE if filename in FIRST_TWO_FOOTER_BANNERS else NORMAL_BANNER_SCALE
+            # Todas as imagens do rodapé usarão a escala normal
+            current_scale = NORMAL_BANNER_SCALE 
             
             # Aplica o offset apenas para as duas últimas imagens
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
