@@ -49,7 +49,7 @@ ZOOM_SELECIONADO_MAPA = 16
 
 NORMAL_BANNER_SCALE = 1.0
 LARGE_BANNER_SCALE = 1.8
-OFFSET_LOGO_PX = 50 # Valor para o deslocamento vertical negativo
+OFFSET_LOGO_PX = 30 # Valor para o deslocamento vertical negativo
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -92,7 +92,7 @@ TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14p
 # --- Funções de Carregamento de Dados ---
 @st.cache_data(ttl=600)
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/16t5iUxuwnNq60yG7YoFnJw3RWnko9-YkkAIFGf6xbTM/export?format=csv&gid=1832051074"
+    url = "https://docs.google.com/spreadsheets/d/1qNmwcOhFnWrFHDYwkq36gHmk4Rx97b6RM0VqU94vOro/edit?gid=1832051074#gid=1832051074"
     try:
         data = pd.read_csv(url, usecols=range(8))
         data['Numeral'] = pd.to_numeric(data['Numeral'], errors='coerce')
