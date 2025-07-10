@@ -180,13 +180,13 @@ def main():
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
-        scaled_width_percent = 90 # Mantido para consistência, embora scale seja 1.0
+        scaled_width_percent = 100 # Força 100% para todas as imagens para evitar quebras
 
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
-            width: {scaled_width_percent}%; /* Revertido para largura percentual */
+            width: {scaled_width_percent}%; /* Definido como 100% para melhor ajuste */
             max-width: 100%; 
             max-height: {scaled_max_height}px; 
             object-fit: contain; 
