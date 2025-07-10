@@ -25,6 +25,8 @@ FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
 BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 NORMAL_BANNER_SCALE = 1.0
+LARGE_BANNER_SCALE_RODAPE = 1.25 # Nova escala para as duas primeiras logos do rodapé
+FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"] # Nomes das duas primeiras logos
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
 OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
 
@@ -180,7 +182,8 @@ def main():
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
-        scaled_width_percent = 100 # Força 100% para todas as imagens para evitar quebras
+        # Força 100% para a largura do container para evitar quebras
+        scaled_width_percent = 100 
 
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
@@ -244,7 +247,11 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            current_scale = NORMAL_BANNER_SCALE 
+            # Aplica a nova escala apenas para as duas primeiras logos
+            if filename in FIRST_TWO_FOOTER_BANNERS:
+                current_scale = LARGE_BANNER_SCALE_RODAPE
+            else:
+                current_scale = NORMAL_BANNER_SCALE 
             
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
             
