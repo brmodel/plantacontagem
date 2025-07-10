@@ -119,7 +119,7 @@ def main():
             z-index: 1000;
         }
         div[data-testid="stSidebarNav"] {
-            display: none !important;
+            display: none !important; /* Oculta a navegação padrão da sidebar */
         }
         div[data-testid="stColumns"] > div > div {
             display: flex;
