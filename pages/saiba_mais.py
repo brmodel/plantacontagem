@@ -35,9 +35,11 @@ OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
 html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
 <p style="margin-bottom: 1.5em; text-align: justify;">
-Criado pela Prefeitura Municipal de Contagem - MG, o CMAUF combate a insegurança alimentar e fortalece a agricultura sustentável,
-alinhado ao programa municipal <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a> e a políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>.
-Sua atuação abrange diversas frentes estratégicas:
+Criado pela Prefeitura Municipal de Contagem - MG, o Centro Municipal de Agricultura Urbana e Familiar (CMAUF) combate a insegurança alimentar e fortalece a agricultura sustentável, garantindo o direito humano à Segurança Alimentar Nutricional Sustentável ao fomentar ações de incentivo à produção, ao processamento e à comercialização de alimentos, através da implantação de sistemas produtivos agroecológicos e da comercialização direta dos produtos.
+</p>
+<p style="margin-bottom: 1.5em; text-align: justify;">
+O equipamento trabalha consonância com as Políticas Nacional e Estadual de Agricultura Urbana Periurbana e Familiar, promovendo programas públicos em nível municipal como o <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a>, além de conferir capilaridade à políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>, sendo Contagem um dos municípios exemplares contemplados por esse programa do Governo Federal.
+A atuação do CMAUF atuação abrange algumas frentes estratégicas:
 </p>
 <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Pilares de Atuação:</h4>
 <ul style="list-style-type: none; padding-left: 0;">
@@ -59,23 +61,28 @@ em sintonia com as Políticas Nacional e Estadual de Agricultura Urbana, visando
 Realiza a identificação contínua de demandas e oportunidades para o desenvolvimento de ações concretas,
 desde a otimização da produção de alimentos até o incentivo à criação de pequenos animais.
 </li>
-</ul>
-<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Tipos de Unidades Produtivas (UPs):</h4>
-<ul style="list-style-type: disc; margin-left: 25px; color: #444;">
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitárias:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Institucionais Públicas:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS) e centros de saúde.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Pedagógicas Escolares:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Territórios de Tradição:</b> Englobam comunidades quilombolas, terreiros e outras comunidades tradicionais, valorizando seus saberes e práticas.</li>
-</ul>
 <p style="margin-top: 2em; text-align: justify;">
 Adicionalmente, o CMAUF mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
 e extensão rural a agricultores familiares do município. Essa colaboração reforça o compromisso do Centro com o
 desenvolvimento sustentável local e a melhoria contínua da qualidade de vida dos cidadãos de Contagem.
 </p>
+</ul>
+<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Tipos de Unidades Produtivas (UPs):</h4>
+<ul style="list-style-type: disc; margin-left: 25px; color: #444;">
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitárias:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Institucionais:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS), Unidades Básicas de Saúde e Escolas Públicas.</li>
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitária/Institucional:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Agricultores Familiares:</b> produtores urbanos e periurbanos do município de Contagem que são atendidos pela parceria com a EMATER.</li>
+</ul>
+<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Outros equipamentos, iniciativas da Prefeitura de Contagem que promovem a Segurança Alimentar:</h4>
+<ul style="list-style-type: disc; margin-left: 25px; color: #444;">
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Restaurante Popular:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Banco de Alimentos:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Feiras da Cidade:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS) e centros de saúde.</li>
+<li style="margin-bottom: 0.7em; text-align: justify;"><b>Viveiros:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
+</ul>
 <p style="margin-top: 1.5em; font-style: italic; color: #666; text-align: justify;">
-Vinculado à Diretoria de Agricultura Urbana e Familiar (Subsecretaria de Segurança Alimentar e Nutricional - SUSANA),
-o CMAUF se posiciona como um agente transformador das realidades locais, conectando o campo e a cidade
-por meio de práticas inovadoras e inclusivas.
+O CMAUF está vinculado à Diretoria de Agricultura Urbana e Familiar, da Subsecretaria de Segurança Alimentar e Nutricional (SUSANA), da Prefeitura Municipal de Contagem - MG.
 </p>
 </div>
 """
