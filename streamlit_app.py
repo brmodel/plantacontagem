@@ -36,9 +36,8 @@ MAPEAMENTO_CORES = {
 BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
 LOGO_PMC_FILENAME = "banner_pmc.png"
 FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
-FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"]
 LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
-OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
+OFFSET_LOGO_PX = 40
 
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 MAX_POPOVER_INFO_CHARS = 250
@@ -48,7 +47,6 @@ ZOOM_INICIAL_MAPA = 12
 ZOOM_SELECIONADO_MAPA = 16
 
 NORMAL_BANNER_SCALE = 1.0
-LARGE_BANNER_SCALE_RODAPE = 1.25 # Nova escala para as duas primeiras logos do rodapé
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -102,6 +100,14 @@ def load_data():
         data['lat'] = pd.to_numeric(data['lat'], errors='coerce')
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
         
+        # --- DEBUG: Verifique os dados antes de dropar NaNs ---
+        # st.subheader("Dados brutos após conversão numérica (primeiras 5 linhas):")
+        # st.dataframe(data.head())
+        # st.subheader("Contagem de valores nulos por coluna (antes de dropar):")
+        # st.dataframe(data.isnull().sum())
+        # st.subheader("Valores únicos e contagem na coluna 'Numeral' (antes de dropar):")
+        # st.dataframe(data['Numeral'].value_counts(dropna=False))
+
         # Remove linhas onde 'Numeral', 'lat' OU 'lon' são NaN.
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
         
@@ -111,6 +117,14 @@ def load_data():
             if col in data.columns:
                 data[col] = data[col].astype(str).replace('nan', '', regex=False).replace('<NA>', '', regex=False)
         
+        # --- DEBUG: Verifique os dados após a limpeza e conversão ---
+        # st.subheader("Dados após limpeza e conversão (primeiras 5 linhas):")
+        # st.dataframe(data.head())
+        # st.subheader("Contagem de valores nulos por coluna (após dropna):")
+        # st.dataframe(data.isnull().sum())
+        # st.subheader("Valores únicos e contagem na coluna 'Numeral' (após dropna):")
+        # st.dataframe(data['Numeral'].value_counts(dropna=False))
+
         return data
     except pd.errors.EmptyDataError: 
         st.error("Erro: A planilha parece estar vazia ou sem cabeçalhos.")
@@ -272,10 +286,9 @@ def main():
             margin-top: 0px; 
             margin-bottom: 0px; 
         }
-        /* Removido o estilo do popover, pois a informação foi para a sidebar */
-        /* div[data-testid="stPopover"] div[data-testid="stVerticalBlock"] {
+        div[data-testid="stPopover"] div[data-testid="stVerticalBlock"] {
              padding: 10px;
-        } */
+        }
         </style>
         """, unsafe_allow_html=True
     )
@@ -420,8 +433,7 @@ def main():
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
-        # Força 100% para a largura do container para evitar quebras
-        scaled_width_percent = 100 
+        scaled_width_percent = 100 # Força 100% para todas as imagens para evitar quebras
 
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
@@ -485,11 +497,7 @@ def main():
 
         for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
             filename = FOOTER_BANNER_FILENAMES[i]
-            # Aplica a nova escala apenas para as duas primeiras logos
-            if filename in FIRST_TWO_FOOTER_BANNERS:
-                current_scale = LARGE_BANNER_SCALE_RODAPE
-            else:
-                current_scale = NORMAL_BANNER_SCALE 
+            current_scale = NORMAL_BANNER_SCALE 
             
             offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
 
