@@ -29,7 +29,7 @@ FOOTER_BANNERS_DATA = [
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
         "link": LINK_GOVERNO_FEDERAL,
         "scale": 2.2,
-        "offset_y": -10 # Desloca 10px para cima para alinhar com a imagem ao lado
+        "offset_y": 0 # Desloca 10px para cima para alinhar com a imagem ao lado
     },
     {
         "filename": "alimenta_cidades.png",
@@ -43,14 +43,14 @@ FOOTER_BANNERS_DATA = [
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
         "link": LINK_CONTAGEM_SEM_FOME,
         "scale": 1.0,
-        "offset_y": 15
+        "offset_y": 25
     },
     {
         "filename": "banner_pmc.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
         "link": PMC_PORTAL_URL,
         "scale": 1.0,
-        "offset_y": 15
+        "offset_y": 25
     }
 ]
 
