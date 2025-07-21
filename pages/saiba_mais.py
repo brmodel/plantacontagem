@@ -36,21 +36,21 @@ FOOTER_BANNERS_DATA = [
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
         "link": LINK_ALIMENTA_CIDADES,
         "scale": 2.5,
-        "offset_y": -20
+        "offset_y": -25
     },
     {
         "filename": "contagem_sem_fome.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
         "link": LINK_CONTAGEM_SEM_FOME,
         "scale": 1.0,
-        "offset_y": 5
+        "offset_y": 15
     },
     {
         "filename": "banner_pmc.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
         "link": PMC_PORTAL_URL,
         "scale": 1.0,
-        "offset_y": 5
+        "offset_y": 15
     }
 ]
 
