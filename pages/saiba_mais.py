@@ -36,7 +36,7 @@ FOOTER_BANNERS_DATA = [
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
         "link": LINK_ALIMENTA_CIDADES,
         "scale": 2.5,
-        "offset_y": 0
+        "offset_y": -20
     },
     {
         "filename": "contagem_sem_fome.png",
