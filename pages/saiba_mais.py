@@ -21,31 +21,35 @@ LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao
 LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 
 # --- Constantes para o rodapé ---
-# Estrutura de dados para gerenciar os banners, agora com um fator de escala individual.
+# Estrutura de dados para gerenciar os banners, agora com escala e offset vertical.
 FOOTER_BANNERS_DATA = [
     {
         "filename": "governo_federal.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
         "link": LINK_GOVERNO_FEDERAL,
-        "scale": 2.0 # Escala aumentada para a imagem parecer maior
+        "scale": 2.0, # Escala aumentada para a imagem parecer maior
+        "offset_y": 0  # Deslocamento vertical em pixels (positivo desce, negativo sobe)
     },
     {
         "filename": "alimenta_cidades.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
         "link": LINK_ALIMENTA_CIDADES,
-        "scale": 1.6 # Escala aumentada para a imagem parecer maior
+        "scale": 2.0, # Escala aumentada para a imagem parecer maior
+        "offset_y": 0  # Deslocamento vertical em pixels
     },
     {
         "filename": "contagem_sem_fome.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
         "link": LINK_CONTAGEM_SEM_FOME,
-        "scale": 1.0 # Escala padrão
+        "scale": 1.0, # Escala padrão
+        "offset_y": 25  # Deslocamento vertical em pixels
     },
     {
         "filename": "banner_pmc.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
         "link": PMC_PORTAL_URL,
-        "scale": 1.0 # Escala padrão
+        "scale": 1.0, # Escala padrão
+        "offset_y": 25  # Deslocamento vertical em pixels
     }
 ]
 
@@ -182,13 +186,16 @@ def main():
     st.markdown("---")
 
     # --- Layout do Rodapé ---
-    def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0) -> str:
+    def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0, offset_y: int = 0) -> str:
         escaped_url = html.escape(url)
         escaped_filename = html.escape(filename)
         
-        # Altura base para as logos. As menores serão escaladas a partir deste valor.
+        # Altura base para as logos.
         base_max_height_px = 50 
         scaled_max_height = int(base_max_height_px * scale)
+
+        # Adiciona o estilo do offset vertical
+        offset_style = f"margin-top: {offset_y}px;" if offset_y != 0 else ""
 
         img_style = f"""
             height: auto;
@@ -199,12 +206,12 @@ def main():
             display: block;
             margin-left: auto; 
             margin-right: auto;
+            {offset_style}
         """
         
         image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
 
         # O container garante alinhamento vertical e centraliza o conteúdo.
-        # A altura mínima do container se ajusta à da imagem para manter o alinhamento.
         container_style = f"""
             display: flex;
             justify-content: center;
@@ -223,14 +230,15 @@ def main():
     # Cria colunas para cada banner no rodapé
     cols_banner = st.columns(len(FOOTER_BANNERS_DATA)) 
 
-    # Itera sobre os dados dos banners e exibe cada um em sua coluna com a escala correta
+    # Itera sobre os dados dos banners e exibe cada um em sua coluna com a escala e offset corretos
     for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
         with cols_banner[i]: 
             banner_html = display_banner_html(
                 url=banner_data["url"],
                 filename=banner_data["filename"],
                 link_url=banner_data["link"],
-                scale=banner_data.get("scale", 1.0) # Usa a escala definida, ou 1.0 como padrão
+                scale=banner_data.get("scale", 1.0),
+                offset_y=banner_data.get("offset_y", 0) # Usa o offset definido
             )
             st.markdown(banner_html, unsafe_allow_html=True)
 
