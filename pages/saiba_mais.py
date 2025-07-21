@@ -22,34 +22,35 @@ LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 
 # --- Constantes para o rodapé ---
 # Estrutura de dados para gerenciar os banners, com escala e offset vertical.
+# Valores de escala e offset ajustados para melhor alinhamento visual.
 FOOTER_BANNERS_DATA = [
     {
         "filename": "governo_federal.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
         "link": LINK_GOVERNO_FEDERAL,
-        "scale": 2.0, # Escala aumentada para a imagem parecer maior
-        "offset_y": 0  # Deslocamento vertical em pixels (positivo desce, negativo sobe)
+        "scale": 1.5,
+        "offset_y": -10 # Desloca 10px para cima para alinhar com a imagem ao lado
     },
     {
         "filename": "alimenta_cidades.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
         "link": LINK_ALIMENTA_CIDADES,
-        "scale": 2.0, # Escala aumentada para a imagem parecer maior
-        "offset_y": 0  # Deslocamento vertical em pixels
+        "scale": 1.5,
+        "offset_y": 0
     },
     {
         "filename": "contagem_sem_fome.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
         "link": LINK_CONTAGEM_SEM_FOME,
-        "scale": 1.0, # Escala padrão
-        "offset_y": 0  # Deslocamento vertical em pixels
+        "scale": 1.0,
+        "offset_y": 0
     },
     {
         "filename": "banner_pmc.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
         "link": PMC_PORTAL_URL,
-        "scale": 1.0, # Escala padrão
-        "offset_y": 0  # Deslocamento vertical em pixels
+        "scale": 1.0,
+        "offset_y": 0
     }
 ]
 
@@ -187,40 +188,42 @@ def main():
 
     # --- Layout do Rodapé ---
     def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0, offset_y: int = 0) -> str:
+        """Gera o HTML para um banner com escala e deslocamento vertical."""
         escaped_url = html.escape(url)
         escaped_filename = html.escape(filename)
 
-        # Altura base para as logos.
         base_max_height_px = 50
         scaled_max_height = int(base_max_height_px * scale)
 
-        # Adiciona o estilo do offset vertical
         offset_style = f"margin-top: {offset_y}px;" if offset_y != 0 else ""
 
-        img_style = f"""
-            height: auto;
-            width: auto;
-            max-width: 100%;
-            max-height: {scaled_max_height}px;
-            object-fit: contain;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-            {offset_style}
-        """
+        # CORREÇÃO: Os estilos CSS são juntados em uma única string sem quebras de linha.
+        img_style_parts = [
+            "height: auto",
+            "width: auto",
+            "max-width: 100%",
+            f"max-height: {scaled_max_height}px",
+            "object-fit: contain",
+            "display: block",
+            "margin-left: auto",
+            "margin-right: auto",
+            offset_style
+        ]
+        img_style = "; ".join(filter(None, [s.strip() for s in img_style_parts]))
 
         image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
 
-        # O container garante alinhamento vertical e centraliza o conteúdo.
-        container_style = f"""
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: {scaled_max_height}px;
-            overflow: hidden;
-            width: 100%;
-            padding: 5px;
-        """
+        # CORREÇÃO: Estilos do container também em uma única linha.
+        container_style_parts = [
+            "display: flex",
+            "justify-content: center",
+            "align-items: center",
+            f"min-height: {scaled_max_height}px",
+            "overflow: hidden",
+            "width: 100%",
+            "padding: 5px",
+        ]
+        container_style = "; ".join(filter(None, [s.strip() for s in container_style_parts]))
 
         if link_url:
             return f'<div style="{container_style}"><a href="{link_url}" target="_blank" rel="noopener noreferrer">{image_tag}</a></div>'
@@ -238,7 +241,7 @@ def main():
                 filename=banner_data["filename"],
                 link_url=banner_data["link"],
                 scale=banner_data.get("scale", 1.0),
-                offset_y=banner_data.get("offset_y", 0) # Usa o offset definido
+                offset_y=banner_data.get("offset_y", 0)
             )
             st.markdown(banner_html, unsafe_allow_html=True)
 
