@@ -21,7 +21,7 @@ LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao
 LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 
 # --- Constantes para o rodapé ---
-# Estrutura de dados para gerenciar os banners, agora com escala e offset vertical.
+# Estrutura de dados para gerenciar os banners, com escala e offset vertical.
 FOOTER_BANNERS_DATA = [
     {
         "filename": "governo_federal.png",
@@ -42,14 +42,14 @@ FOOTER_BANNERS_DATA = [
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
         "link": LINK_CONTAGEM_SEM_FOME,
         "scale": 1.0, # Escala padrão
-        "offset_y": 25  # Deslocamento vertical em pixels
+        "offset_y": 0  # Deslocamento vertical em pixels
     },
     {
         "filename": "banner_pmc.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
         "link": PMC_PORTAL_URL,
         "scale": 1.0, # Escala padrão
-        "offset_y": 25  # Deslocamento vertical em pixels
+        "offset_y": 0  # Deslocamento vertical em pixels
     }
 ]
 
@@ -189,9 +189,9 @@ def main():
     def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0, offset_y: int = 0) -> str:
         escaped_url = html.escape(url)
         escaped_filename = html.escape(filename)
-        
+
         # Altura base para as logos.
-        base_max_height_px = 50 
+        base_max_height_px = 50
         scaled_max_height = int(base_max_height_px * scale)
 
         # Adiciona o estilo do offset vertical
@@ -200,15 +200,15 @@ def main():
         img_style = f"""
             height: auto;
             width: auto;
-            max-width: 100%; 
-            max-height: {scaled_max_height}px; 
-            object-fit: contain; 
+            max-width: 100%;
+            max-height: {scaled_max_height}px;
+            object-fit: contain;
             display: block;
-            margin-left: auto; 
+            margin-left: auto;
             margin-right: auto;
             {offset_style}
         """
-        
+
         image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
 
         # O container garante alinhamento vertical e centraliza o conteúdo.
@@ -228,11 +228,11 @@ def main():
             return f'<div style="{container_style}">{image_tag}</div>'
 
     # Cria colunas para cada banner no rodapé
-    cols_banner = st.columns(len(FOOTER_BANNERS_DATA)) 
+    cols_banner = st.columns(len(FOOTER_BANNERS_DATA))
 
     # Itera sobre os dados dos banners e exibe cada um em sua coluna com a escala e offset corretos
     for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
-        with cols_banner[i]: 
+        with cols_banner[i]:
             banner_html = display_banner_html(
                 url=banner_data["url"],
                 filename=banner_data["filename"],
