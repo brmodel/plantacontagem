@@ -54,14 +54,14 @@ FOOTER_BANNERS_DATA = [
         "filename": "governo_federal.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
         "link": LINK_GOVERNO_FEDERAL,
-        "scale": 1.5,
-        "offset_y": -10
+        "scale": 2.2,
+        "offset_y": -10 # Desloca 10px para cima para alinhar com a imagem ao lado
     },
     {
         "filename": "alimenta_cidades.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
         "link": LINK_ALIMENTA_CIDADES,
-        "scale": 1.5,
+        "scale": 2.5,
         "offset_y": 0
     },
     {
@@ -69,14 +69,14 @@ FOOTER_BANNERS_DATA = [
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
         "link": LINK_CONTAGEM_SEM_FOME,
         "scale": 1.0,
-        "offset_y": 0
+        "offset_y": 5
     },
     {
         "filename": "banner_pmc.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
         "link": PMC_PORTAL_URL,
         "scale": 1.0,
-        "offset_y": 0
+        "offset_y": 5
     }
 ]
 
