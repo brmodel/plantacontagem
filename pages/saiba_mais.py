@@ -7,8 +7,6 @@ import html # Importar o módulo html para escape
 # --- Constantes ---
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
 # URLs base para as imagens no GitHub
-ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/icones/"
-# CORREÇÃO: Usar raw.githubusercontent.com para acessar o conteúdo raw das imagens
 BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 LOGO_PMC_FILENAME = "banner_pmc.png"
 
@@ -20,17 +18,32 @@ SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centr
 # --- Links ---
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
+LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 
 # --- Constantes para o rodapé ---
-BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
-FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
-BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
-
-NORMAL_BANNER_SCALE = 1.0
-LARGE_BANNER_SCALE_RODAPE = 1.25 # Nova escala para as duas primeiras logos do rodapé
-FIRST_TWO_FOOTER_BANNERS = ["governo_federal.png", "alimenta_cidades.png"] # Nomes das duas primeiras logos
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
-OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
+# Estrutura de dados para gerenciar os banners do rodapé de forma mais organizada
+FOOTER_BANNERS_DATA = [
+    {
+        "filename": "governo_federal.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
+        "link": LINK_GOVERNO_FEDERAL
+    },
+    {
+        "filename": "alimenta_cidades.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
+        "link": LINK_ALIMENTA_CIDADES
+    },
+    {
+        "filename": "contagem_sem_fome.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
+        "link": LINK_CONTAGEM_SEM_FOME
+    },
+    {
+        "filename": "banner_pmc.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
+        "link": PMC_PORTAL_URL
+    }
+]
 
 
 # --- Conteúdo HTML ---
@@ -165,101 +178,57 @@ def main():
     st.markdown("---")
 
     # --- Layout do Rodapé ---
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
-        # Usar a URL diretamente, sem tentar base64 para evitar problemas de renderização
-        # A URL precisa ser a raw.githubusercontent.com para ser renderizada como imagem
-        raw_url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
-        escaped_url = html.escape(raw_url)
-        # Escapar o nome do arquivo para o atributo alt
+    def display_banner_html(url: str, filename: str, link_url: str | None) -> str:
+        escaped_url = html.escape(url)
         escaped_filename = html.escape(filename)
         
+        # Tamanho base consistente para todas as logos
         base_max_height_px = 70 
-        scaled_max_height = int(base_max_height_px * scale)
-
-        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
-            height: auto; 
-            width: auto; /* Alterado para auto */
+            height: auto;
+            width: auto;
             max-width: 100%; 
-            max-height: {scaled_max_height}px; 
+            max-height: {base_max_height_px}px; 
             object-fit: contain; 
             display: block;
             margin-left: auto; 
             margin-right: auto;
-            {margin_top_style} 
         """
         
-        # Adiciona o link para as imagens do rodapé
-        link_url = None
-        if filename == "governo_federal.png":
-            link_url = "https://www.gov.br/pt-br"
-        elif filename == "alimenta_cidades.png":
-            link_url = LINK_ALIMENTA_CIDADES
-        elif filename == "contagem_sem_fome.png":
-            link_url = LINK_CONTAGEM_SEM_FOME
-        elif filename == "banner_pmc.png":
-            link_url = PMC_PORTAL_URL
-
-        # A tag <img> é construída diretamente com a URL escapada
         image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
 
+        # O container div garante alinhamento vertical e centraliza o conteúdo
+        container_style = f"""
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: {base_max_height_px}px;
+            overflow: hidden;
+            width: 100%;
+            padding: 5px;
+        """
+
         if link_url:
-            return f"""
-            <div style="
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: {scaled_max_height}px;
-                overflow: hidden;
-                width: 100%;
-                padding: 5px;
-            ">
-                <a href="{link_url}" target="_blank" rel="noopener noreferrer">{image_tag}</a>
-            </div>
-            """
+            return f'<div style="{container_style}"><a href="{link_url}" target="_blank" rel="noopener noreferrer">{image_tag}</a></div>'
         else:
-            return f"""
-            <div style="
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: {scaled_max_height}px;
-                overflow: hidden;
-                width: 100%;
-                padding: 5px;
-            ">
-                {image_tag}
-            </div>
-            """
+            return f'<div style="{container_style}">{image_tag}</div>'
 
-    if BANNER_PMC_URLS_RODAPE:
-        num_banners = len(BANNER_PMC_URLS_RODAPE)
-        cols_banner = st.columns(num_banners if num_banners <= 4 else 4) 
+    # Cria colunas para cada banner no rodapé
+    cols_banner = st.columns(len(FOOTER_BANNERS_DATA)) 
 
-        for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
-            filename = FOOTER_BANNER_FILENAMES[i]
-            # Aplica a nova escala apenas para as duas primeiras logos
-            if filename in FIRST_TWO_FOOTER_BANNERS:
-                current_scale = LARGE_BANNER_SCALE_RODAPE
-            else:
-                current_scale = NORMAL_BANNER_SCALE 
-            
-            offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
-            
-            with cols_banner[i % len(cols_banner)]: 
-                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo)
-                st.markdown(banner_html, unsafe_allow_html=True)
+    # Itera sobre os dados dos banners e exibe cada um em sua coluna
+    for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
+        with cols_banner[i]: 
+            banner_html = display_banner_html(
+                url=banner_data["url"],
+                filename=banner_data["filename"],
+                link_url=banner_data["link"]
+            )
+            st.markdown(banner_html, unsafe_allow_html=True)
 
     # --- Placeholder para o Carrossel de Imagens ---
-    # Removido o título "Galeria de Imagens" conforme solicitado.
     st.info("O carrossel de imagens será implementado aqui assim que o link para a pasta de imagens for fornecido.")
-    # Exemplo de como você poderia carregar e exibir as imagens (sem carrossel funcional ainda)
-    # IMAGES_CAROUSEL_URL_BASE = "LINK_DA_SUA_PASTA_DE_IMAGENS_AQUI"
-    # image_filenames = ["imagem1.png", "imagem2.png", "imagem3.png"] # Substitua pelos nomes reais
-    # for img_name in image_filenames:
-    #     st.image(f"{IMAGES_CAROUSEL_URL_BASE}/{img_name}", use_column_width=True)
-
 
 if __name__ == "__main__":
     main()
