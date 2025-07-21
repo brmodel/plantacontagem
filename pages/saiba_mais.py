@@ -2,6 +2,7 @@
 import streamlit as st
 import requests
 import base64
+import html # Importar o módulo html para escape
 
 # --- Constantes ---
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
@@ -38,14 +39,14 @@ html_content = f"""
 Centro Municipal de Agricultura Urbana e Familiar (CMAUF) foi criado pela Prefeitura de Contagem para combater a insegurança alimentar através do fortalecimento da agricultura sustentável no município, garantindo o direito humano universal à Segurança Alimentar Nutricional Sustentável. Isso é feito ao fomentar ações de incentivo à produção, ao processamento e à comercialização de alimentos, através da implantação de sistemas produtivos agroecológicos e da comercialização direta dos produtos.
 </p>
 <p style="margin-bottom: 1.5em; text-align: justify;">
-O equipamento trabalha em consonância com as Políticas Nacional e Estadual de Agricultura Urbana Periurbana e Familiar, promovendo programas públicos em nível municipal como o <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a>, além de conferir capilaridade a políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>, sendo Contagem um dos municípios exemplares contemplados por esse programa do Governo Federal.
+O equipamento trabalha **em** consonância com as Políticas Nacional e Estadual de Agricultura Urbana Periurbana e Familiar, promovendo programas públicos em nível municipal como o <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a>, além de conferir capilaridade **a** políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>, sendo Contagem um dos municípios exemplares contemplados por esse programa do Governo Federal.
 </p>
 <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Pilares de Atuação:</h4>
 <ul style="list-style-type: none; padding-left: 0;">
 <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
 <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
 <b style="color: #555;">Capacitação e apoio técnico:</b>
-Implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo assistência e formação técnica, trocas de mudas, subsidiando e qualificando a produção local.
+Implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo assistência e formação técnica, trocas de mudas, subsidiando e **qualificando** a produção local.
 </li>
 <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
 <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
@@ -60,7 +61,7 @@ Realiza a identificação contínua de demandas e oportunidades para o desenvolv
 desde a otimização da produção de alimentos até o incentivo à criação de pequenos animais.
 </li>
 <p style="margin-top: 2em; text-align: justify;">
-Para tanto, o CMAUF é formado por uma dupla parceria entre a Organização da Sociedade Civil da Comunidade Quilombola dos Arturo's, e mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
+Para tanto, o CMAUF é formado **por** uma dupla parceria entre a Organização da Sociedade Civil da Comunidade Quilombola dos Arturo's, e mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
 e extensão rural a agricultores familiares do município e para os vários tipos de Unidades Produtivas. Essa colaboração reforça o compromisso da prefeitura com o
 desenvolvimento sustentável local e a melhoria contínua da qualidade de vida dos cidadãos de Contagem.
 </p>
@@ -164,8 +165,10 @@ def main():
 
     # --- Layout do Rodapé ---
     def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
-        # Usar a URL diretamente, sem tentar base64 para evitar problemas de renderização
-        image_source = url
+        # Escapar a URL para garantir que não haja caracteres problemáticos no atributo src
+        escaped_url = html.escape(url)
+        # Escapar o nome do arquivo para o atributo alt
+        escaped_filename = html.escape(filename)
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
@@ -195,8 +198,8 @@ def main():
         elif filename == "banner_pmc.png":
             link_url = PMC_PORTAL_URL
 
-        # A tag <img> é construída diretamente com a URL. Removido o onerror redundante.
-        image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}">'
+        # A tag <img> é construída diretamente com a URL escapada
+        image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
 
         if link_url:
             return f"""
@@ -244,6 +247,16 @@ def main():
             with cols_banner[i % len(cols_banner)]: 
                 banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo)
                 st.markdown(banner_html, unsafe_allow_html=True)
+
+    # --- Placeholder para o Carrossel de Imagens ---
+    st.markdown("## Galeria de Imagens")
+    st.info("O carrossel de imagens será implementado aqui assim que o link para a pasta de imagens for fornecido.")
+    # Exemplo de como você poderia carregar e exibir as imagens (sem carrossel funcional ainda)
+    # IMAGES_CAROUSEL_URL_BASE = "LINK_DA_SUA_PASTA_DE_IMAGENS_AQUI"
+    # image_filenames = ["imagem1.png", "imagem2.png", "imagem3.png"] # Substitua pelos nomes reais
+    # for img_name in image_filenames:
+    #     st.image(f"{IMAGES_CAROUSEL_URL_BASE}/{img_name}", use_column_width=True)
+
 
 if __name__ == "__main__":
     main()
