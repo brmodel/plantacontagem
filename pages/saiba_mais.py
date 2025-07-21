@@ -35,35 +35,36 @@ OFFSET_LOGO_PX = 40 # Valor para o deslocamento vertical negativo
 html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
 <p style="margin-bottom: 1.5em; text-align: justify;">
-Criado pela Prefeitura Municipal de Contagem - MG, o Centro Municipal de Agricultura Urbana e Familiar (CMAUF) combate a insegurança alimentar e fortalece a agricultura sustentável, garantindo o direito humano à Segurança Alimentar Nutricional Sustentável ao fomentar ações de incentivo à produção, ao processamento e à comercialização de alimentos, através da implantação de sistemas produtivos agroecológicos e da comercialização direta dos produtos.
+Centro Municipal de Agricultura Urbana e Familiar (CMAUF) foi criado pela Prefeitura de Contagem para combater a insegurança alimentar através do fortalecimento da agricultura sustentável no município, garantindo o direito humano universal à Segurança Alimentar Nutricional Sustentável. Isso é feito ao fomentar ações de incentivo à produção, ao processamento e à comercialização de alimentos, através da implantação de sistemas produtivos agroecológicos e da comercialização direta dos produtos.
 </p>
 <p style="margin-bottom: 1.5em; text-align: justify;">
-O equipamento trabalha consonância com as Políticas Nacional e Estadual de Agricultura Urbana Periurbana e Familiar, promovendo programas públicos em nível municipal como o <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a>, além de conferir capilaridade à políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>, sendo Contagem um dos municípios exemplares contemplados por esse programa do Governo Federal.
-A atuação do CMAUF atuação abrange algumas frentes estratégicas:
+O equipamento trabalha **em** consonância com as Políticas Nacional e Estadual de Agricultura Urbana Periurbana e Familiar, promovendo programas públicos em nível municipal como o <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a>, além de conferir capilaridade **a** políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>, sendo Contagem um dos municípios exemplares contemplados por esse programa do Governo Federal.
 </p>
 <h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Pilares de Atuação:</h4>
 <ul style="list-style-type: none; padding-left: 0;">
 <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
 <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
-<b style="color: #555;">Capacitação e Apoio Técnico:</b>
-Implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo formação,
-troca de mudas e compostos para subsidiar e qualificar a produção local.
+<b style="color: #555;">Capacitação e apoio técnico:</b>
+Implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo assistência e formação técnica, trocas de mudas, subsidiando e **qualificando** a produção local.
 </li>
 <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
 <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
-<b style="color: #555;">Sistemas Agroecológicos:</b>
+<b style="color: #555;">Sistemas agroecológicos:</b>
 Promove ativamente a comercialização direta de alimentos e a implementação de tecnologias sociais,
 em sintonia com as Políticas Nacional e Estadual de Agricultura Urbana, visando sustentabilidade e equidade.
 </li>
 <li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
 <span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
-<b style="color: #555;">Mapeamento Estratégico:</b>
+<b style="color: #555;">Mapeamento estratégico:</b>
 Realiza a identificação contínua de demandas e oportunidades para o desenvolvimento de ações concretas,
 desde a otimização da produção de alimentos até o incentivo à criação de pequenos animais.
 </li>
 <p style="margin-top: 2em; text-align: justify;">
-Adicionalmente, o CMAUF mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
-e extensão rural a agricultores familiares do município. Essa colaboração reforça o compromisso do Centro com o
+Para tanto, o CMAUF é formado **por** uma dupla parceria entre a Organização da Sociedade Civil da Comunidade Quilombola dos Arturo's, e mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
+e extensão rural a agricultores familiares do município.
+</p>
+<p style="margin-bottom: 1.5em; text-align: justify;">
+Essa colaboração reforça o compromisso da prefeitura com o
 desenvolvimento sustentável local e a melhoria contínua da qualidade de vida dos cidadãos de Contagem.
 </p>
 </ul>
@@ -74,16 +75,13 @@ desenvolvimento sustentável local e a melhoria contínua da qualidade de vida d
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitária/Institucional:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Agricultores Familiares:</b> produtores urbanos e periurbanos do município de Contagem que são atendidos pela parceria com a EMATER.</li>
 </ul>
-<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Outros equipamentos, iniciativas da Prefeitura de Contagem que promovem a Segurança Alimentar:</h4>
+<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Outras iniciativas em Contagem:</h4>
 <ul style="list-style-type: disc; margin-left: 25px; color: #444;">
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Restaurante Popular:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Banco de Alimentos:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Feiras da Cidade:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS) e centros de saúde.</li>
 <li style="margin-bottom: 0.7em; text-align: justify;"><b>Viveiros:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
 </ul>
-<p style="margin-top: 1.5em; font-style: italic; color: #666; text-align: justify;">
-O CMAUF está vinculado à Diretoria de Agricultura Urbana e Familiar, da Subsecretaria de Segurança Alimentar e Nutricional (SUSANA), da Prefeitura Municipal de Contagem - MG.
-</p>
 </div>
 """
 
@@ -126,7 +124,7 @@ def main():
             z-index: 1000;
         }
         div[data-testid="stSidebarNav"] {
-            display: none !important; /* Oculta a navegação padrão da sidebar */
+            display: none !important;
         }
         div[data-testid="stColumns"] > div > div {
             display: flex;
@@ -189,14 +187,12 @@ def main():
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
-        # Força 100% para a largura do container para evitar quebras
-        scaled_width_percent = 100 
 
         margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
 
         img_style = f"""
             height: auto; 
-            width: {scaled_width_percent}%; /* Definido como 100% para melhor ajuste */
+            width: auto; /* Alterado para auto */
             max-width: 100%; 
             max-height: {scaled_max_height}px; 
             object-fit: contain; 
@@ -217,7 +213,8 @@ def main():
         elif filename == "banner_pmc.png":
             link_url = PMC_PORTAL_URL
 
-        image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}">'
+        # Adicionado onerror para fallback caso o base64 falhe
+        image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}" onerror="this.onerror=null;this.src=\'{url}\';">'
 
         if link_url:
             return f"""
