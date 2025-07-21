@@ -87,21 +87,6 @@ desenvolvimento sustentável local e a melhoria contínua da qualidade de vida d
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
-def get_image_as_base64(image_url: str) -> str | None:
-    try:
-        response = requests.get(image_url, timeout=10)
-        response.raise_for_status()
-        img_bytes = response.content
-        if not img_bytes: # Adicionado para verificar se o conteúdo da imagem é vazio
-            print(f"Erro: Conteúdo da imagem vazio para {image_url}")
-            return None
-        content_type = response.headers.get('Content-Type', 'image/png')
-        return f"data:{content_type};base64,{base64.b64encode(img_bytes).decode()}"
-    except requests.exceptions.RequestException as e:
-        print(f"Erro ao carregar imagem {image_url} como Base64: {e}")
-        return None
-
-@st.cache_data(show_spinner=False)
 def get_image_bytes(image_url: str) -> bytes | None:
     try:
         response = requests.get(image_url, timeout=10)
@@ -182,8 +167,8 @@ def main():
 
     # --- Layout do Rodapé ---
     def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
-        base64_image_data = get_image_as_base64(url)
-        image_source = base64_image_data if base64_image_data else url
+        # Usar a URL diretamente, sem tentar base64 para evitar problemas de renderização
+        image_source = url
         
         base_max_height_px = 70 
         scaled_max_height = int(base_max_height_px * scale)
@@ -213,8 +198,8 @@ def main():
         elif filename == "banner_pmc.png":
             link_url = PMC_PORTAL_URL
 
-        # Adicionado onerror para fallback caso o base64 falhe
-        image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}" onerror="this.onerror=null;this.src=\'{url}\';">'
+        # A tag <img> é construída diretamente com a URL. Removido o onerror redundante.
+        image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}">'
 
         if link_url:
             return f"""
