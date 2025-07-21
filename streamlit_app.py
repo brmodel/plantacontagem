@@ -8,6 +8,7 @@ from folium.plugins import LocateControl
 import numpy as np
 import json
 import base64
+import html # Módulo importado para escape de HTML
 
 # --- Configurações ---
 APP_TITULO = "Planta Contagem"
@@ -33,11 +34,7 @@ MAPEAMENTO_CORES = {
     5: "#fed9a6", 6: "#ffffcc", 7: "#e5d8bd"
 }
 
-BANNER_PMC_BASE_FILENAMES_RODAPE = ["governo_federal.png", "alimenta_cidades.png", "contagem_sem_fome.png"]
 LOGO_PMC_FILENAME = "banner_pmc.png"
-FOOTER_BANNER_FILENAMES = BANNER_PMC_BASE_FILENAMES_RODAPE + [LOGO_PMC_FILENAME]
-LAST_TWO_FOOTER_BANNERS = ["contagem_sem_fome.png", "banner_pmc.png"]
-OFFSET_LOGO_PX = 40
 
 GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
 MAX_POPOVER_INFO_CHARS = 250
@@ -46,7 +43,42 @@ CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
 ZOOM_SELECIONADO_MAPA = 16
 
-NORMAL_BANNER_SCALE = 1.0
+# --- Links (copiado de saiba_mais.py) ---
+LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
+LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
+LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
+
+# --- Constantes para o rodapé (copiado de saiba_mais.py) ---
+FOOTER_BANNERS_DATA = [
+    {
+        "filename": "governo_federal.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
+        "link": LINK_GOVERNO_FEDERAL,
+        "scale": 1.5,
+        "offset_y": -10
+    },
+    {
+        "filename": "alimenta_cidades.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
+        "link": LINK_ALIMENTA_CIDADES,
+        "scale": 1.5,
+        "offset_y": 0
+    },
+    {
+        "filename": "contagem_sem_fome.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
+        "link": LINK_CONTAGEM_SEM_FOME,
+        "scale": 1.0,
+        "offset_y": 0
+    },
+    {
+        "filename": "banner_pmc.png",
+        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
+        "link": PMC_PORTAL_URL,
+        "scale": 1.0,
+        "offset_y": 0
+    }
+]
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
@@ -78,7 +110,6 @@ def get_image_bytes(image_url: str) -> bytes | None:
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
 LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
-BANNER_PMC_URLS_RODAPE = [BANNER_URL_BASE + fname for fname in FOOTER_BANNER_FILENAMES]
 
 # --- Templates HTML ---
 POPUP_TEMPLATE_BASE = """
@@ -95,70 +126,28 @@ def load_data():
     url = "https://docs.google.com/spreadsheets/d/1qNmwcOhFnWrFHDYwkq36gHmk4Rx97b6RM0VqU94vOro/export?format=csv&gid=1832051074"
     try:
         data = pd.read_csv(url, usecols=range(8))
-        
         data['Numeral'] = pd.to_numeric(data['Numeral'], errors='coerce')
         data['lat'] = pd.to_numeric(data['lat'], errors='coerce')
         data['lon'] = pd.to_numeric(data['lon'], errors='coerce')
-        
-        # --- DEBUG: Verifique os dados antes de dropar NaNs ---
-        # st.subheader("Dados brutos após conversão numérica (primeiras 5 linhas):")
-        # st.dataframe(data.head())
-        # st.subheader("Contagem de valores nulos por coluna (antes de dropar):")
-        # st.dataframe(data.isnull().sum())
-        # st.subheader("Valores únicos e contagem na coluna 'Numeral' (antes de dropar):")
-        # st.dataframe(data['Numeral'].value_counts(dropna=False))
-
-        # Remove linhas onde 'Numeral', 'lat' OU 'lon' são NaN.
         data.dropna(subset=['Numeral', 'lat', 'lon'], inplace=True)
-        
         data['Numeral'] = data['Numeral'].astype('Int64')
-        
         for col in ['Nome', 'Tipo', 'Regional', 'Info', 'Instagram']:
             if col in data.columns:
                 data[col] = data[col].astype(str).replace('nan', '', regex=False).replace('<NA>', '', regex=False)
-        
-        # --- DEBUG: Verifique os dados após a limpeza e conversão ---
-        # st.subheader("Dados após limpeza e conversão (primeiras 5 linhas):")
-        # st.dataframe(data.head())
-        # st.subheader("Contagem de valores nulos por coluna (após dropna):")
-        # st.dataframe(data.isnull().sum())
-        # st.subheader("Valores únicos e contagem na coluna 'Numeral' (após dropna):")
-        # st.dataframe(data['Numeral'].value_counts(dropna=False))
-
         return data
-    except pd.errors.EmptyDataError: 
-        st.error("Erro: A planilha parece estar vazia ou sem cabeçalhos.")
-        return pd.DataFrame()
-    except ValueError as e: 
-        st.error(f"Erro ao processar colunas: {e}. Verifique se os dados estão no formato esperado.")
-        return pd.DataFrame()
-    except Exception as e: 
-        st.error(f"Erro inesperado ao carregar dados: {e}")
+    except Exception as e:
+        st.error(f"Erro ao carregar dados: {e}")
         return pd.DataFrame()
 
 @st.cache_data(ttl=3600)
 def load_geojson():
-    default_geojson = {"type": "FeatureCollection", "features": []}
     try:
         response = requests.get(GEOJSON_URL, timeout=20)
         response.raise_for_status()
-        geojson_data = response.json()
-        if not isinstance(geojson_data, dict) or "features" not in geojson_data:
-            st.warning("Estrutura do GeoJSON inválida.")
-            return default_geojson
-        return geojson_data
-    except requests.exceptions.Timeout:
-        st.error(f"Timeout ao carregar GeoJSON: {GEOJSON_URL}")
-        return default_geojson
-    except requests.exceptions.RequestException as e:
-        st.error(f"Erro de rede ao carregar GeoJSON: {e}")
-        return default_geojson
-    except ValueError as e:
-        st.error(f"Erro ao decodificar GeoJSON: {e}")
-        return default_geojson
+        return response.json()
     except Exception as e:
-        st.error(f"Erro inesperado ao carregar GeoJSON: {e}")
-        return default_geojson
+        st.error(f"Erro ao carregar GeoJSON: {e}")
+        return {"type": "FeatureCollection", "features": []}
 
 # --- Funções de Criação do Mapa e Legenda ---
 def criar_legenda(geojson_data):
@@ -250,7 +239,7 @@ def main():
             z-index: 1000;
         }
         div[data-testid="stSidebarNav"] {
-            display: none !important; /* Oculta a navegação padrão da sidebar */
+            display: none !important;
         }
         div[data-testid="stColumns"] > div[data-testid^="stVerticalBlock"] {
             display: flex;
@@ -300,18 +289,16 @@ def main():
     if 'map_center' not in st.session_state: st.session_state.map_center = CENTRO_INICIAL_MAPA
     if 'map_zoom' not in st.session_state: st.session_state.map_zoom = ZOOM_INICIAL_MAPA
     
-    # Carregamento de dados: Só carrega se o DataFrame não existir ou estiver vazio
     if 'df' not in st.session_state or st.session_state.df.empty:
-        st.session_state.df = pd.DataFrame() # Garante que df seja um DataFrame vazio inicialmente
-        st.session_state.load_error = False # Reseta o erro ao tentar carregar novamente
+        st.session_state.df = pd.DataFrame() 
+        st.session_state.load_error = False
         with st.spinner("Carregando dados..."):
-            loaded_df = load_data() # Esta chamada usa @st.cache_data
+            loaded_df = load_data()
             if not loaded_df.empty:
                 st.session_state.df = loaded_df
-                st.session_state.load_error = False
             else:
                 st.session_state.load_error = True
-            st.session_state.geojson_data = load_geojson() # Esta chamada usa @st.cache_data
+            st.session_state.geojson_data = load_geojson()
     
     # --- Layout do Cabeçalho ---
     st.title(APP_TITULO)
@@ -363,13 +350,12 @@ def main():
             info_text_sidebar = selected_info.get('Info', '').strip()
             if info_text_sidebar:
                 st.write(f"**Informações:**")
-                st.markdown(info_text_sidebar) # Não precisa de expander na sidebar, se for para exibir tudo
+                st.markdown(info_text_sidebar)
             if st.button("Fechar Detalhes", key="close_sidebar_btn"):
                 st.session_state.selected_marker_info = None
                 st.rerun()
         else:
             st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
-
 
     # --- Filtragem de Dados ---
     df_filtrado = pd.DataFrame()
@@ -380,11 +366,9 @@ def main():
                 filtro_nome = df_original["Nome"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
                 filtro_tipo = df_original["Tipo"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
                 filtro_regional = df_original["Regional"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
-                
                 df_filtrado = df_original[filtro_nome | filtro_tipo | filtro_regional]
-
                 if df_filtrado.empty:
-                    st.warning(f"Nenhuma unidade encontrada com '{search_query}' no Nome, Tipo ou Regional.")
+                    st.warning(f"Nenhuma unidade encontrada com '{search_query}'.")
             except Exception as e:
                 st.error(f"Erro no filtro: {e}"); df_filtrado = df_original
         else:
@@ -401,109 +385,71 @@ def main():
             returned_objects=['last_object_clicked']
         )
         
-        # Lida com eventos de clique no mapa
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
                 clicked_lat = clicked_obj['lat']; clicked_lon = clicked_obj['lng']
                 rounded_clicked_key = (round(clicked_lat, 6), round(clicked_lon, 6))
                 found_info = st.session_state.get('marker_lookup', {}).get(rounded_clicked_key)
-
-                if found_info is not None:
-                    if found_info != st.session_state.selected_marker_info:
-                        st.session_state.selected_marker_info = found_info
-                        st.session_state.map_center = [found_info['lat'], found_info['lon']]
-                        st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA
-                        st.rerun()
-                elif st.session_state.selected_marker_info is not None: 
-                    st.session_state.selected_marker_info = None
+                if found_info is not None and found_info != st.session_state.selected_marker_info:
+                    st.session_state.selected_marker_info = found_info
+                    st.session_state.map_center = [found_info['lat'], found_info['lon']]
+                    st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA
                     st.rerun()
             elif st.session_state.selected_marker_info is not None:
                 st.session_state.selected_marker_info = None
                 st.rerun()
                 
-    elif st.session_state.load_error: st.error("Falha crítica ao carregar dados. Mapa não pode ser exibido.")
+    elif st.session_state.load_error: st.error("Falha ao carregar dados. O mapa não pode ser exibido.")
     
     # --- Rodapé ---
     st.markdown("---"); st.caption(APP_DESC)
 
-    def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
-        base64_image_data = get_image_as_base64(url)
-        image_source = base64_image_data if base64_image_data else url
-        
-        base_max_height_px = 70 
+    # --- Lógica do Rodapé (copiado de saiba_mais.py) ---
+    def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0, offset_y: int = 0) -> str:
+        """Gera o HTML para um banner com escala e deslocamento vertical."""
+        escaped_url = html.escape(url)
+        escaped_filename = html.escape(filename)
+
+        base_max_height_px = 50
         scaled_max_height = int(base_max_height_px * scale)
-        scaled_width_percent = 100 # Força 100% para todas as imagens para evitar quebras
 
-        margin_top_style = f"margin-top: {offset_top_px}px;" if offset_top_px else ""
+        offset_style = f"margin-top: {offset_y}px;" if offset_y != 0 else ""
 
-        img_style = f"""
-            height: auto; 
-            width: {scaled_width_percent}%; /* Definido como 100% para melhor ajuste */
-            max-width: 100%; 
-            max-height: {scaled_max_height}px; 
-            object-fit: contain; 
-            display: block;
-            margin-left: auto; 
-            margin-right: auto;
-            {margin_top_style}
-        """
-        
-        # Adiciona o link para as imagens do rodapé
-        link_url = None
-        if filename == "governo_federal.png":
-            link_url = "https://www.gov.br/pt-br"
-        elif filename == "alimenta_cidades.png":
-            link_url = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
-        elif filename == "contagem_sem_fome.png":
-            link_url = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
-        elif filename == "banner_pmc.png":
-            link_url = PMC_PORTAL_URL
+        img_style_parts = [
+            "height: auto", "width: auto", "max-width: 100%",
+            f"max-height: {scaled_max_height}px", "object-fit: contain",
+            "display: block", "margin-left: auto", "margin-right: auto",
+            offset_style
+        ]
+        img_style = "; ".join(filter(None, [s.strip() for s in img_style_parts]))
 
-        image_tag = f'<img src="{image_source}" alt="Banner {filename}" style="{img_style}">'
+        image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
+
+        container_style_parts = [
+            "display: flex", "justify-content: center", "align-items: center",
+            f"min-height: {scaled_max_height}px", "overflow: hidden",
+            "width: 100%", "padding: 5px",
+        ]
+        container_style = "; ".join(filter(None, [s.strip() for s in container_style_parts]))
 
         if link_url:
-            return f"""
-            <div style="
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: {scaled_max_height}px;
-                overflow: hidden;
-                width: 100%;
-                padding: 5px;
-            ">
-                <a href="{link_url}" target="_blank" rel="noopener noreferrer">{image_tag}</a>
-            </div>
-            """
+            return f'<div style="{container_style}"><a href="{link_url}" target="_blank" rel="noopener noreferrer">{image_tag}</a></div>'
         else:
-            return f"""
-            <div style="
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: {scaled_max_height}px;
-                overflow: hidden;
-                width: 100%;
-                padding: 5px;
-            ">
-                {image_tag}
-            </div>
-            """
+            return f'<div style="{container_style}">{image_tag}</div>'
 
-    if BANNER_PMC_URLS_RODAPE:
-        num_banners = len(BANNER_PMC_URLS_RODAPE)
-        cols_banner = st.columns(num_banners if num_banners <= 4 else 4) 
+    cols_banner = st.columns(len(FOOTER_BANNERS_DATA))
 
-        for i, url in enumerate(BANNER_PMC_URLS_RODAPE):
-            filename = FOOTER_BANNER_FILENAMES[i]
-            current_scale = NORMAL_BANNER_SCALE 
-            
-            offset_for_this_logo = OFFSET_LOGO_PX if filename in LAST_TWO_FOOTER_BANNERS else 0
-
-            with cols_banner[i % len(cols_banner)]: 
-                banner_html = display_banner_html(url, filename, current_scale, offset_for_this_logo)
-                st.markdown(banner_html, unsafe_allow_html=True)
+    for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
+        with cols_banner[i]:
+            banner_html = display_banner_html(
+                url=banner_data["url"],
+                filename=banner_data["filename"],
+                link_url=banner_data["link"],
+                scale=banner_data.get("scale", 1.0),
+                offset_y=banner_data.get("offset_y", 0)
+            )
+            st.markdown(banner_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
