@@ -21,27 +21,31 @@ LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao
 LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 
 # --- Constantes para o rodapé ---
-# Estrutura de dados para gerenciar os banners do rodapé de forma mais organizada
+# Estrutura de dados para gerenciar os banners, agora com um fator de escala individual.
 FOOTER_BANNERS_DATA = [
     {
         "filename": "governo_federal.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
-        "link": LINK_GOVERNO_FEDERAL
+        "link": LINK_GOVERNO_FEDERAL,
+        "scale": 1.6 # Escala aumentada para a imagem parecer maior
     },
     {
         "filename": "alimenta_cidades.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
-        "link": LINK_ALIMENTA_CIDADES
+        "link": LINK_ALIMENTA_CIDADES,
+        "scale": 1.6 # Escala aumentada para a imagem parecer maior
     },
     {
         "filename": "contagem_sem_fome.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
-        "link": LINK_CONTAGEM_SEM_FOME
+        "link": LINK_CONTAGEM_SEM_FOME,
+        "scale": 1.0 # Escala padrão
     },
     {
         "filename": "banner_pmc.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
-        "link": PMC_PORTAL_URL
+        "link": PMC_PORTAL_URL,
+        "scale": 1.0 # Escala padrão
     }
 ]
 
@@ -178,18 +182,19 @@ def main():
     st.markdown("---")
 
     # --- Layout do Rodapé ---
-    def display_banner_html(url: str, filename: str, link_url: str | None) -> str:
+    def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0) -> str:
         escaped_url = html.escape(url)
         escaped_filename = html.escape(filename)
         
-        # Tamanho base consistente para todas as logos
-        base_max_height_px = 70 
+        # Altura base para as logos. As menores serão escaladas a partir deste valor.
+        base_max_height_px = 50 
+        scaled_max_height = int(base_max_height_px * scale)
 
         img_style = f"""
             height: auto;
             width: auto;
             max-width: 100%; 
-            max-height: {base_max_height_px}px; 
+            max-height: {scaled_max_height}px; 
             object-fit: contain; 
             display: block;
             margin-left: auto; 
@@ -198,12 +203,13 @@ def main():
         
         image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
 
-        # O container div garante alinhamento vertical e centraliza o conteúdo
+        # O container garante alinhamento vertical e centraliza o conteúdo.
+        # A altura mínima do container se ajusta à da imagem para manter o alinhamento.
         container_style = f"""
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: {base_max_height_px}px;
+            min-height: {scaled_max_height}px;
             overflow: hidden;
             width: 100%;
             padding: 5px;
@@ -217,13 +223,14 @@ def main():
     # Cria colunas para cada banner no rodapé
     cols_banner = st.columns(len(FOOTER_BANNERS_DATA)) 
 
-    # Itera sobre os dados dos banners e exibe cada um em sua coluna
+    # Itera sobre os dados dos banners e exibe cada um em sua coluna com a escala correta
     for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
         with cols_banner[i]: 
             banner_html = display_banner_html(
                 url=banner_data["url"],
                 filename=banner_data["filename"],
-                link_url=banner_data["link"]
+                link_url=banner_data["link"],
+                scale=banner_data.get("scale", 1.0) # Usa a escala definida, ou 1.0 como padrão
             )
             st.markdown(banner_html, unsafe_allow_html=True)
 
