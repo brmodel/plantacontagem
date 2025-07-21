@@ -8,6 +8,7 @@ import html # Importar o módulo html para escape
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
 # URLs base para as imagens no GitHub
 ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/icones/"
+# CORREÇÃO: Usar raw.githubusercontent.com para acessar o conteúdo raw das imagens
 BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 LOGO_PMC_FILENAME = "banner_pmc.png"
 
@@ -165,8 +166,10 @@ def main():
 
     # --- Layout do Rodapé ---
     def display_banner_html(url: str, filename: str, scale: float = 1.0, offset_top_px: int = 0) -> str:
-        # Escapar a URL para garantir que não haja caracteres problemáticos no atributo src
-        escaped_url = html.escape(url)
+        # Usar a URL diretamente, sem tentar base64 para evitar problemas de renderização
+        # A URL precisa ser a raw.githubusercontent.com para ser renderizada como imagem
+        raw_url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+        escaped_url = html.escape(raw_url)
         # Escapar o nome do arquivo para o atributo alt
         escaped_filename = html.escape(filename)
         
@@ -249,7 +252,7 @@ def main():
                 st.markdown(banner_html, unsafe_allow_html=True)
 
     # --- Placeholder para o Carrossel de Imagens ---
-    st.markdown("## Galeria de Imagens")
+    # Removido o título "Galeria de Imagens" conforme solicitado.
     st.info("O carrossel de imagens será implementado aqui assim que o link para a pasta de imagens for fornecido.")
     # Exemplo de como você poderia carregar e exibir as imagens (sem carrossel funcional ainda)
     # IMAGES_CAROUSEL_URL_BASE = "LINK_DA_SUA_PASTA_DE_IMAGENS_AQUI"
