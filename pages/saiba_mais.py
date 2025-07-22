@@ -117,7 +117,7 @@ GITHUB_API_FOLDER_URL = "https://api.github.com/repos/brmodel/plantacontagem/con
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.ico')
 
 # Limite de imagens a serem carregadas no carrossel para otimização
-MAX_CAROUSEL_IMAGES = 10 # Reduzido para 10 imagens para evitar sobrecarga
+MAX_CAROUSEL_IMAGES = 5 # Reduzido para 5 imagens para tentar carregar
 
 # --- Funções de Cache ---
 
@@ -302,8 +302,9 @@ def main():
     st.markdown("---")
 
     # --- Carrossel de Imagens (Adicionado aqui) ---
-    st.subheader("Galeria de Fotos do CMAUF")
-    st.write("Confira algumas fotos das atividades e locais do Centro Municipal de Agricultura Urbana e Familiar.")
+    # Removidos os títulos e subtítulos do carrossel
+    # st.subheader("Galeria de Fotos do CMAUF")
+    # st.write("Confira algumas fotos das atividades e locais do Centro Municipal de Agricultura Urbana e Familiar.")
 
     # Busca os nomes dos arquivos de imagem dinamicamente do GitHub
     photo_filenames = get_github_image_filenames(GITHUB_API_FOLDER_URL)
@@ -357,9 +358,10 @@ def main():
             for i, (encoded_img, mime_type) in enumerate(image_data_list):
                 # O primeiro slide é ativo por padrão
                 active_class = "active" if i == 0 else ""
+                # Usamos um placeholder src e o data-src para o base64 para lazy loading
                 carousel_slides_html += f"""
                 <div class="carousel-slide {active_class}">
-                    <img src="data:{mime_type};base64,{encoded_img}" alt="Foto {i+1}">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="data:{mime_type};base64,{encoded_img}" alt="Foto {i+1}">
                 </div>
                 """
                 
@@ -385,6 +387,13 @@ def main():
                 const dots = document.querySelectorAll('.indicator-dot');
                 const totalSlides = slides.length;
 
+                function loadImage(slideElement) {{
+                    const img = slideElement.querySelector('img');
+                    if (img && img.dataset.src && !img.src.startsWith('data:{mime_type};base64')) {{ // Evita recarregar se já carregado
+                        img.src = img.dataset.src;
+                    }}
+                }}
+
                 function showSlides() {{
                     for (let i = 0; i < totalSlides; i++) {{
                         slides[i].classList.remove('active');
@@ -392,6 +401,11 @@ def main():
                     }}
                     slides[slideIndex].classList.add('active');
                     dots[slideIndex].classList.add('active');
+                    loadImage(slides[slideIndex]); // Carrega a imagem do slide ativo
+
+                    // Opcional: pré-carregar a próxima imagem para transições mais suaves
+                    const nextSlideIndex = (slideIndex + 1) % totalSlides;
+                    loadImage(slides[nextSlideIndex]);
                 }}
 
                 function moveSlide(n) {{
@@ -409,7 +423,7 @@ def main():
                 // Auto-play
                 setInterval(() => moveSlide(1), 5000); // Muda de slide a cada 5 segundos
 
-                // Exibe o primeiro slide ao carregar
+                // Exibe o primeiro slide ao carregar e carrega sua imagem
                 showSlides();
             </script>
             """
