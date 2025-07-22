@@ -3,6 +3,7 @@ import streamlit as st
 import requests
 import base64
 import html # Importar o módulo html para escape
+import os # Para manipular extensões de arquivo
 
 # --- Constantes ---
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
@@ -55,7 +56,6 @@ FOOTER_BANNERS_DATA = [
     }
 ]
 
-
 # --- Conteúdo HTML ---
 html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
@@ -107,9 +107,21 @@ desenvolvimento sustentável local e a melhoria contínua da qualidade de vida d
 </div>
 """
 
+# --- Constantes para Imagens Estáticas ---
+PHOTOS_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/fotos/"
+STATIC_IMAGE_FILENAMES = [
+    "1.jpg", "2.jpeg", "3.png",
+    "4.jpg", "5.jpeg", "6.png",
+    "7.jpg", "8.jpeg", "9.png"
+]
+MAX_IMAGE_HEIGHT_PX = 200 # Altura máxima para as imagens estáticas
+
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
 def get_image_bytes(image_url: str) -> bytes | None:
+    """
+    Carrega os bytes de uma imagem a partir de uma URL e os armazena em cache.
+    """
     try:
         response = requests.get(image_url, timeout=10)
         response.raise_for_status()
@@ -126,36 +138,28 @@ def main():
     st.markdown(
         """
         <style>
-        .stApp > header {
-            position: relative;
-            z-index: 1000;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f6;
         }
-        div[data-testid="stSidebarNav"] {
-            display: none !important;
+        .stApp {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background-color: white;
         }
-        div[data-testid="stColumns"] > div > div {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            height: 100%;
-        }
-        div[data-testid="stVerticalBlock"] h3 {
-            margin-top: 0px; margin-bottom: 0px;
-            padding-top: 0px; padding-bottom: 0px;
-        }
-        div[data-testid="column-PMC-logo"] {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            padding-top: 5px;
-            margin-top: 0px;
-        }
-        div[data-testid="column-PMC-logo"] img {
+        /* Estilo para as imagens nas colunas */
+        .stColumn img {
             max-width: 100%;
             height: auto;
-            max-height: 60px;
-            object-fit: contain;
+            max-height: 200px; /* Definido pela constante MAX_IMAGE_HEIGHT_PX */
+            object-fit: contain; /* Garante que a imagem caiba sem cortar */
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 5px auto; /* Centraliza a imagem na coluna */
+            display: block; /* Garante que margin: auto funcione */
         }
         </style>
         """, unsafe_allow_html=True
@@ -184,6 +188,49 @@ def main():
 
     # --- Conteúdo Principal ---
     st.markdown(html_content, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # --- Galeria de Imagens Estáticas ---
+    st.subheader("Galeria de Fotos do CMAUF")
+    st.write("Confira algumas fotos das atividades e locais do Centro Municipal de Agricultura Urbana e Familiar.")
+
+    # Carregar as imagens e exibi-las em 3 colunas
+    num_images_per_row = 3
+    
+    # Criar um placeholder para a barra de progresso
+    progress_text = "Carregando imagens da galeria..."
+    image_progress_bar = st.progress(0, text=progress_text)
+
+    # Lista para armazenar as URLs das imagens que serão exibidas
+    images_to_display = []
+
+    for i, filename in enumerate(STATIC_IMAGE_FILENAMES):
+        image_url = PHOTOS_URL_BASE + filename
+        images_to_display.append(image_url)
+        
+        # Atualiza a barra de progresso
+        progress_percentage = (i + 1) / len(STATIC_IMAGE_FILENAMES)
+        image_progress_bar.progress(progress_percentage, text=f"{progress_text} ({i+1}/{len(STATIC_IMAGE_FILENAMES)})")
+    
+    image_progress_bar.empty() # Remove a barra de progresso após o carregamento
+
+    if not images_to_display:
+        st.warning("Nenhuma imagem válida foi carregada para a galeria.")
+    else:
+        # Divide as imagens em linhas de 3
+        for i in range(0, len(images_to_display), num_images_per_row):
+            cols = st.columns(num_images_per_row)
+            for j in range(num_images_per_row):
+                if i + j < len(images_to_display):
+                    with cols[j]:
+                        img_url = images_to_display[i + j]
+                        # Usar st.image diretamente com a URL
+                        st.image(img_url, use_column_width="always")
+                else:
+                    # Preencher colunas vazias se não houver imagens suficientes para a última linha
+                    with cols[j]:
+                        st.empty() # Garante que as colunas vazias não quebrem o layout
 
     st.markdown("---")
 
