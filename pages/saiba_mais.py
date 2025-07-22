@@ -3,47 +3,45 @@ import streamlit as st
 import requests
 import base64
 import html # Importar o módulo html para escape
+import os # Para manipular extensões de arquivo
 
 # --- Constantes ---
-# URL base para as fotos no GitHub
+# URL base para as fotos no GitHub (para acesso direto às imagens)
 PHOTOS_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/fotos/"
+# URL da API do GitHub para listar o conteúdo da pasta (para buscar nomes de arquivos)
+GITHUB_API_FOLDER_URL = "https://api.github.com/repos/brmodel/plantacontagem/contents/images/fotos"
 
-# Lista de nomes de arquivos das fotos (ajuste conforme os nomes reais na sua pasta)
-# Assumindo nomes genéricos para o exemplo. Por favor, substitua pelos nomes exatos dos seus arquivos.
-PHOTO_FILENAMES = [
-    "foto1.jpg",
-    "foto2.jpg",
-    "foto3.jpg",
-    "foto4.jpg",
-    "foto5.jpg",
-    "foto6.jpg",
-    "foto7.jpg",
-    "foto8.jpg",
-    "foto9.jpg",
-    "foto10.jpg",
-    "foto11.jpg",
-    "foto12.jpg",
-    "foto13.jpg",
-    "foto14.jpg",
-    "foto15.jpg",
-    "foto16.jpg",
-    "foto17.jpg",
-    "foto18.jpg",
-    "foto19.jpg",
-    "foto20.jpg",
-    "foto21.jpg",
-    "foto22.jpg",
-    "foto23.jpg",
-    "foto24.jpg",
-    "foto25.jpg",
-    "foto26.jpg",
-    "foto27.jpg",
-    "foto28.jpg",
-    "foto29.jpg"
-]
+# Extensões de arquivo de imagem comuns que serão consideradas
+IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.ico')
 
+# --- Funções de Cache ---
 
-# --- Funções de Cache de Imagem ---
+@st.cache_data(show_spinner="Buscando nomes de arquivos de imagem no GitHub...")
+def get_github_image_filenames(api_url: str) -> list[str]:
+    """
+    Busca os nomes dos arquivos de imagem em uma pasta do GitHub usando a API.
+    Retorna uma lista de nomes de arquivos.
+    """
+    try:
+        response = requests.get(api_url, timeout=10)
+        response.raise_for_status() # Levanta um erro para códigos de status HTTP ruins
+        contents = response.json()
+
+        filenames = []
+        for item in contents:
+            if item['type'] == 'file':
+                # Verifica se a extensão do arquivo está na lista de extensões de imagem
+                _, ext = os.path.splitext(item['name'])
+                if ext.lower() in IMAGE_EXTENSIONS:
+                    filenames.append(item['name'])
+        return filenames
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erro ao buscar nomes de arquivos do GitHub: {e}")
+        return []
+    except Exception as e:
+        st.error(f"Ocorreu um erro inesperado ao processar a resposta do GitHub: {e}")
+        return []
+
 @st.cache_data(show_spinner=False)
 def get_image_bytes(image_url: str) -> bytes | None:
     """
@@ -175,41 +173,51 @@ def main():
     st.title("Carrossel de Imagens do CMAUF")
     st.write("Confira algumas fotos das atividades e locais do Centro Municipal de Agricultura Urbana e Familiar.")
 
+    # Busca os nomes dos arquivos de imagem dinamicamente do GitHub
+    photo_filenames = get_github_image_filenames(GITHUB_API_FOLDER_URL)
+
+    if not photo_filenames:
+        st.warning("Não foi possível carregar as imagens do GitHub ou a pasta está vazia.")
+        return # Sai da função main se não houver imagens
+
     # Carregar todas as imagens e convertê-las para base64
     image_data_list = []
-    for filename in PHOTO_FILENAMES:
+    for filename in photo_filenames:
         image_url = PHOTOS_URL_BASE + filename
         img_bytes = get_image_bytes(image_url)
         if img_bytes:
             # Usar html.escape para garantir que a string base64 seja segura para HTML
+            # Determinar o tipo MIME da imagem com base na extensão
+            _, ext = os.path.splitext(filename)
+            mime_type = f"image/{ext[1:]}" if ext else "image/jpeg" # Default para jpeg se não houver extensão
+            if ext.lower() == '.jpg': # Ajuste específico para .jpg que é frequentemente image/jpeg
+                mime_type = "image/jpeg"
+            elif ext.lower() == '.gif':
+                mime_type = "image/gif"
+            elif ext.lower() == '.webp':
+                mime_type = "image/webp"
+
             encoded_image = html.escape(base64.b64encode(img_bytes).decode())
-            image_data_list.append(encoded_image)
+            image_data_list.append((encoded_image, mime_type))
         else:
-            # Se a imagem não puder ser carregada, adicione uma imagem placeholder ou trate o erro
-            st.warning(f"Não foi possível carregar a imagem: {filename}. Usando placeholder.")
-            # Você pode adicionar um placeholder genérico aqui se desejar
-            image_data_list.append(None) # Ou um base64 de uma imagem placeholder
+            st.warning(f"Não foi possível carregar a imagem: {filename}. Será ignorada no carrossel.")
+            # Não adicionamos None para evitar slides vazios, apenas ignoramos a imagem com erro
+
+    if not image_data_list:
+        st.warning("Nenhuma imagem válida foi carregada para o carrossel.")
+        return
 
     # Construir o HTML do carrossel
     carousel_slides_html = ""
     carousel_indicators_html = ""
-    for i, encoded_img in enumerate(image_data_list):
-        if encoded_img:
-            # O primeiro slide é ativo por padrão
-            active_class = "active" if i == 0 else ""
-            carousel_slides_html += f"""
-            <div class="carousel-slide {active_class}">
-                <img src="data:image/jpeg;base64,{encoded_img}" alt="Foto {i+1}">
-            </div>
-            """
-        else:
-            # Adicionar um slide vazio ou com mensagem de erro se a imagem não carregou
-            active_class = "active" if i == 0 else ""
-            carousel_slides_html += f"""
-            <div class="carousel-slide {active_class}">
-                <p style="color: grey;">Imagem não disponível.</p>
-            </div>
-            """
+    for i, (encoded_img, mime_type) in enumerate(image_data_list):
+        # O primeiro slide é ativo por padrão
+        active_class = "active" if i == 0 else ""
+        carousel_slides_html += f"""
+        <div class="carousel-slide {active_class}">
+            <img src="data:{mime_type};base64,{encoded_img}" alt="Foto {i+1}">
+        </div>
+        """
         
         # Indicadores de slide
         active_dot_class = "active" if i == 0 else ""
