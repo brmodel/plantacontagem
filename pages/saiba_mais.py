@@ -119,7 +119,7 @@ MAX_IMAGE_HEIGHT_PX = 200 # Altura máxima para as imagens estáticas
 def get_github_image_filenames(api_url: str) -> list[str]:
     """
     Busca os nomes dos arquivos de imagem em uma pasta do GitHub usando a API.
-    Retorna uma lista de nomes de arquivos.
+    Retorna uma lista de nomes de arquivos. Em caso de erro, retorna uma lista vazia.
     """
     try:
         response = requests.get(api_url, timeout=15) # Aumentado timeout para 15 segundos
@@ -135,10 +135,12 @@ def get_github_image_filenames(api_url: str) -> list[str]:
                     filenames.append(item['name'])
         return filenames
     except requests.exceptions.RequestException as e:
-        st.error(f"Erro ao buscar nomes de arquivos do GitHub: {e}")
+        # Não usar st.error ou st.warning aqui, apenas retornar vazio
+        print(f"Erro ao buscar nomes de arquivos do GitHub: {e}")
         return []
     except Exception as e:
-        st.error(f"Ocorreu um erro inesperado ao processar a resposta do GitHub: {e}")
+        # Não usar st.error ou st.warning aqui, apenas retornar vazio
+        print(f"Ocorreu um erro inesperado ao processar a resposta do GitHub: {e}")
         return []
 
 @st.cache_data(show_spinner=False)
