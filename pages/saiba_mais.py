@@ -246,8 +246,5 @@ def main():
             )
             st.markdown(banner_html, unsafe_allow_html=True)
 
-    # --- Placeholder para o Carrossel de Imagens ---
-    st.info("O carrossel de imagens será implementado aqui assim que o link para a pasta de imagens for fornecido.")
-
 if __name__ == "__main__":
     main()
