@@ -223,7 +223,7 @@ def main():
 
     # Lista de URLs das imagens a serem exibidas (fotos de 2 a 9)
     images_to_display = [
-        PHOTOS_URL_BASE + "2.jpg",
+        PHOTOS_URL_BASE + "2.JPG",
         PHOTOS_URL_BASE + "3.jpeg",
         PHOTOS_URL_BASE + "4.jpeg",
         PHOTOS_URL_BASE + "5.jpeg",
@@ -231,6 +231,10 @@ def main():
         PHOTOS_URL_BASE + "7.jpeg",
         PHOTOS_URL_BASE + "8.jpeg",
         PHOTOS_URL_BASE + "9.jpeg",
+        PHOTOS_URL_BASE + "10.jpeg",
+        PHOTOS_URL_BASE + "11.jpeg",
+        PHOTOS_URL_BASE + "12.JPG",
+        PHOTOS_URL_BASE + "13.jpeg",
     ]
 
     if not images_to_display:
