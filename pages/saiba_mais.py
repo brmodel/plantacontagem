@@ -117,7 +117,7 @@ GITHUB_API_FOLDER_URL = "https://api.github.com/repos/brmodel/plantacontagem/con
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.ico')
 
 # Limite de imagens a serem carregadas no carrossel para otimização
-MAX_CAROUSEL_IMAGES = 20 # Limita a 20 imagens para evitar sobrecarga
+MAX_CAROUSEL_IMAGES = 10 # Reduzido para 10 imagens para evitar sobrecarga
 
 # --- Funções de Cache ---
 
@@ -128,7 +128,7 @@ def get_github_image_filenames(api_url: str) -> list[str]:
     Retorna uma lista de nomes de arquivos.
     """
     try:
-        response = requests.get(api_url, timeout=10)
+        response = requests.get(api_url, timeout=15) # Aumentado timeout para 15 segundos
         response.raise_for_status() # Levanta um erro para códigos de status HTTP ruins
         contents = response.json()
 
@@ -153,7 +153,7 @@ def get_image_bytes(image_url: str) -> bytes | None:
     Carrega os bytes de uma imagem a partir de uma URL e os armazena em cache.
     """
     try:
-        response = requests.get(image_url, timeout=10)
+        response = requests.get(image_url, timeout=15) # Aumentado timeout para 15 segundos
         response.raise_for_status()  # Levanta um erro para códigos de status HTTP ruins (4xx ou 5xx)
         return response.content
     except requests.exceptions.RequestException as e:
@@ -316,7 +316,10 @@ def main():
 
         # Carregar todas as imagens e convertê-las para base64
         image_data_list = []
-        for filename in photo_filenames_limited:
+        progress_text = "Carregando imagens para o carrossel..."
+        image_progress_bar = st.progress(0, text=progress_text)
+        
+        for i, filename in enumerate(photo_filenames_limited):
             image_url = PHOTOS_URL_BASE + filename
             img_bytes = get_image_bytes(image_url)
             if img_bytes:
@@ -324,18 +327,26 @@ def main():
                 # Determinar o tipo MIME da imagem com base na extensão
                 _, ext = os.path.splitext(filename)
                 mime_type = f"image/{ext[1:]}" if ext else "image/jpeg" # Default para jpeg se não houver extensão
-                if ext.lower() == '.jpg': # Ajuste específico para .jpg que é frequentemente image/jpeg
+                if ext.lower() in ['.jpg', '.jpeg']: # Ajuste específico para .jpg/.jpeg que é frequentemente image/jpeg
                     mime_type = "image/jpeg"
                 elif ext.lower() == '.gif':
                     mime_type = "image/gif"
                 elif ext.lower() == '.webp':
                     mime_type = "image/webp"
+                elif ext.lower() == '.png':
+                    mime_type = "image/png"
 
                 encoded_image = html.escape(base64.b64encode(img_bytes).decode())
                 image_data_list.append((encoded_image, mime_type))
             else:
                 st.warning(f"Não foi possível carregar a imagem: {filename}. Será ignorada no carrossel.")
                 # Não adicionamos None para evitar slides vazios, apenas ignoramos a imagem com erro
+            
+            # Atualiza a barra de progresso
+            progress_percentage = (i + 1) / len(photo_filenames_limited)
+            image_progress_bar.progress(progress_percentage, text=f"{progress_text} ({i+1}/{len(photo_filenames_limited)})")
+        
+        image_progress_bar.empty() # Remove a barra de progresso após o carregamento
 
         if not image_data_list:
             st.warning("Nenhuma imagem válida foi carregada para o carrossel.")
