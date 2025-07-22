@@ -110,9 +110,9 @@ desenvolvimento sustentável local e a melhoria contínua da qualidade de vida d
 # --- Constantes para Imagens Estáticas ---
 PHOTOS_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/fotos/"
 STATIC_IMAGE_FILENAMES = [
-    "1.jpg", "2.jpeg", "3.png",
-    "4.jpg", "5.jpeg", "6.png",
-    "7.jpg", "8.jpeg", "9.png"
+    "1.jpeg", "2.jpg", "3.jpeg",
+    "4.jpeg", "5.jpeg", "6.jpeg",
+    "7.jpeg", "8.jpeg", "9.jpg"
 ]
 MAX_IMAGE_HEIGHT_PX = 200 # Altura máxima para as imagens estáticas
 
