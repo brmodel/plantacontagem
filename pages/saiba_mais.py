@@ -168,16 +168,16 @@ def main():
         }}
         /* Estilo para a imagem 1.jpg em destaque */
         .top-image-container {{
-            width: 100%;
+            width: 75%;
             display: flex;
             justify-content: center;
             margin-top: 20px; /* Espaço antes da imagem */
             margin-bottom: 20px; /* Espaço depois da imagem */
         }}
         .top-image-container img {{
-            max-width: 250px; /* Largura máxima para a imagem principal (reduzida em ~200%) */
-            width: 100%;
-            height: auto;
+            max-width: 180px; /* Largura máxima para a imagem principal (reduzida em ~200%) */
+            width: 75%;
+            height: 75%;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }}
@@ -223,14 +223,14 @@ def main():
 
     # Lista de URLs das imagens a serem exibidas (fotos de 2 a 9)
     images_to_display = [
-        PHOTOS_URL_BASE + "2.jpeg",
-        PHOTOS_URL_BASE + "3.png",
-        PHOTOS_URL_BASE + "4.jpg",
+        PHOTOS_URL_BASE + "2.jpg",
+        PHOTOS_URL_BASE + "3.jpeg",
+        PHOTOS_URL_BASE + "4.jpeg",
         PHOTOS_URL_BASE + "5.jpeg",
-        PHOTOS_URL_BASE + "6.png",
-        PHOTOS_URL_BASE + "7.jpg",
+        PHOTOS_URL_BASE + "6.jpeg",
+        PHOTOS_URL_BASE + "7.jpeg",
         PHOTOS_URL_BASE + "8.jpeg",
-        PHOTOS_URL_BASE + "9.png",
+        PHOTOS_URL_BASE + "9.jpeg",
     ]
 
     if not images_to_display:
