@@ -152,7 +152,7 @@ def main():
         .stColumn img {{
             width: 100%; /* Ocupa toda a largura da coluna */
             height: auto; /* Mantém a proporção */
-            max-height: 150px; /* Altura máxima para as imagens da galeria */
+            max-height: 200px; /* Altura máxima para as imagens da galeria (aumentada) */
             object-fit: contain; /* Garante que a imagem caiba sem cortar */
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -166,7 +166,7 @@ def main():
             color: #666;
             margin-top: 5px;
         }}
-        /* Estilo para a imagem 1.jpg no topo */
+        /* Estilo para a imagem 1.jpg em destaque */
         .top-image-container {{
             width: 100%;
             display: flex;
@@ -175,7 +175,7 @@ def main():
             margin-bottom: 20px; /* Espaço depois da imagem */
         }}
         .top-image-container img {{
-            max-width: 500px; /* Largura máxima para a imagem principal (reduzida) */
+            max-width: 250px; /* Largura máxima para a imagem principal (reduzida em ~200%) */
             width: 100%;
             height: auto;
             border-radius: 10px;
@@ -213,7 +213,7 @@ def main():
 
     # --- Imagem 1.jpg em destaque (agora após o conteúdo principal) ---
     st.markdown('<div class="top-image-container">', unsafe_allow_html=True)
-    st.image(PHOTOS_URL_BASE + "1.jpg", caption="Foto de Destaque", use_column_width=True)
+    st.image(PHOTOS_URL_BASE + "1.jpg", caption="Foto de Destaque") # Removido use_column_width
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---") # Separador após a imagem de destaque
