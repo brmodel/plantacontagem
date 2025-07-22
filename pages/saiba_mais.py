@@ -109,39 +109,10 @@ desenvolvimento sustentável local e a melhoria contínua da qualidade de vida d
 
 # --- Constantes para Imagens Estáticas (Galeria) ---
 PHOTOS_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/fotos/"
-# Extensões de arquivo de imagem comuns que serão consideradas
+# Extensões de arquivo de imagem comuns que serão consideradas (mantidas para referência, mas não usadas para busca dinâmica)
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.ico')
-MAX_IMAGE_HEIGHT_PX = 200 # Altura máxima para as imagens estáticas
 
 # --- Funções de Cache ---
-
-@st.cache_data(show_spinner="Buscando nomes de arquivos de imagem no GitHub...")
-def get_github_image_filenames(api_url: str) -> list[str]:
-    """
-    Busca os nomes dos arquivos de imagem em uma pasta do GitHub usando a API.
-    Retorna uma lista de nomes de arquivos. Em caso de erro, retorna uma lista vazia.
-    """
-    try:
-        response = requests.get(api_url, timeout=15) # Aumentado timeout para 15 segundos
-        response.raise_for_status() # Levanta um erro para códigos de status HTTP ruins
-        contents = response.json()
-
-        filenames = []
-        for item in contents:
-            if item['type'] == 'file':
-                # Verifica se a extensão do arquivo está na lista de extensões de imagem
-                _, ext = os.path.splitext(item['name'])
-                if ext.lower() in IMAGE_EXTENSIONS:
-                    filenames.append(item['name'])
-        return filenames
-    except requests.exceptions.RequestException as e:
-        # Não usar st.error ou st.warning aqui, apenas retornar vazio
-        print(f"Erro ao buscar nomes de arquivos do GitHub: {e}")
-        return []
-    except Exception as e:
-        # Não usar st.error ou st.warning aqui, apenas retornar vazio
-        print(f"Ocorreu um erro inesperado ao processar a resposta do GitHub: {e}")
-        return []
 
 @st.cache_data(show_spinner=False)
 def get_image_bytes(image_url: str) -> bytes | None:
@@ -179,10 +150,9 @@ def main():
         }}
         /* Estilo para as imagens nas colunas da galeria */
         .stColumn img {{
-            max-width: 100%;
-            height: auto;
-            max-height: {MAX_IMAGE_HEIGHT_PX}px; /* Definido pela constante */
-            object-fit: contain; /* Garante que a imagem caiba sem cortar */
+            width: 100%; /* Ocupa toda a largura da coluna */
+            height: auto; /* Mantém a proporção */
+            object-fit: cover; /* Garante que a imagem preencha a área, cortando se necessário */
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             margin: 5px auto; /* Centraliza a imagem na coluna */
@@ -194,6 +164,20 @@ def main():
             font-size: 0.85em;
             color: #666;
             margin-top: 5px;
+        }}
+        /* Estilo para a imagem 1.jpg no topo */
+        .top-image-container {{
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px; /* Espaço entre a imagem e o texto */
+        }}
+        .top-image-container img {{
+            max-width: 800px; /* Largura máxima para a imagem principal */
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }}
         </style>
         """, unsafe_allow_html=True
@@ -220,56 +204,51 @@ def main():
     st.markdown("---")
     st.caption(SAIBA_DESC)
 
+    # --- Imagem 1.jpg no início da página ---
+    st.markdown('<div class="top-image-container">', unsafe_allow_html=True)
+    st.image(PHOTOS_URL_BASE + "1.jpg", caption="Foto de Destaque", use_column_width=True) # Adicionado use_column_width para a imagem principal
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # --- Conteúdo Principal ---
     st.markdown(html_content, unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # --- Galeria de Imagens Dinâmica ---
-    st.subheader("Galeria de Fotos do CMAUF")
-    # Removido o subtítulo "Confira algumas fotos..."
+    # --- Galeria de Imagens Estáticas (Adicionadas uma a uma) ---
+    # Removido o título e subtítulo da galeria
 
-    # Busca os nomes dos arquivos de imagem dinamicamente do GitHub
-    photo_filenames = get_github_image_filenames(GITHUB_API_FOLDER_URL)
+    # Lista de URLs das imagens a serem exibidas (fotos de 2 a 9)
+    images_to_display = [
+        PHOTOS_URL_BASE + "2.jpeg",
+        PHOTOS_URL_BASE + "3.png",
+        PHOTOS_URL_BASE + "4.jpg",
+        PHOTOS_URL_BASE + "5.jpeg",
+        PHOTOS_URL_BASE + "6.png",
+        PHOTOS_URL_BASE + "7.jpg",
+        PHOTOS_URL_BASE + "8.jpeg",
+        PHOTOS_URL_BASE + "9.png",
+    ]
 
-    if not photo_filenames:
-        st.warning("Não foi possível carregar as imagens do GitHub ou a pasta está vazia.")
+    if not images_to_display:
+        st.warning("Nenhuma imagem para exibir na galeria. Por favor, verifique os nomes dos arquivos.")
     else:
-        # Criar um placeholder para a barra de progresso
-        progress_text = "Carregando imagens da galeria..."
-        image_progress_bar = st.progress(0, text=progress_text)
-
-        # Lista para armazenar as URLs das imagens que serão exibidas
-        images_to_display = []
-        for i, filename in enumerate(photo_filenames):
-            image_url = PHOTOS_URL_BASE + filename
-            images_to_display.append(image_url)
-            
-            # Atualiza a barra de progresso
-            progress_percentage = (i + 1) / len(photo_filenames)
-            image_progress_bar.progress(progress_percentage, text=f"{progress_text} ({i+1}/{len(photo_filenames)})")
+        num_images_per_row = 3 # Retornado para 3 colunas
         
-        image_progress_bar.empty() # Remove a barra de progresso após o carregamento
-
-        if not images_to_display:
-            st.warning("Nenhuma imagem válida foi carregada para a galeria.")
-        else:
-            num_images_per_row = 3
-            # Divide as imagens em linhas de 3
-            for i in range(0, len(images_to_display), num_images_per_row):
-                cols = st.columns(num_images_per_row)
-                for j in range(num_images_per_row):
-                    if i + j < len(images_to_display):
-                        with cols[j]:
-                            img_url = images_to_display[i + j]
-                            # Usar st.image diretamente com a URL, sem use_column_width
-                            st.image(img_url)
-                            # Adicionar uma legenda base para cada foto
-                            st.caption(f"Legenda da Foto {i + j + 1}")
-                    else:
-                        # Preencher colunas vazias se não houver imagens suficientes para a última linha
-                        with cols[j]:
-                            st.empty() # Garante que as colunas vazias não quebrem o layout
+        # Divide as imagens em linhas de 3
+        for i in range(0, len(images_to_display), num_images_per_row):
+            cols = st.columns(num_images_per_row)
+            for j in range(num_images_per_row):
+                if i + j < len(images_to_display):
+                    with cols[j]:
+                        img_url = images_to_display[i + j]
+                        # Usar st.image diretamente com a URL, permitindo que o CSS controle o tamanho
+                        st.image(img_url)
+                        # Adicionar uma legenda base para cada foto
+                        st.caption(f"Legenda da Foto {i + j + 2}") # Ajustado o índice para começar de 2
+                else:
+                    # Preencher colunas vazias se não houver imagens suficientes para a última linha
+                    with cols[j]:
+                        st.empty() # Garante que as colunas vazias não quebrem o layout
 
     st.markdown("---")
 
