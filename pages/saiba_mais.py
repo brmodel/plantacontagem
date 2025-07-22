@@ -5,246 +5,340 @@ import base64
 import html # Importar o módulo html para escape
 
 # --- Constantes ---
-PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
-# URLs base para as imagens no GitHub
-BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
-LOGO_PMC_FILENAME = "banner_pmc.png"
+# URL base para as fotos no GitHub
+PHOTOS_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/fotos/"
 
-# --- Textos da Página ---
-SAIBA_TITULO = "Conheça o CMAUF"
-SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
-SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
-
-# --- Links ---
-LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
-LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
-LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
-LINK_PAA = "https://www.gov.br/secom/pt-br/acesso-a-informacao/comunicabr/lista-de-acoes-e-programas/programa-de-aquisicao-de-alimentos-paa"
-
-# --- Constantes para o rodapé ---
-# Estrutura de dados para gerenciar os banners, com escala e offset vertical.
-# Valores de escala e offset ajustados para melhor alinhamento visual.
-FOOTER_BANNERS_DATA = [
-    {
-        "filename": "governo_federal.png",
-        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
-        "link": LINK_GOVERNO_FEDERAL,
-        "scale": 2.2,
-        "offset_y": -5 # Desloca 10px para cima para alinhar com a imagem ao lado
-    },
-    {
-        "filename": "alimenta_cidades.png",
-        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/alimenta_cidades.png",
-        "link": LINK_ALIMENTA_CIDADES,
-        "scale": 2.5,
-        "offset_y": -25
-    },
-    {
-        "filename": "contagem_sem_fome.png",
-        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/contagem_sem_fome.png",
-        "link": LINK_CONTAGEM_SEM_FOME,
-        "scale": 1.0,
-        "offset_y": 25
-    },
-    {
-        "filename": "banner_pmc.png",
-        "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/banner_pmc.png",
-        "link": PMC_PORTAL_URL,
-        "scale": 1.0,
-        "offset_y": 25
-    }
+# Lista de nomes de arquivos das fotos (ajuste conforme os nomes reais na sua pasta)
+# Assumindo nomes genéricos para o exemplo. Por favor, substitua pelos nomes exatos dos seus arquivos.
+PHOTO_FILENAMES = [
+    "foto1.jpg",
+    "foto2.jpg",
+    "foto3.jpg",
+    "foto4.jpg",
+    "foto5.jpg",
+    "foto6.jpg",
+    "foto7.jpg",
+    "foto8.jpg",
+    "foto9.jpg",
+    "foto10.jpg",
+    "foto11.jpg",
+    "foto12.jpg",
+    "foto13.jpg",
+    "foto14.jpg",
+    "foto15.jpg",
+    "foto16.jpg",
+    "foto17.jpg",
+    "foto18.jpg",
+    "foto19.jpg",
+    "foto20.jpg",
+    "foto21.jpg",
+    "foto22.jpg",
+    "foto23.jpg",
+    "foto24.jpg",
+    "foto25.jpg",
+    "foto26.jpg",
+    "foto27.jpg",
+    "foto28.jpg",
+    "foto29.jpg",
+    "foto30.jpg",
+    "foto31.jpg",
+    "foto32.jpg",
+    "foto33.jpg",
+    "foto34.jpg",
+    "foto35.jpg",
+    "foto36.jpg",
+    "foto37.jpg",
+    "foto38.jpg",
+    "foto39.jpg",
+    "foto40.jpg",
+    "foto41.jpg",
+    "foto42.jpg",
+    "foto43.jpg",
+    "foto44.jpg",
+    "foto45.jpg",
+    "foto46.jpg",
+    "foto47.jpg",
+    "foto48.jpg",
+    "foto49.jpg",
+    "foto50.jpg",
+    "foto51.jpg",
+    "foto52.jpg",
+    "foto53.jpg",
+    "foto54.jpg",
+    "foto55.jpg",
+    "foto56.jpg",
+    "foto57.jpg",
+    "foto58.jpg",
+    "foto59.jpg",
+    "foto60.jpg",
+    "foto61.jpg",
+    "foto62.jpg",
+    "foto63.jpg",
+    "foto64.jpg",
+    "foto65.jpg",
+    "foto66.jpg",
+    "foto67.jpg",
+    "foto68.jpg",
+    "foto69.jpg",
+    "foto70.jpg",
+    "foto71.jpg",
+    "foto72.jpg",
+    "foto73.jpg",
+    "foto74.jpg",
+    "foto75.jpg",
+    "foto76.jpg",
+    "foto77.jpg",
+    "foto78.jpg",
+    "foto79.jpg",
+    "foto80.jpg",
+    "foto81.jpg",
+    "foto82.jpg",
+    "foto83.jpg",
+    "foto84.jpg",
+    "foto85.jpg",
+    "foto86.jpg",
+    "foto87.jpg",
+    "foto88.jpg",
+    "foto89.jpg",
+    "foto90.jpg",
+    "foto91.jpg",
+    "foto92.jpg",
+    "foto93.jpg",
+    "foto94.jpg",
+    "foto95.jpg",
+    "foto96.jpg",
+    "foto97.jpg",
+    "foto98.jpg",
+    "foto99.jpg",
+    "foto100.jpg",
 ]
 
-
-# --- Conteúdo HTML ---
-html_content = f"""
-<div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-<p style="margin-bottom: 1.5em; text-align: justify;">
-Centro Municipal de Agricultura Urbana e Familiar (CMAUF) foi criado pela Prefeitura de Contagem para combater a insegurança alimentar através do fortalecimento da agricultura sustentável no município, garantindo o direito humano universal à Segurança Alimentar Nutricional Sustentável. Isso é feito ao fomentar ações de incentivo à produção, ao processamento e à comercialização de alimentos, através da implantação de sistemas produtivos agroecológicos e da comercialização direta dos produtos.
-</p>
-<p style="margin-bottom: 1.5em; text-align: justify;">
-O equipamento trabalha em consonância com as Políticas Nacional e Estadual de Agricultura Urbana Periurbana e Familiar, promovendo programas públicos em nível municipal como o <a href="{LINK_CONTAGEM_SEM_FOME}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Contagem Sem Fome</a>, além de conferir capilaridade a políticas nacionais como o <a href="{LINK_ALIMENTA_CIDADES}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Alimenta Cidades</a>, sendo Contagem um dos municípios exemplares contemplados por esse programa do Governo Federal. Além desses dois, o CMAUF e a Prefeitura de Contagem participam ativamente do <a href="{LINK_PAA}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: bold;">Programa de Aquisição de Alimentos (PAA)</a>
-</p>
-<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Pilares de Atuação:</h4>
-<ul style="list-style-type: none; padding-left: 0;">
-<li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
-<span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
-<b style="color: #555;">Capacitação e apoio técnico:</b>
-Implanta e acompanha Unidades Produtivas (UPs) em todo o município, oferecendo assistência e formação técnica, trocas de mudas, subsidiando e qualificando a produção local.
-</li>
-<li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
-<span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
-<b style="color: #555;">Sistemas agroecológicos:</b>
-Promove ativamente a comercialização direta de alimentos e a implementação de tecnologias sociais,
-em sintonia com as Políticas Nacional e Estadual de Agricultura Urbana, visando sustentabilidade e equidade.
-</li>
-<li style="margin-bottom: 1em; padding-left: 25px; position: relative;">
-<span style="position: absolute; left: 0; top: 0; color: #0066cc; font-size: 1.2em;">&#10003;</span>
-<b style="color: #555;">Mapeamento estratégico:</b>
-Realiza a identificação contínua de demandas e oportunidades para o desenvolvimento de ações concretas,
-desde a otimização da produção de alimentos até o incentivo à criação de pequenos animais.
-</li>
-<p style="margin-top: 2em; text-align: justify;">
-Para tanto, o CMAUF é formado por uma dupla parceria entre a Organização da Sociedade Civil da Comunidade Quilombola dos Arturo's, e mantém uma parceria estratégica com a EMATER-MG, garantindo assistência técnica especializada
-e extensão rural a agricultores familiares do município e para os vários tipos de Unidades Produtivas. Essa colaboração reforça o compromisso da prefeitura com o
-desenvolvimento sustentável local e a melhoria contínua da qualidade de vida dos cidadãos de Contagem.
-</p>
-</ul>
-<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Tipos de Unidades Produtivas (UPs):</h4>
-<ul style="list-style-type: disc; margin-left: 25px; color: #444;">
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitárias:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Institucionais:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS), Unidades Básicas de Saúde e Escolas Públicas.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Comunitária/Institucional:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Agricultores Familiares:</b> produtores urbanos e periurbanos do município de Contagem que são atendidos pela parceria com a EMATER.</li>
-</ul>
-<h4 style="color: #0066cc; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Outras iniciativas em Contagem:</h4>
-<ul style="list-style-type: disc; margin-left: 25px; color: #444;">
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Restaurante Popular:</b> Projetos de gestão compartilhada desenvolvidos em áreas públicas ou privadas.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Banco de Alimentos:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Feiras da Cidade:</b> Vinculadas e integradas a equipamentos públicos, como Centros de Referência de Assistência Social (CRAS) e centros de saúde.</li>
-<li style="margin-bottom: 0.7em; text-align: justify;"><b>Viveiros:</b> Iniciativas focadas na educação ambiental e na promoção de hábitos alimentares saudáveis no ambiente escolar.</li>
-</ul>
-</div>
-"""
 
 # --- Funções de Cache de Imagem ---
 @st.cache_data(show_spinner=False)
 def get_image_bytes(image_url: str) -> bytes | None:
+    """
+    Carrega os bytes de uma imagem a partir de uma URL e os armazena em cache.
+    """
     try:
         response = requests.get(image_url, timeout=10)
-        response.raise_for_status()
+        response.raise_for_status()  # Levanta um erro para códigos de status HTTP ruins (4xx ou 5xx)
         return response.content
     except requests.exceptions.RequestException as e:
-        print(f"Erro ao carregar bytes da imagem {image_url}: {e}")
+        st.error(f"Erro ao carregar a imagem de {image_url}: {e}")
         return None
 
 # --- App Principal Streamlit ---
 def main():
-    st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="collapsed")
+    st.set_page_config(page_title="Carrossel de Imagens", layout="wide", initial_sidebar_state="collapsed")
 
-    # Injeção de CSS customizado
+    # Injeção de CSS customizado para o carrossel e estilo geral
     st.markdown(
         """
         <style>
-        .stApp > header {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f6;
+        }
+        .stApp {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background-color: white;
+        }
+
+        .carousel-container {
             position: relative;
-            z-index: 1000;
+            width: 100%;
+            max-width: 800px; /* Largura máxima do carrossel */
+            margin: 20px auto;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background-color: #f8f8f8;
+            aspect-ratio: 16 / 9; /* Mantém a proporção 16:9 */
         }
-        div[data-testid="stSidebarNav"] {
-            display: none !important;
-        }
-        div[data-testid="stColumns"] > div > div {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out; /* Efeito crossfade */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #eee; /* Cor de fundo enquanto a imagem carrega */
         }
-        div[data-testid="stVerticalBlock"] h3 {
-            margin-top: 0px; margin-bottom: 0px;
-            padding-top: 0px; padding-bottom: 0px;
+
+        .carousel-slide.active {
+            opacity: 1;
         }
-        div[data-testid="column-PMC-logo"] {
+
+        .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Ajusta a imagem para caber sem cortar */
+            border-radius: 10px;
+        }
+
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-size: 24px;
+            border-radius: 50%;
+            z-index: 10;
+            transition: background-color 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100%;
-            padding-top: 5px;
-            margin-top: 0px;
         }
-        div[data-testid="column-PMC-logo"] img {
-            max-width: 100%;
-            height: auto;
-            max-height: 60px;
-            object-fit: contain;
+
+        .carousel-button:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .prev {
+            left: 10px;
+        }
+
+        .next {
+            right: 10px;
+        }
+
+        /* Indicadores de slide */
+        .carousel-indicators {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .indicator-dot {
+            width: 12px;
+            height: 12px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .indicator-dot.active {
+            background-color: rgba(255, 255, 255, 1);
         }
         </style>
         """, unsafe_allow_html=True
     )
 
-    # --- Layout do Cabeçalho ---
-    with st.container():
-        col1, col2 = st.columns([3, 0.5])
-        with col1:
-            st.title(SAIBA_TITULO)
-            st.header(SAIBA_SUBTITULO)
-            if st.button("⬅️ Voltar ao Mapa"):
-                st.switch_page("streamlit_app.py")
+    st.title("Carrossel de Imagens do CMAUF")
+    st.write("Confira algumas fotos das atividades e locais do Centro Municipal de Agricultura Urbana e Familiar.")
 
-        with col2:
-            st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
-            logo_bytes = get_image_bytes(BANNER_URL_BASE + LOGO_PMC_FILENAME)
-            if logo_bytes:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{BANNER_URL_BASE + LOGO_PMC_FILENAME}"></a>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("---")
-    st.caption(SAIBA_DESC)
-
-    # --- Conteúdo Principal ---
-    st.markdown(html_content, unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    # --- Layout do Rodapé ---
-    def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0, offset_y: int = 0) -> str:
-        """Gera o HTML para um banner com escala e deslocamento vertical."""
-        escaped_url = html.escape(url)
-        escaped_filename = html.escape(filename)
-
-        base_max_height_px = 50
-        scaled_max_height = int(base_max_height_px * scale)
-
-        offset_style = f"margin-top: {offset_y}px;" if offset_y != 0 else ""
-
-        # CORREÇÃO: Os estilos CSS são juntados em uma única string sem quebras de linha.
-        img_style_parts = [
-            "height: auto",
-            "width: auto",
-            "max-width: 100%",
-            f"max-height: {scaled_max_height}px",
-            "object-fit: contain",
-            "display: block",
-            "margin-left: auto",
-            "margin-right: auto",
-            offset_style
-        ]
-        img_style = "; ".join(filter(None, [s.strip() for s in img_style_parts]))
-
-        image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
-
-        # CORREÇÃO: Estilos do container também em uma única linha.
-        container_style_parts = [
-            "display: flex",
-            "justify-content: center",
-            "align-items: center",
-            f"min-height: {scaled_max_height}px",
-            "overflow: hidden",
-            "width: 100%",
-            "padding: 5px",
-        ]
-        container_style = "; ".join(filter(None, [s.strip() for s in container_style_parts]))
-
-        if link_url:
-            return f'<div style="{container_style}"><a href="{link_url}" target="_blank" rel="noopener noreferrer">{image_tag}</a></div>'
+    # Carregar todas as imagens e convertê-las para base64
+    image_data_list = []
+    for filename in PHOTO_FILENAMES:
+        image_url = PHOTOS_URL_BASE + filename
+        img_bytes = get_image_bytes(image_url)
+        if img_bytes:
+            # Usar html.escape para garantir que a string base64 seja segura para HTML
+            encoded_image = html.escape(base64.b64encode(img_bytes).decode())
+            image_data_list.append(encoded_image)
         else:
-            return f'<div style="{container_style}">{image_tag}</div>'
+            # Se a imagem não puder ser carregada, adicione uma imagem placeholder ou trate o erro
+            st.warning(f"Não foi possível carregar a imagem: {filename}. Usando placeholder.")
+            # Você pode adicionar um placeholder genérico aqui se desejar
+            image_data_list.append(None) # Ou um base64 de uma imagem placeholder
 
-    # Cria colunas para cada banner no rodapé
-    cols_banner = st.columns(len(FOOTER_BANNERS_DATA))
+    # Construir o HTML do carrossel
+    carousel_slides_html = ""
+    carousel_indicators_html = ""
+    for i, encoded_img in enumerate(image_data_list):
+        if encoded_img:
+            # O primeiro slide é ativo por padrão
+            active_class = "active" if i == 0 else ""
+            carousel_slides_html += f"""
+            <div class="carousel-slide {active_class}">
+                <img src="data:image/jpeg;base64,{encoded_img}" alt="Foto {i+1}">
+            </div>
+            """
+        else:
+            # Adicionar um slide vazio ou com mensagem de erro se a imagem não carregou
+            active_class = "active" if i == 0 else ""
+            carousel_slides_html += f"""
+            <div class="carousel-slide {active_class}">
+                <p style="color: grey;">Imagem não disponível.</p>
+            </div>
+            """
+        
+        # Indicadores de slide
+        active_dot_class = "active" if i == 0 else ""
+        carousel_indicators_html += f"""
+        <div class="indicator-dot {active_dot_class}" onclick="currentSlide({i})"></div>
+        """
 
-    # Itera sobre os dados dos banners e exibe cada um em sua coluna com a escala e offset corretos
-    for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
-        with cols_banner[i]:
-            banner_html = display_banner_html(
-                url=banner_data["url"],
-                filename=banner_data["filename"],
-                link_url=banner_data["link"],
-                scale=banner_data.get("scale", 1.0),
-                offset_y=banner_data.get("offset_y", 0)
-            )
-            st.markdown(banner_html, unsafe_allow_html=True)
+
+    carousel_html = f"""
+    <div class="carousel-container">
+        {carousel_slides_html}
+        <button class="carousel-button prev" onclick="moveSlide(-1)">&#10094;</button>
+        <button class="carousel-button next" onclick="moveSlide(1)">&#10095;</button>
+        <div class="carousel-indicators">
+            {carousel_indicators_html}
+        </div>
+    </div>
+
+    <script>
+        let slideIndex = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.indicator-dot');
+        const totalSlides = slides.length;
+
+        function showSlides() {{
+            for (let i = 0; i < totalSlides; i++) {{
+                slides[i].classList.remove('active');
+                dots[i].classList.remove('active');
+            }}
+            slides[slideIndex].classList.add('active');
+            dots[slideIndex].classList.add('active');
+        }}
+
+        function moveSlide(n) {{
+            slideIndex += n;
+            if (slideIndex >= totalSlides) {{ slideIndex = 0; }}
+            if (slideIndex < 0) {{ slideIndex = totalSlides - 1; }}
+            showSlides();
+        }}
+
+        function currentSlide(n) {{
+            slideIndex = n;
+            showSlides();
+        }}
+
+        // Auto-play
+        setInterval(() => moveSlide(1), 5000); // Muda de slide a cada 5 segundos
+
+        // Exibe o primeiro slide ao carregar
+        showSlides();
+    </script>
+    """
+
+    # Exibir o carrossel no Streamlit
+    st.markdown(carousel_html, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.write("Este carrossel demonstra a integração de recursos web personalizados no Streamlit.")
 
 if __name__ == "__main__":
     main()
