@@ -152,7 +152,8 @@ def main():
         .stColumn img {{
             width: 100%; /* Ocupa toda a largura da coluna */
             height: auto; /* Mantém a proporção */
-            object-fit: cover; /* Garante que a imagem preencha a área, cortando se necessário */
+            max-height: 150px; /* Altura máxima para as imagens da galeria */
+            object-fit: contain; /* Garante que a imagem caiba sem cortar */
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             margin: 5px auto; /* Centraliza a imagem na coluna */
@@ -170,10 +171,11 @@ def main():
             width: 100%;
             display: flex;
             justify-content: center;
-            margin-bottom: 20px; /* Espaço entre a imagem e o texto */
+            margin-top: 20px; /* Espaço antes da imagem */
+            margin-bottom: 20px; /* Espaço depois da imagem */
         }}
         .top-image-container img {{
-            max-width: 800px; /* Largura máxima para a imagem principal */
+            max-width: 500px; /* Largura máxima para a imagem principal (reduzida) */
             width: 100%;
             height: auto;
             border-radius: 10px;
@@ -204,17 +206,19 @@ def main():
     st.markdown("---")
     st.caption(SAIBA_DESC)
 
-    # --- Imagem 1.jpg no início da página ---
-    st.markdown('<div class="top-image-container">', unsafe_allow_html=True)
-    st.image(PHOTOS_URL_BASE + "1.jpg", caption="Foto de Destaque", use_column_width=True) # Adicionado use_column_width para a imagem principal
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # --- Conteúdo Principal ---
+    # --- Conteúdo Principal (Texto) ---
     st.markdown(html_content, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("---") # Separador após o conteúdo principal
 
-    # --- Galeria de Imagens Estáticas (Adicionadas uma a uma) ---
+    # --- Imagem 1.jpg em destaque (agora após o conteúdo principal) ---
+    st.markdown('<div class="top-image-container">', unsafe_allow_html=True)
+    st.image(PHOTOS_URL_BASE + "1.jpg", caption="Foto de Destaque", use_column_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("---") # Separador após a imagem de destaque
+
+    # --- Galeria de Imagens Estáticas (fotos de 2 a 9) ---
     # Removido o título e subtítulo da galeria
 
     # Lista de URLs das imagens a serem exibidas (fotos de 2 a 9)
