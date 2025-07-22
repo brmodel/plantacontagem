@@ -117,7 +117,7 @@ GITHUB_API_FOLDER_URL = "https://api.github.com/repos/brmodel/plantacontagem/con
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.ico')
 
 # Limite de imagens a serem carregadas no carrossel para otimização
-MAX_CAROUSEL_IMAGES = 5 # Reduzido para 5 imagens para tentar carregar
+MAX_CAROUSEL_IMAGES = 5 # Mantido em 5 imagens para teste
 
 # --- Funções de Cache ---
 
@@ -147,6 +147,9 @@ def get_github_image_filenames(api_url: str) -> list[str]:
         st.error(f"Ocorreu um erro inesperado ao processar a resposta do GitHub: {e}")
         return []
 
+# A função get_image_bytes não é mais necessária para as imagens do carrossel,
+# pois elas serão carregadas diretamente pelas URLs no frontend.
+# Mantida apenas para o logo do cabeçalho, se necessário.
 @st.cache_data(show_spinner=False)
 def get_image_bytes(image_url: str) -> bytes | None:
     """
@@ -303,8 +306,6 @@ def main():
 
     # --- Carrossel de Imagens (Adicionado aqui) ---
     # Removidos os títulos e subtítulos do carrossel
-    # st.subheader("Galeria de Fotos do CMAUF")
-    # st.write("Confira algumas fotos das atividades e locais do Centro Municipal de Agricultura Urbana e Familiar.")
 
     # Busca os nomes dos arquivos de imagem dinamicamente do GitHub
     photo_filenames = get_github_image_filenames(GITHUB_API_FOLDER_URL)
@@ -315,53 +316,24 @@ def main():
         # Limita o número de imagens a serem carregadas
         photo_filenames_limited = photo_filenames[:MAX_CAROUSEL_IMAGES]
 
-        # Carregar todas as imagens e convertê-las para base64
-        image_data_list = []
-        progress_text = "Carregando imagens para o carrossel..."
-        image_progress_bar = st.progress(0, text=progress_text)
+        # Carregar apenas as URLs das imagens para o JavaScript
+        image_urls_list = []
+        for filename in photo_filenames_limited:
+            image_urls_list.append(PHOTOS_URL_BASE + filename)
         
-        for i, filename in enumerate(photo_filenames_limited):
-            image_url = PHOTOS_URL_BASE + filename
-            img_bytes = get_image_bytes(image_url)
-            if img_bytes:
-                # Usar html.escape para garantir que a string base64 seja segura para HTML
-                # Determinar o tipo MIME da imagem com base na extensão
-                _, ext = os.path.splitext(filename)
-                mime_type = f"image/{ext[1:]}" if ext else "image/jpeg" # Default para jpeg se não houver extensão
-                if ext.lower() in ['.jpg', '.jpeg']: # Ajuste específico para .jpg/.jpeg que é frequentemente image/jpeg
-                    mime_type = "image/jpeg"
-                elif ext.lower() == '.gif':
-                    mime_type = "image/gif"
-                elif ext.lower() == '.webp':
-                    mime_type = "image/webp"
-                elif ext.lower() == '.png':
-                    mime_type = "image/png"
-
-                encoded_image = html.escape(base64.b64encode(img_bytes).decode())
-                image_data_list.append((encoded_image, mime_type))
-            else:
-                st.warning(f"Não foi possível carregar a imagem: {filename}. Será ignorada no carrossel.")
-                # Não adicionamos None para evitar slides vazios, apenas ignoramos a imagem com erro
-            
-            # Atualiza a barra de progresso
-            progress_percentage = (i + 1) / len(photo_filenames_limited)
-            image_progress_bar.progress(progress_percentage, text=f"{progress_text} ({i+1}/{len(photo_filenames_limited)})")
-        
-        image_progress_bar.empty() # Remove a barra de progresso após o carregamento
-
-        if not image_data_list:
+        if not image_urls_list:
             st.warning("Nenhuma imagem válida foi carregada para o carrossel.")
         else:
             # Construir o HTML do carrossel
             carousel_slides_html = ""
             carousel_indicators_html = ""
-            for i, (encoded_img, mime_type) in enumerate(image_data_list):
+            for i, image_url in enumerate(image_urls_list):
                 # O primeiro slide é ativo por padrão
                 active_class = "active" if i == 0 else ""
-                # Usamos um placeholder src e o data-src para o base64 para lazy loading
+                # Usamos um placeholder src e o data-src para a URL real da imagem
                 carousel_slides_html += f"""
                 <div class="carousel-slide {active_class}">
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="data:{mime_type};base64,{encoded_img}" alt="Foto {i+1}">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="{html.escape(image_url)}" alt="Foto {i+1}">
                 </div>
                 """
                 
@@ -389,7 +361,8 @@ def main():
 
                 function loadImage(slideElement) {{
                     const img = slideElement.querySelector('img');
-                    if (img && img.dataset.src && !img.src.startsWith('data:{mime_type};base64')) {{ // Evita recarregar se já carregado
+                    // Verifica se o elemento img existe, se tem data-src e se o src ainda é o placeholder GIF
+                    if (img && img.dataset.src && img.src.startsWith('data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=')) {{
                         img.src = img.dataset.src;
                     }}
                 }}
@@ -405,7 +378,9 @@ def main():
 
                     // Opcional: pré-carregar a próxima imagem para transições mais suaves
                     const nextSlideIndex = (slideIndex + 1) % totalSlides;
-                    loadImage(slides[nextSlideIndex]);
+                    if (nextSlideIndex < totalSlides) {{ // Garante que o índice é válido
+                        loadImage(slides[nextSlideIndex]);
+                    }}
                 }}
 
                 function moveSlide(n) {{
