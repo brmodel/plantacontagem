@@ -8,9 +8,9 @@ from folium.plugins import LocateControl
 import numpy as np
 import json
 import base64
-import html # Módulo importado para escape de HTML
+import html
 
-# --- Configurações ---
+####### Configurações de ícones, base de dados, links de imagens e afins ######
 APP_TITULO = "Planta Contagem"
 APP_SUBTITULO = "Mapa das Unidades Produtivas de Contagem"
 APP_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
@@ -43,19 +43,17 @@ CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
 ZOOM_SELECIONADO_MAPA = 16
 
-# --- Links (copiado de saiba_mais.py) ---
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 
-# --- Constantes para o rodapé (copiado de saiba_mais.py) ---
 FOOTER_BANNERS_DATA = [
     {
         "filename": "governo_federal.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
         "link": LINK_GOVERNO_FEDERAL,
         "scale": 2.2,
-        "offset_y": -5 # Desloca 10px para cima para alinhar com a imagem ao lado
+        "offset_y": -5 
     },
     {
         "filename": "alimenta_cidades.png",
@@ -80,7 +78,7 @@ FOOTER_BANNERS_DATA = [
     }
 ]
 
-# --- Funções de Cache de Imagem ---
+####### Carregamento de imagens e database ######
 @st.cache_data(show_spinner=False)
 def get_image_as_base64(image_url: str) -> str | None:
     try:
@@ -106,12 +104,11 @@ def get_image_bytes(image_url: str) -> bytes | None:
         print(f"Erro ao carregar bytes da imagem {image_url}: {e}")
         return None
 
-# --- URLs e Rótulos Pré-calculados ---
+####### Design da página da internet e dos icones do mapa #######
 ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
 ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
 LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
 
-# --- Templates HTML ---
 POPUP_TEMPLATE_BASE = """
 <div style="font-family: Arial, sans-serif; font-size: 12px; width: auto; max-width: min(90vw, 466px); min-width: 200px; word-break: break-word; box-sizing: border-box; padding: 8px;">
     <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{}</b></h6>
@@ -120,7 +117,7 @@ POPUP_TEMPLATE_BASE = """
     {} </div>"""
 TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14px"><p><b>{}:</b><br>{}</p></div>"""
 
-# --- Funções de Carregamento de Dados ---
+####### Carregamento dos dados do mapa a partir do googledocs, do geojson com limites do município ######
 @st.cache_data(ttl=600)
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/1qNmwcOhFnWrFHDYwkq36gHmk4Rx97b6RM0VqU94vOro/export?format=csv&gid=1832051074"
@@ -149,7 +146,7 @@ def load_geojson():
         st.error(f"Erro ao carregar GeoJSON: {e}")
         return {"type": "FeatureCollection", "features": []}
 
-# --- Funções de Criação do Mapa e Legenda ---
+
 def criar_legenda(geojson_data):
     regions = []
     if geojson_data and isinstance(geojson_data, dict) and 'features' in geojson_data:
@@ -226,11 +223,11 @@ def criar_mapa(data, geojson_data):
     folium.LayerControl(position='bottomleft').add_to(m)
     return m
 
-# --- App Principal Streamlit ---
+###### Funções do streamlit para design da página e pra alocação do mapa e dos elementos do mapa #####
 def main():
     st.set_page_config(page_title=APP_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
-    # Injeção de CSS
+    
     st.markdown(
         """
         <style>
@@ -282,7 +279,7 @@ def main():
         """, unsafe_allow_html=True
     )
 
-    # Inicializa ou carrega variáveis de estado da sessão
+    ###### Carregamento dos elementos na sessão do usuário quando entra na página ou qunaod recarrega streamlit #########
     if 'selected_marker_info' not in st.session_state: st.session_state.selected_marker_info = None
     if 'search_input_value' not in st.session_state: st.session_state.search_input_value = ''
     if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {}
@@ -300,7 +297,7 @@ def main():
                 st.session_state.load_error = True
             st.session_state.geojson_data = load_geojson()
     
-    # --- Layout do Cabeçalho ---
+    ####### Layout da página ##########
     st.title(APP_TITULO)
     
     header_col1, header_col2, header_col3 = st.columns([0.6, 0.25, 0.15])
@@ -334,7 +331,7 @@ def main():
             st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- Sidebar para Detalhes do Marcador ---
+    
     with st.sidebar:
         st.header("Detalhes da Unidade")
         if st.session_state.get("selected_marker_info"):
@@ -357,7 +354,7 @@ def main():
         else:
             st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
 
-    # --- Filtragem de Dados ---
+    ###### Conferir se dados existem e quebra de loop se houver falha na conexão com o googledocs ####
     df_filtrado = pd.DataFrame()
     if not st.session_state.load_error and not st.session_state.df.empty:
         df_original = st.session_state.df
@@ -374,7 +371,7 @@ def main():
         else:
             df_filtrado = df_original
     
-    # --- Exibição do Mapa ---
+    ###### Exibicação do mapa na página ###########
     if not df_filtrado.empty:
         m = criar_mapa(df_filtrado, st.session_state.get('geojson_data'))
         map_output = st_folium(
@@ -384,7 +381,7 @@ def main():
             width='100%', height=600, key="folium_map_interactive",
             returned_objects=['last_object_clicked']
         )
-        
+    ####### Loop com função de exibir dados específicos da unidade quando clicar na unidade #####    
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
@@ -402,12 +399,12 @@ def main():
                 
     elif st.session_state.load_error: st.error("Falha ao carregar dados. O mapa não pode ser exibido.")
     
-    # --- Rodapé ---
+    ###### Restante da página depois do mapa ########
     st.markdown("---"); st.caption(APP_DESC)
 
-    # --- Lógica do Rodapé (copiado de saiba_mais.py) ---
+    
     def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0, offset_y: int = 0) -> str:
-        """Gera o HTML para um banner com escala e deslocamento vertical."""
+        """Html do banner de rodapé."""
         escaped_url = html.escape(url)
         escaped_filename = html.escape(filename)
 
