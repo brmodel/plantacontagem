@@ -2,36 +2,32 @@
 import streamlit as st
 import requests
 import base64
-import html # Importar o módulo html para escape
-import os # Para manipular extensões de arquivo
+import html
+import os
 
-# --- Constantes ---
+
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
-# URLs base para as imagens no GitHub
 BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 LOGO_PMC_FILENAME = "banner_pmc.png"
 
-# --- Textos da Página ---
 SAIBA_TITULO = "Conheça o CMAUF"
 SAIBA_SUBTITULO = "Centro Municipal de Agricultura Urbana e Familiar"
 SAIBA_DESC = "Prefeitura Municipal de Contagem - MG, Mapeamento feito pelo Centro Municipal de Agricultura Urbana e Familiar (CMAUF)"
 
-# --- Links ---
+
 LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/67444/prefeitura-lanca-campanha-de-seguranca-alimentar-contagem-sem-fome"
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 LINK_PAA = "https://www.gov.br/secom/pt-br/acesso-a-informacao/comunicabr/lista-de-acoes-e-programas/programa-de-aquisicao-de-alimentos-paa"
 
-# --- Constantes para o rodapé ---
-# Estrutura de dados para gerenciar os banners, com escala e offset vertical.
-# Valores de escala e offset ajustados para melhor alinhamento visual.
+
 FOOTER_BANNERS_DATA = [
     {
         "filename": "governo_federal.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
         "link": LINK_GOVERNO_FEDERAL,
         "scale": 2.2,
-        "offset_y": -5 # Desloca 10px para cima para alinhar com a imagem ao lado
+        "offset_y": -5
     },
     {
         "filename": "alimenta_cidades.png",
@@ -56,7 +52,7 @@ FOOTER_BANNERS_DATA = [
     }
 ]
 
-# --- Conteúdo HTML ---
+
 html_content = f"""
 <div style="font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333; padding: 15px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
 <p style="margin-bottom: 1.5em; text-align: justify;">
@@ -107,12 +103,10 @@ desenvolvimento sustentável local e a melhoria contínua da qualidade de vida d
 </div>
 """
 
-# --- Constantes para Imagens Estáticas (Galeria) ---
+
 PHOTOS_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/fotos/"
-# Extensões de arquivo de imagem comuns que serão consideradas (mantidas para referência, mas não usadas para busca dinâmica)
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.ico')
 
-# --- Funções de Cache ---
 
 @st.cache_data(show_spinner=False)
 def get_image_bytes(image_url: str) -> bytes | None:
@@ -128,11 +122,11 @@ def get_image_bytes(image_url: str) -> bytes | None:
         print(f"Erro ao carregar bytes da imagem {image_url}: {e}")
         return None
 
-# --- App Principal Streamlit ---
+
 def main():
     st.set_page_config(page_title=SAIBA_TITULO, layout="wide", initial_sidebar_state="collapsed")
 
-    # Injeção de CSS customizado
+    
     st.markdown(
         f"""
         <style>
@@ -185,7 +179,7 @@ def main():
         """, unsafe_allow_html=True
     )
 
-    # --- Layout do Cabeçalho ---
+    
     with st.container():
         col1, col2 = st.columns([3, 0.5])
         with col1:
@@ -218,10 +212,7 @@ def main():
 
     st.markdown("---") # Separador após a imagem de destaque
 
-    # --- Galeria de Imagens Estáticas (fotos de 2 a 9) ---
-    # Removido o título e subtítulo da galeria
 
-    # Lista de URLs das imagens a serem exibidas (fotos de 2 a 9)
     images_to_display = [
         PHOTOS_URL_BASE + "2.JPG",
         PHOTOS_URL_BASE + "3.jpeg",
@@ -242,25 +233,20 @@ def main():
     else:
         num_images_per_row = 3 # Retornado para 3 colunas
         
-        # Divide as imagens em linhas de 3
         for i in range(0, len(images_to_display), num_images_per_row):
             cols = st.columns(num_images_per_row)
             for j in range(num_images_per_row):
                 if i + j < len(images_to_display):
                     with cols[j]:
                         img_url = images_to_display[i + j]
-                        # Usar st.image diretamente com a URL, permitindo que o CSS controle o tamanho
                         st.image(img_url)
-                        # Adicionar uma legenda base para cada foto
-                        st.caption(f"Legenda da Foto {i + j + 2}") # Ajustado o índice para começar de 2
                 else:
-                    # Preencher colunas vazias se não houver imagens suficientes para a última linha
                     with cols[j]:
                         st.empty() # Garante que as colunas vazias não quebrem o layout
 
     st.markdown("---")
 
-    # --- Layout do Rodapé ---
+    
     def display_banner_html(url: str, filename: str, link_url: str | None, scale: float = 1.0, offset_y: int = 0) -> str:
         """Gera o HTML para um banner com escala e deslocamento vertical."""
         escaped_url = html.escape(url)
@@ -271,7 +257,7 @@ def main():
 
         offset_style = f"margin-top: {offset_y}px;" if offset_y != 0 else ""
 
-        # CORREÇÃO: Os estilos CSS são juntados em uma única string sem quebras de linha.
+        
         img_style_parts = [
             "height: auto",
             "width: auto",
@@ -287,7 +273,6 @@ def main():
 
         image_tag = f'<img src="{escaped_url}" alt="Banner {escaped_filename}" style="{img_style}">'
 
-        # CORREÇÃO: Estilos do container também em uma única linha.
         container_style_parts = [
             "display: flex",
             "justify-content: center",
@@ -304,10 +289,8 @@ def main():
         else:
             return f'<div style="{container_style}">{image_tag}</div>'
 
-    # Cria colunas para cada banner no rodapé
     cols_banner = st.columns(len(FOOTER_BANNERS_DATA))
 
-    # Itera sobre os dados dos banners e exibe cada um em sua coluna com a escala e offset corretos
     for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
         with cols_banner[i]:
             banner_html = display_banner_html(
