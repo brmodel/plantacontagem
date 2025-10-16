@@ -383,9 +383,9 @@ def main():
         )
     ####### Loop com função de exibir dados específicos da unidade quando clicar na unidade #####    
         if map_output and map_output.get('last_object_clicked'):
-            clicked_obj = map_output['last_object_clicked']
-            if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
-                lat_clicada = clicked_obj['lat']; lon_clicada = clicked_obj['lng']
+            objeto_clicado = map_output['last_object_clicked']
+            if objeto_clicado and 'lat' in objeto_clicado and 'lng' in objeto_clicado:
+                lat_clicada = objeto_clicado['lat']; lon_clicada = objeto_clicado['lng']
                 coordenada_arredondada = (round(lat_clicada, 6), round(lon_clicada, 6))
                 found_info = st.session_state.get('buscar_marcador', {}).get(coordenada_arredondada)
                 if found_info is not None and found_info != st.session_state.info_marcador_selecionado:
