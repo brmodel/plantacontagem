@@ -18,7 +18,7 @@ ICONES_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main
 BANNER_URL_BASE = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/"
 PMC_PORTAL_URL = "https://portal.contagem.mg.gov.br"
 
-ICON_DEFINITIONS = {
+ICONES_DEFINIDOS = {
     1: {"file": "leaf_green.png", "label": "Comunitária"},
     2: {"file": "leaf_blue.png", "label": "Institucional"},
     3: {"file": "leaf_orange.png", "label": "Comunitária/Institucional"},
@@ -27,7 +27,7 @@ ICON_DEFINITIONS = {
     6: {"file": "restaurante_pop.png", "label": "Restaurante Popular"},
     9: {"file": "sede_cmauf.png", "label": "Sede CMAUF"}
 }
-ICONE_PADRAO_FILENAME = "leaf_green.png"
+ICONE_PADRAO_ARQUIVO = "leaf_green.png"
 
 MAPEAMENTO_CORES = {
     1: "#fbb4ae", 2: "#b3cde3", 3: "#ccebc5", 4: "#decbe4",
@@ -36,8 +36,8 @@ MAPEAMENTO_CORES = {
 
 LOGO_PMC_FILENAME = "banner_pmc.png"
 
-GEOJSON_URL = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
-MAX_POPOVER_INFO_CHARS = 250
+LINK_GEOJSON = "https://raw.githubusercontent.com/brmodel/plantacontagem/main/data/regionais_contagem.geojson"
+LIMITE_CARACTERES = 250
 
 CENTRO_INICIAL_MAPA = [-19.8888, -44.0535]
 ZOOM_INICIAL_MAPA = 12
@@ -47,7 +47,7 @@ LINK_CONTAGEM_SEM_FOME = "https://portal.contagem.mg.gov.br/portal/noticias/0/3/
 LINK_ALIMENTA_CIDADES = "https://www.gov.br/mds/pt-br/acoes-e-programas/promocao-da-alimentacao-adequada-e-saudavel/alimenta-cidades"
 LINK_GOVERNO_FEDERAL = "https://www.gov.br/pt-br"
 
-FOOTER_BANNERS_DATA = [
+RODAPE_PAGINA = [
     {
         "filename": "governo_federal.png",
         "url": "https://raw.githubusercontent.com/brmodel/plantacontagem/main/images/logos/governo_federal.png",
@@ -80,7 +80,7 @@ FOOTER_BANNERS_DATA = [
 
 ####### Carregamento de imagens e database ######
 @st.cache_data(show_spinner=False)
-def get_image_as_base64(image_url: str) -> str | None:
+def buscar_imagem_base64(image_url: str) -> str | None:
     try:
         response = requests.get(image_url, timeout=10)
         response.raise_for_status()
@@ -105,21 +105,21 @@ def get_image_bytes(image_url: str) -> bytes | None:
         return None
 
 ####### Design da página da internet e dos icones do mapa #######
-ICONE_LEGENDA = {key: props["label"] for key, props in ICON_DEFINITIONS.items()}
-ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_FILENAME
-LOGO_PMC_URL_CABEÇALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
+ICONE_LEGENDA = {key: props["label"] for key, props in ICONES_DEFINIDOS.items()}
+ICONE_PADRAO_URL = ICONES_URL_BASE + ICONE_PADRAO_ARQUIVO
+LOGO_PMC_URL_CABECALHO = BANNER_URL_BASE + LOGO_PMC_FILENAME
 
-POPUP_TEMPLATE_BASE = """
+ESTILO_POPUP = """
 <div style="font-family: Arial, sans-serif; font-size: 12px; width: auto; max-width: min(90vw, 466px); min-width: 200px; word-break: break-word; box-sizing: border-box; padding: 8px;">
     <h6 style="margin: 0 0 8px 0; word-break: break-word; font-size: 14px;"><b>{}</b></h6>
     <p style="margin: 4px 0;"><b>Tipo:</b> {}</p>
     <p style="margin: 4px 0;"><b>Regional:</b> {}</p>
     {} </div>"""
-TOOLTIP_TEMPLATE = """<div style="font-family: Arial, sans-serif; font-size: 14px"><p><b>{}:</b><br>{}</p></div>"""
+ESTILO_TOOLTIP = """<div style="font-family: Arial, sans-serif; font-size: 14px"><p><b>{}:</b><br>{}</p></div>"""
 
 ####### Carregamento dos dados do mapa a partir do googledocs, do geojson com limites do município ######
 @st.cache_data(ttl=600)
-def load_data():
+def carregar_dados():
     url = "https://docs.google.com/spreadsheets/d/1qNmwcOhFnWrFHDYwkq36gHmk4Rx97b6RM0VqU94vOro/export?format=csv&gid=1832051074"
     try:
         data = pd.read_csv(url, usecols=range(8))
@@ -137,9 +137,9 @@ def load_data():
         return pd.DataFrame()
 
 @st.cache_data(ttl=3600)
-def load_geojson():
+def carregar_geojson():
     try:
-        response = requests.get(GEOJSON_URL, timeout=20)
+        response = requests.get(LINK_GEOJSON, timeout=20)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -154,16 +154,16 @@ def criar_legenda(geojson_data):
             props = feature.get('properties', {}); regions.append({'id': props.get('id'), 'name': props.get('Name')})
     items_legenda_regional = []
     for region in sorted(regions, key=lambda x: x.get('id', float('inf'))):
-        color = MAPEAMENTO_CORES.get(region.get('id'), "#CCCCCC"); region_name = region.get('name', 'N/A')
-        if region_name and region_name != 'N/A' and color:
-            items_legenda_regional.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><div style="background: {color}; width: 20px; height: 20px; margin-right: 5px; border: 1px solid #ccc;"></div><span>{region_name}</span></div>""")
+        regiao_colorida = MAPEAMENTO_CORES.get(region.get('id'), "#CCCCCC"); nome_regiao = region.get('name', 'N/A')
+        if nome_regiao and nome_regiao != 'N/A' and regiao_colorida:
+            items_legenda_regional.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><div style="background: {regiao_colorida}; width: 20px; height: 20px; margin-right: 5px; border: 1px solid #ccc;"></div><span>{nome_regiao}</span></div>""")
     html_regional = f"""<div style="font-weight: bold; margin-bottom: 5px;">Regionais</div>{"".join(items_legenda_regional)}""" if items_legenda_regional else ""
     items_legenda_icones = []
-    for key, props in sorted(ICON_DEFINITIONS.items()):
-        icon_full_url = ICONES_URL_BASE + props["file"]
-        icon_src_for_html = get_image_as_base64(icon_full_url) or icon_full_url
+    for key, props in sorted(ICONES_DEFINIDOS.items()):
+        icone_url_completa = ICONES_URL_BASE + props["file"]
+        icone_link_html = buscar_imagem_base64(icone_url_completa) or icone_url_completa
         legenda_texto = props["label"]
-        items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icon_src_for_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
+        items_legenda_icones.append(f"""<div style="display: flex; align-items: center; margin: 2px 0;"><img src="{icone_link_html}" alt="{legenda_texto}" title="{legenda_texto}" style="width: 20px; height: 20px; margin-right: 5px; object-fit: contain;"><span>{legenda_texto}</span></div>""")
     html_icones = f"""<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Tipos de Unidade</div>{"".join(items_legenda_icones)}""" if items_legenda_icones else ""
     if html_regional or html_icones:
         return folium.Element(f"""<div style="position: fixed; bottom: 50px; right: 20px; z-index: 1000; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif; font-size: 12px; max-width: 180px; max-height: 450px; overflow-y: auto;">{html_regional}{html_icones}</div>""")
@@ -186,22 +186,22 @@ def criar_mapa(data, geojson_data):
             valid_coords = data[['lat', 'lon']].apply(pd.to_numeric, errors='coerce').dropna()
             rounded_coords = list(zip(np.round(valid_coords['lat'], coord_precision), np.round(valid_coords['lon'], coord_precision)))
             valid_data_dict = data.loc[valid_coords.index].to_dict('records')
-            st.session_state.marker_lookup = dict(zip(rounded_coords, valid_data_dict))
+            st.session_state.buscar_marcador = dict(zip(rounded_coords, valid_data_dict))
         except Exception as e:
             st.warning(f"Erro ao criar lookup de marcadores: {e}.");
-            if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {}
+            if 'buscar_marcador' not in st.session_state: st.session_state.buscar_marcador = {}
 
-        feature_groups = {num: folium.FeatureGroup(name=props["label"], show=True) for num, props in ICON_DEFINITIONS.items()}
+        feature_groups = {num: folium.FeatureGroup(name=props["label"], show=True) for num, props in ICONES_DEFINIDOS.items()}
         default_feature_group = folium.FeatureGroup(name='Outras Categorias', show=True); default_group_needed = False
-        icon_base64_cache = {key: get_image_as_base64(ICONES_URL_BASE + props["file"]) for key, props in ICON_DEFINITIONS.items()}
-        default_icon_base64 = get_image_as_base64(ICONE_PADRAO_URL)
+        icon_base64_cache = {key: buscar_imagem_base64(ICONES_URL_BASE + props["file"]) for key, props in ICONES_DEFINIDOS.items()}
+        default_icon_base64 = buscar_imagem_base64(ICONE_PADRAO_URL)
 
         for index, row in data.iterrows():
             if pd.isna(row["lat"]) or pd.isna(row["lon"]): continue
             lat, lon = row["lat"], row["lon"]
             icon_num = int(row["Numeral"]) if pd.notna(row["Numeral"]) else None
             icon_b64_data = icon_base64_cache.get(icon_num, default_icon_base64)
-            current_icon = folium.CustomIcon(icon_b64_data, icon_size=(25,25), icon_anchor=(0,20), popup_anchor=(0,-10)) if icon_b64_data else folium.Icon(color="green", prefix='fa', icon="leaf")
+            icone_atual = folium.CustomIcon(icon_b64_data, icon_size=(25,25), icon_anchor=(0,20), popup_anchor=(0,-10)) if icon_b64_data else folium.Icon(color="green", prefix='fa', icon="leaf")
             
             popup_parts = []
             instagram_link = row.get('Instagram', '').strip()
@@ -209,9 +209,9 @@ def criar_mapa(data, geojson_data):
                 link_ig_safe = instagram_link if instagram_link.startswith(('http://','https://')) else 'https://'+instagram_link
                 popup_parts.append(f"<p style='margin:4px 0;'><b>Instagram:</b> <a href='{link_ig_safe}' target='_blank' rel='noopener noreferrer'>{instagram_link}</a></p>")
             
-            popup_content = POPUP_TEMPLATE_BASE.format(row.get('Nome','N/I'), row.get('Tipo','N/I'), row.get('Regional','N/I'), "".join(popup_parts))
+            popup_content = ESTILO_POPUP.format(row.get('Nome','N/I'), row.get('Tipo','N/I'), row.get('Regional','N/I'), "".join(popup_parts))
             popup = folium.Popup(popup_content, max_width=450)
-            marker = Marker(location=[lat,lon], popup=popup, icon=current_icon, tooltip=TOOLTIP_TEMPLATE.format(row.get('Tipo','N/I'), row.get('Nome','N/I')))
+            marker = Marker(location=[lat,lon], popup=popup, icon=icone_atual, tooltip=ESTILO_TOOLTIP.format(row.get('Tipo','N/I'), row.get('Nome','N/I')))
             
             if icon_num in feature_groups: marker.add_to(feature_groups[icon_num])
             else: marker.add_to(default_feature_group); default_group_needed = True
@@ -280,22 +280,22 @@ def main():
     )
 
     ###### Carregamento dos elementos na sessão do usuário quando entra na página ou qunaod recarrega streamlit #########
-    if 'selected_marker_info' not in st.session_state: st.session_state.selected_marker_info = None
-    if 'search_input_value' not in st.session_state: st.session_state.search_input_value = ''
-    if 'marker_lookup' not in st.session_state: st.session_state.marker_lookup = {}
-    if 'map_center' not in st.session_state: st.session_state.map_center = CENTRO_INICIAL_MAPA
-    if 'map_zoom' not in st.session_state: st.session_state.map_zoom = ZOOM_INICIAL_MAPA
+    if 'info_marcador_selecionado' not in st.session_state: st.session_state.info_marcador_selecionado = None
+    if 'valor_busca' not in st.session_state: st.session_state.valor_busca = ''
+    if 'buscar_marcador' not in st.session_state: st.session_state.buscar_marcador = {}
+    if 'centro_mapa' not in st.session_state: st.session_state.centro_mapa = CENTRO_INICIAL_MAPA
+    if 'zoom_mapa' not in st.session_state: st.session_state.zoom_mapa = ZOOM_INICIAL_MAPA
     
     if 'df' not in st.session_state or st.session_state.df.empty:
         st.session_state.df = pd.DataFrame() 
-        st.session_state.load_error = False
+        st.session_state.erro_processamento = False
         with st.spinner("Carregando dados..."):
-            loaded_df = load_data()
-            if not loaded_df.empty:
-                st.session_state.df = loaded_df
+            df_carregado = carregar_dados()
+            if not df_carregado.empty:
+                st.session_state.df = df_carregado
             else:
-                st.session_state.load_error = True
-            st.session_state.geojson_data = load_geojson()
+                st.session_state.erro_processamento = True
+            st.session_state.geojson_data = carregar_geojson()
     
     ####### Layout da página ##########
     st.title(APP_TITULO)
@@ -310,62 +310,62 @@ def main():
     with header_col2:
         st.markdown('<div data-testid="column-search-bar">', unsafe_allow_html=True)
         def clear_selection_on_search():
-            st.session_state.selected_marker_info = None
+            st.session_state.info_marcador_selecionado = None
 
-        search_query = st.text_input(
+        pesquisar_unidade = st.text_input(
             "Pesquisar por Nome, Tipo ou Regional:",
             key="search_input_widget_key",
             on_change=clear_selection_on_search,
-            value=st.session_state.search_input_value,
+            value=st.session_state.valor_busca,
             label_visibility="collapsed"
         ).strip().lower()
-        st.session_state.search_input_value = search_query
+        st.session_state.valor_busca = pesquisar_unidade
         st.markdown('</div>', unsafe_allow_html=True)
 
     with header_col3:
         st.markdown('<div data-testid="column-PMC-logo">', unsafe_allow_html=True)
-        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABEÇALHO)
+        logo_bytes = get_image_bytes(LOGO_PMC_URL_CABECALHO)
         if logo_bytes:
             st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="data:image/png;base64,{base64.b64encode(logo_bytes).decode()}"></a>', unsafe_allow_html=True)
         else:
-            st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABEÇALHO}"></a>', unsafe_allow_html=True)
+            st.markdown(f'<a href="{PMC_PORTAL_URL}" target="_blank"><img src="{LOGO_PMC_URL_CABECALHO}"></a>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     
     with st.sidebar:
         st.header("Detalhes da Unidade")
-        if st.session_state.get("selected_marker_info"):
-            selected_info = st.session_state.selected_marker_info
-            st.subheader(selected_info.get('Nome', 'N/I'))
-            st.write(f"**Tipo:** {selected_info.get('Tipo', 'N/I')}")
-            st.write(f"**Regional:** {selected_info.get('Regional', 'N/I')}")
-            redes = selected_info.get('Instagram', '').strip()
+        if st.session_state.get("info_marcador_selecionado"):
+            info_selecao = st.session_state.info_marcador_selecionado
+            st.subheader(info_selecao.get('Nome', 'N/I'))
+            st.write(f"**Tipo:** {info_selecao.get('Tipo', 'N/I')}")
+            st.write(f"**Regional:** {info_selecao.get('Regional', 'N/I')}")
+            redes = info_selecao.get('Instagram', '').strip()
             if redes:
                 link_ig = redes if redes.startswith(('http://','https://')) else 'https://'+redes
                 st.write(f"**Instagram:**"); st.markdown(f"[{redes}]({link_ig})", unsafe_allow_html=True)
             
-            info_text_sidebar = selected_info.get('Info', '').strip()
-            if info_text_sidebar:
+            info_sidebar = info_selecao.get('Info', '').strip()
+            if info_sidebar:
                 st.write(f"**Informações:**")
-                st.markdown(info_text_sidebar)
+                st.markdown(info_sidebar)
             if st.button("Fechar Detalhes", key="close_sidebar_btn"):
-                st.session_state.selected_marker_info = None
+                st.session_state.info_marcador_selecionado = None
                 st.rerun()
         else:
             st.info("Clique em um marcador no mapa para ver os detalhes aqui.")
 
     ###### Conferir se dados existem e quebra de loop se houver falha na conexão com o googledocs ####
     df_filtrado = pd.DataFrame()
-    if not st.session_state.load_error and not st.session_state.df.empty:
+    if not st.session_state.erro_processamento and not st.session_state.df.empty:
         df_original = st.session_state.df
-        if search_query:
+        if pesquisar_unidade:
             try:
-                filtro_nome = df_original["Nome"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
-                filtro_tipo = df_original["Tipo"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
-                filtro_regional = df_original["Regional"].astype(str).str.contains(search_query, case=False, na=False, regex=False)
+                filtro_nome = df_original["Nome"].astype(str).str.contains(pesquisar_unidade, case=False, na=False, regex=False)
+                filtro_tipo = df_original["Tipo"].astype(str).str.contains(pesquisar_unidade, case=False, na=False, regex=False)
+                filtro_regional = df_original["Regional"].astype(str).str.contains(pesquisar_unidade, case=False, na=False, regex=False)
                 df_filtrado = df_original[filtro_nome | filtro_tipo | filtro_regional]
                 if df_filtrado.empty:
-                    st.warning(f"Nenhuma unidade encontrada com '{search_query}'.")
+                    st.warning(f"Nenhuma unidade encontrada com '{pesquisar_unidade}'.")
             except Exception as e:
                 st.error(f"Erro no filtro: {e}"); df_filtrado = df_original
         else:
@@ -376,8 +376,8 @@ def main():
         m = criar_mapa(df_filtrado, st.session_state.get('geojson_data'))
         map_output = st_folium(
             m,
-            center=st.session_state.map_center,
-            zoom=st.session_state.map_zoom,
+            center=st.session_state.centro_mapa,
+            zoom=st.session_state.zoom_mapa,
             width='100%', height=600, key="folium_map_interactive",
             returned_objects=['last_object_clicked']
         )
@@ -385,19 +385,19 @@ def main():
         if map_output and map_output.get('last_object_clicked'):
             clicked_obj = map_output['last_object_clicked']
             if clicked_obj and 'lat' in clicked_obj and 'lng' in clicked_obj:
-                clicked_lat = clicked_obj['lat']; clicked_lon = clicked_obj['lng']
-                rounded_clicked_key = (round(clicked_lat, 6), round(clicked_lon, 6))
-                found_info = st.session_state.get('marker_lookup', {}).get(rounded_clicked_key)
-                if found_info is not None and found_info != st.session_state.selected_marker_info:
-                    st.session_state.selected_marker_info = found_info
-                    st.session_state.map_center = [found_info['lat'], found_info['lon']]
-                    st.session_state.map_zoom = ZOOM_SELECIONADO_MAPA
+                lat_clicada = clicked_obj['lat']; lon_clicada = clicked_obj['lng']
+                coordenada_arredondada = (round(lat_clicada, 6), round(lon_clicada, 6))
+                found_info = st.session_state.get('buscar_marcador', {}).get(coordenada_arredondada)
+                if found_info is not None and found_info != st.session_state.info_marcador_selecionado:
+                    st.session_state.info_marcador_selecionado = found_info
+                    st.session_state.centro_mapa = [found_info['lat'], found_info['lon']]
+                    st.session_state.zoom_mapa = ZOOM_SELECIONADO_MAPA
                     st.rerun()
-            elif st.session_state.selected_marker_info is not None:
-                st.session_state.selected_marker_info = None
+            elif st.session_state.info_marcador_selecionado is not None:
+                st.session_state.info_marcador_selecionado = None
                 st.rerun()
                 
-    elif st.session_state.load_error: st.error("Falha ao carregar dados. O mapa não pode ser exibido.")
+    elif st.session_state.erro_processamento: st.error("Falha ao carregar dados. O mapa não pode ser exibido.")
     
     ###### Restante da página depois do mapa ########
     st.markdown("---"); st.caption(APP_DESC)
@@ -435,9 +435,9 @@ def main():
         else:
             return f'<div style="{container_style}">{image_tag}</div>'
 
-    cols_banner = st.columns(len(FOOTER_BANNERS_DATA))
+    cols_banner = st.columns(len(RODAPE_PAGINA))
 
-    for i, banner_data in enumerate(FOOTER_BANNERS_DATA):
+    for i, banner_data in enumerate(RODAPE_PAGINA):
         with cols_banner[i]:
             banner_html = display_banner_html(
                 url=banner_data["url"],
