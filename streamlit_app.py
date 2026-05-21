@@ -204,7 +204,12 @@ def criar_mapa(data, geojson_data):
             icone_atual = folium.CustomIcon(icon_b64_data, icon_size=(25,25), icon_anchor=(0,20), popup_anchor=(0,-10)) if icon_b64_data else folium.Icon(color="green", prefix='fa', icon="leaf")
             
             popup_parts = []
-            instagram_link = row.get('Instagram', '').strip()
+            instagram_val = row.get('Instagram')
+            if pd.isna(instagram_val):
+                instagram_link = ''
+            else:
+                instagram_link = str(instagram_val).strip()
+            
             if instagram_link:
                 link_ig_safe = instagram_link if instagram_link.startswith(('http://','https://')) else 'https://'+instagram_link
                 popup_parts.append(f"<p style='margin:4px 0;'><b>Instagram:</b> <a href='{link_ig_safe}' target='_blank' rel='noopener noreferrer'>{instagram_link}</a></p>")
