@@ -284,7 +284,7 @@ def main():
         """, unsafe_allow_html=True
     )
 
-    ###### Carregamento dos elementos na sessão do usuário quando entra na página ou qunaod recarrega streamlit #########
+    ###### Carregamento dos elementos na sessão do usuário quando entra na página ou quando recarrega streamlit #########
     if 'info_marcador_selecionado' not in st.session_state: st.session_state.info_marcador_selecionado = None
     if 'valor_busca' not in st.session_state: st.session_state.valor_busca = ''
     if 'buscar_marcador' not in st.session_state: st.session_state.buscar_marcador = {}
@@ -339,20 +339,27 @@ def main():
     
     with st.sidebar:
         st.header("Detalhes da Unidade")
-        if st.session_state.get("info_marcador_selecionado"):
-            info_selecao = st.session_state.info_marcador_selecionado
-            st.subheader(info_selecao.get('Nome', 'N/I'))
-            st.write(f"**Tipo:** {info_selecao.get('Tipo', 'N/I')}")
-            st.write(f"**Regional:** {info_selecao.get('Regional', 'N/I')}")
-            redes = info_selecao.get('Instagram', '').strip()
+        info_marcador = st.session_state.get("info_marcador_selecionado")
+        if isinstance(info_marcador, dict) and info_marcador:
+            st.subheader(info_marcador.get('Nome', 'N/I'))
+            st.write(f"**Tipo:** {info_marcador.get('Tipo', 'N/I')}")
+            st.write(f"**Regional:** {info_marcador.get('Regional', 'N/I')}")
+            
+            redes = info_marcador.get('Instagram', '')
+            if isinstance(redes, str):
+                redes = redes.strip()
             if redes:
                 link_ig = redes if redes.startswith(('http://','https://')) else 'https://'+redes
-                st.write(f"**Instagram:**"); st.markdown(f"[{redes}]({link_ig})", unsafe_allow_html=True)
+                st.write(f"**Instagram:**")
+                st.markdown(f"[{redes}]({link_ig})", unsafe_allow_html=True)
             
-            info_sidebar = info_selecao.get('Info', '').strip()
+            info_sidebar = info_marcador.get('Info', '')
+            if isinstance(info_sidebar, str):
+                info_sidebar = info_sidebar.strip()
             if info_sidebar:
                 st.write(f"**Informações:**")
                 st.markdown(info_sidebar)
+                
             if st.button("Fechar Detalhes", key="close_sidebar_btn"):
                 st.session_state.info_marcador_selecionado = None
                 st.rerun()
@@ -376,7 +383,7 @@ def main():
         else:
             df_filtrado = df_original
     
-    ###### Exibicação do mapa na página ###########
+    ###### Exibição do mapa na página ###########
     if not df_filtrado.empty:
         m = criar_mapa(df_filtrado, st.session_state.get('geojson_data'))
         map_output = st_folium(
