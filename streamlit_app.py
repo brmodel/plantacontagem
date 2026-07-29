@@ -345,18 +345,22 @@ def main():
             st.write(f"**Tipo:** {info_marcador.get('Tipo', 'N/I')}")
             st.write(f"**Regional:** {info_marcador.get('Regional', 'N/I')}")
             
-            redes = info_marcador.get('Instagram', '')
-            if isinstance(redes, str):
-                redes = redes.strip()
-            if redes:
+            # Garantir que 'redes' seja uma string, mesmo se o valor original for None, número, etc.
+            redes_raw = info_marcador.get('Instagram', '')
+            if not isinstance(redes_raw, str):
+                redes_raw = str(redes_raw) if redes_raw is not None else ''
+            redes = redes_raw.strip()
+            
+            if redes and redes.lower() not in ['none', 'nan', '']:
                 link_ig = redes if redes.startswith(('http://','https://')) else 'https://'+redes
                 st.write(f"**Instagram:**")
                 st.markdown(f"[{redes}]({link_ig})", unsafe_allow_html=True)
             
             info_sidebar = info_marcador.get('Info', '')
-            if isinstance(info_sidebar, str):
-                info_sidebar = info_sidebar.strip()
-            if info_sidebar:
+            if not isinstance(info_sidebar, str):
+                info_sidebar = str(info_sidebar) if info_sidebar is not None else ''
+            info_sidebar = info_sidebar.strip()
+            if info_sidebar and info_sidebar.lower() not in ['none', 'nan', '']:
                 st.write(f"**Informações:**")
                 st.markdown(info_sidebar)
                 
