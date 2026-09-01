@@ -170,7 +170,7 @@ def criar_legenda(geojson_data):
     return None
 
 def criar_mapa(data, geojson_data):
-    m = folium.Map(location=CENTRO_INICIAL_MAPA, tiles="World_Light_Gray_Base", zoom_start=ZOOM_INICIAL_MAPA, control_scale=True)
+    m = folium.Map(location=CENTRO_INICIAL_MAPA, tiles="WorldLightGrayBase", zoom_start=ZOOM_INICIAL_MAPA, control_scale=True)
     if geojson_data and isinstance(geojson_data, dict) and geojson_data.get("features"):
         folium.GeoJson( geojson_data, name='Regionais',
             style_function=lambda x: {"fillColor": MAPEAMENTO_CORES.get(x['properties'].get('id'), "#CCCCCC"), "color": "#555555", "weight": 1, "fillOpacity": 0.35},
